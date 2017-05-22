@@ -27,7 +27,7 @@ class Player {
 //labirintus egy mezõje
 class Node {
 	constructor(x,y) {
-		this.x_orig = x; //0 -> n ig a gráfban elfoglalt x, y pozícoó
+		this.x_orig = x; //0 -> n ig a gráfban elfoglalt x, y pozíció
 		this.y_orig = y;
 		this.x = border.x+x*field_size; //a pályán ténylegesen elfoglalt x, y pozíció
 		this.y = border.x+y*field_size;
