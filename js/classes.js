@@ -1,10 +1,44 @@
-class Player {
-	constructor(x,y,id) {
+class Entity {
+	constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false) {
+		this.x = x;
+		this.y = y;
 		this.id = id;
-		this.x_orig = x;
-		this.y_orig = y;
-		this.width = 0;
-		this.height = 0;
+		this.sprite = new PIXI.Sprite(texture);
+		this.sprite.x = this.x;
+		this.sprite.y = this.y;
+		app.stage.addChild(this.sprite);
+		if (width !== false) {
+			this.sprite.width = width;
+		}
+		if (height !== false) {
+			this.sprite.height = height;
+		}
+	}
+}
+
+class Wall extends Entity{
+	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
+		super(x,y,x_graph,y_graph,id,texture,width,height);
+		this.sprite.anchor.set(0.5,0.5);
+		this.hitbox = {
+			'width':width,
+			'height':height
+		};
+	}
+}
+Wall.list = {}; //obj kell, hátha egyszer remove-oljuk az elemeket. tömbben összekavarodna az id-zés olyankor
+Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
+
+class Player extends Entity{
+	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
+		super(x,y,x_graph,y_graph,id,texture,width,height);
+		this.sprite.anchor.set(0.4,0.5);
+		this.x_graph = x; //a gráfban elfoglalt hely
+		this.y_graph = y;
+		this.hitbox = {
+			'width':Math.min(width,height),
+			'height':Math.min(width,height)
+		};
 		this.keypress = {
 			'left':false,
 			'up':false,
@@ -23,12 +57,14 @@ class Player {
 			this.y -= 10;
 	};
 }
+Player.list = []; //statikus osztály-változó
+Player.list_count = 0;
 
 //labirintus egy mezõje
 class Node {
 	constructor(x,y) {
-		this.x_orig = x; //0 -> n ig a gráfban elfoglalt x, y pozíció
-		this.y_orig = y;
+		this.x_graph = x; //0 -> n ig a gráfban elfoglalt x, y pozíció
+		this.y_graph = y;
 		this.x = border.x+x*field_size; //a pályán ténylegesen elfoglalt x, y pozíció
 		this.y = border.x+y*field_size;
 		this.block_id = -1; //melyik összefüggõ blokkba tartozik. -1=egyikbe sem.
@@ -62,18 +98,18 @@ class Node {
 			this.block_id = actual_block;
 			var children_size = 1; //1 mert önmaga is hozzáadódik a blokkhoz.
 			//elõször a balra és felette lévõket kérdezzük le
-			if (graph[this.x_orig-1] !== undefined && graph[this.x_orig-1][this.y_orig].path[0] == 1) {
-				children_size += graph[this.x_orig-1][this.y_orig].besorol(actual_block,graph);
+			if (graph[this.x_graph-1] !== undefined && graph[this.x_graph-1][this.y_graph].path[0] == 1) {
+				children_size += graph[this.x_graph-1][this.y_graph].besorol(actual_block,graph);
 			}
-			if (graph[this.x_orig][this.y_orig-1] !== undefined && graph[this.x_orig][this.y_orig-1].path[1] == 1) {
-				children_size += graph[this.x_orig][this.y_orig-1].besorol(actual_block,graph);
+			if (graph[this.x_graph][this.y_graph-1] !== undefined && graph[this.x_graph][this.y_graph-1].path[1] == 1) {
+				children_size += graph[this.x_graph][this.y_graph-1].besorol(actual_block,graph);
 			}
 			//majd a jobbra és alatta lévõket
 			if (this.path[0] == 1) {
-				children_size += graph[this.x_orig+1][this.y_orig].besorol(actual_block,graph);
+				children_size += graph[this.x_graph+1][this.y_graph].besorol(actual_block,graph);
 			}
 			if (this.path[1] == 1) {
-				children_size += graph[this.x_orig][this.y_orig+1].besorol(actual_block,graph);
+				children_size += graph[this.x_graph][this.y_graph+1].besorol(actual_block,graph);
 			}
 			return children_size;
 		}

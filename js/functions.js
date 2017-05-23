@@ -41,8 +41,8 @@ function generate_map(dimensions) {
 //lekérdezi, hogy adott node-ra tehet-e tankot
 function free_pos(node) {
 	var free = true;
-	for (id in players) {
-		if (Math.abs(players[id].x_orig - node.x_orig)+Math.abs(players[id].y_orig - node.y_orig) < 4) {
+	for (id in Player.list) {
+		if (Math.abs(Player.list[id].x_graph - node.x_graph)+Math.abs(Player.list[id].y_graph - node.y_graph) < 4) {
 			free = false;
 		}
 	}
@@ -50,44 +50,17 @@ function free_pos(node) {
 }
 
 //draw walls
-function draw_walls (graph,dimensions,tex_wall,app) {
-
-	//TODO: kiszervezni wall osztályba, és annak lenne egy draw metódusa, ami ezt csinálja. a szélén lehet
-	//hosszú fal is, amég azt eltároljuk nála, hogy mekkora, és azalapján figyeli az ütközést.
-
-	/*var wall = new PIXI.Sprite(tex_wall);
-	wall.anchor.set(0,0.5);
-	
-	wall.height = 5;
-	wall.width = dimensions.x*field_size;
-	wall.x = border.x-field_size/2;
-	wall.y = border.y-field_size/2;
+function create_walls (graph,dimensions,tex_wall,app) {
+	for (let x = 0; x < dimensions.x; x++) {
+		for (let y = 0; y < dimensions.y; y++) {
+			let node = graph[x][y];
 			
-	app.stage.addChild(wall);
-	
-	var wall = new PIXI.Sprite(tex_wall);
-	wall.anchor.set(0.5,0);
-	
-	wall.height = dimensions.x*field_size;
-	wall.width = 5;
-	wall.x = border.x-field_size/2;
-	wall.y = border.y-field_size/2;
-			
-	app.stage.addChild(wall);*/
-
-	for (var x = 0; x < dimensions.x; x++) {
-		for (var y = 0; y < dimensions.y; y++) {
-			var node = graph[x][y];
-			
-			for (var dir in node.path) {
+			for (let dir in node.path) {
 				if (node.path[dir] !== 1) {
 					
-					var wall = new PIXI.Sprite(tex_wall);
-					// center the anchor point
-					wall.anchor.set(0.5,0.5);
-					
-					var x_self = border.x+x*field_size;
-					var y_self = border.y+y*field_size;
+					let wall = {};
+					let x_self = border.x+x*field_size;
+					let y_self = border.y+y*field_size;
 					
 					switch (dir) {
 						case '0': //jobbra kell a fal
@@ -103,14 +76,12 @@ function draw_walls (graph,dimensions,tex_wall,app) {
 							wall.y = y_self+field_size/2
 							break;
 					}
-					app.stage.addChild(wall);
-					
+					Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,textures.wall,wall.width,wall.height);
+					Wall.list_id_counter++;
 				}
 			}
-			
 		}
 	}
-	//app.stage.addChild(lines);
 }
 
 //tömb sorrend keverés
