@@ -19,7 +19,7 @@ for (k in leteheto_nodes) {
 		break;
 	}
 	if (free_pos(node)) {
-		Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,textures.tank,30,19);
+		Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,textures.tank,35,22);
 		Player.list_count++;
 	}
 }
@@ -54,14 +54,17 @@ create_walls(graph,dimensions,textures.wall,app);
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 app.ticker.add(function(delta) {
-	window_sizes = {'x':window.innerWidth-16,'y':window.innerHeight-16};
-	//app.renderer.view.style.width = window_sizes.x;
-	//app.renderer.view.style.height = window_sizes.y;
-	app.renderer.resize(window_sizes.x, window_sizes.y);
 	
-    /*for (var key in Player.list) {
-		Player.list[key].draw();
-	}*/
+	//oldal resize
+	site_orig_width = window.innerWidth-16; //16 egy medzsik érték, 8+8 a canvas alapértelmezett kerete. (igen megnéztem, a canvas egyes számban van. canvases a többes)
+	site_orig_height = site_orig_width*WRATIO;
+	if (site_orig_height > window.innerHeight-16) {
+		site_orig_height = window.innerHeight-16;
+		site_orig_width = site_orig_height/WRATIO;
+	}
+	app.renderer.view.style.width = site_orig_width;
+	app.renderer.view.style.height = site_orig_height;
+	
 });
 
 /*
