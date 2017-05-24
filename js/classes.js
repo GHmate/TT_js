@@ -1,11 +1,12 @@
 class Entity {
-	constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false) {
+	constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false,speed = 1) {
 		this.x = x;
 		this.y = y;
 		this.id = id;
 		this.sprite = new PIXI.Sprite(texture);
 		this.sprite.x = this.x;
 		this.sprite.y = this.y;
+		this.speed = speed;
 		app.stage.addChild(this.sprite);
 		if (width !== false) {
 			this.sprite.width = width;
@@ -48,13 +49,26 @@ class Player extends Entity{
 	}
 	updatePosition() {
 		if(this.keypress.right)
-			this.x += 10
+			this.sprite.rotation += 0.09 //* delta;
 		if(this.keypress.left)
-			this.x -= 10;
-		if(this.keypress.down)
-			this.y += 10;
-		if(this.keypress.up)
-			this.y -= 10;
+			this.sprite.rotation -= 0.09 //* delta;
+		
+		
+		if(this.keypress.up){
+			
+			this.sprite.x += Math.cos(this.sprite.rotation)*this.speed;
+			this.x += Math.cos(this.sprite.rotation)*this.speed;
+			this.sprite.y += Math.sin(this.sprite.rotation)*this.speed;
+			this.y += Math.cos(this.sprite.rotation)*this.speed;
+		
+		}
+		
+		if(this.keypress.down){
+			this.sprite.x -= Math.cos(this.sprite.rotation)*this.speed;
+			this.x -= Math.cos(this.sprite.rotation)*this.speed;
+			this.sprite.y -= Math.sin(this.sprite.rotation)*this.speed;
+			this.y -= Math.cos(this.sprite.rotation)*this.speed;
+		}
 	};
 }
 Player.list = []; //statikus osztály-változó

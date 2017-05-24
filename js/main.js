@@ -62,6 +62,7 @@ app.ticker.add(function(delta) {
     /*for (var key in Player.list) {
 		Player.list[key].draw();
 	}*/
+	Player.list[0].updatePosition();
 });
 
 /*
