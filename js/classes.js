@@ -1,5 +1,5 @@
 class Entity {
-	constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false,speed = 1) {
+	constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false,speed = 1.8) {
 		this.x = x;
 		this.y = y;
 		this.id = id;
@@ -49,9 +49,9 @@ class Player extends Entity{
 	}
 	updatePosition() {
 		if(this.keypress.right)
-			this.sprite.rotation += 0.09 //* delta;
+			this.sprite.rotation += 0.05 //* delta;
 		if(this.keypress.left)
-			this.sprite.rotation -= 0.09 //* delta;
+			this.sprite.rotation -= 0.05 //* delta;
 		
 		
 		if(this.keypress.up){
@@ -64,10 +64,10 @@ class Player extends Entity{
 		}
 		
 		if(this.keypress.down){
-			this.sprite.x -= Math.cos(this.sprite.rotation)*this.speed;
-			this.x -= Math.cos(this.sprite.rotation)*this.speed;
-			this.sprite.y -= Math.sin(this.sprite.rotation)*this.speed;
-			this.y -= Math.cos(this.sprite.rotation)*this.speed;
+			this.sprite.x -= Math.cos(this.sprite.rotation)*this.speed*0.7;
+			this.x -= Math.cos(this.sprite.rotation)*this.speed*0.7;
+			this.sprite.y -= Math.sin(this.sprite.rotation)*this.speed*0.7;
+			this.y -= Math.cos(this.sprite.rotation)*this.speed*0.7;
 		}
 	};
 }
