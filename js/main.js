@@ -54,13 +54,9 @@ create_walls(graph,dimensions,textures.wall,app);
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 app.ticker.add(function(delta) {
-	
-<<<<<<< HEAD
-    /*for (var key in Player.list) {
-		Player.list[key].draw();
-	}*/
+
 	Player.list[0].updatePosition();
-=======
+	
 	//oldal resize
 	site_orig_width = window.innerWidth-16; //16 egy medzsik érték, 8+8 a canvas alapértelmezett kerete. (igen megnéztem, a canvas egyes számban van. canvases a többes)
 	site_orig_height = site_orig_width*WRATIO;
@@ -70,8 +66,7 @@ app.ticker.add(function(delta) {
 	}
 	app.renderer.view.style.width = site_orig_width;
 	app.renderer.view.style.height = site_orig_height;
-	
->>>>>>> 9889ef63d8ba5d346c66a433570a3e2d1fbb36f3
+
 });
 
 /*
