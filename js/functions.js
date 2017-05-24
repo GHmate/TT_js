@@ -55,23 +55,26 @@ function create_walls (graph,dimensions,tex_wall,app) {
 		for (let y = 0; y < dimensions.y; y++) {
 			let node = graph[x][y];
 			
+			//fal adatok, amik csak a konstruktorokhoz kellenek
+			let wall = {};
+			let x_self = border.x+x*field_size;
+			let y_self = border.y+y*field_size;
+			let longer_side = field_size + field_size/10;
+			let shorter_side = Math.ceil(field_size/10);
+			
+			//jobb oldali és lenti falak
 			for (let dir in node.path) {
 				if (node.path[dir] !== 1) {
-					
-					let wall = {};
-					let x_self = border.x+x*field_size;
-					let y_self = border.y+y*field_size;
-					
 					switch (dir) {
 						case '0': //jobbra kell a fal
-							wall.height = field_size+5;
-							wall.width = 5;
+							wall.height = longer_side;
+							wall.width = shorter_side;
 							wall.x = x_self+field_size/2;
 							wall.y = y_self;
 							break;
 						case '1': //lefele kell a fal
-							wall.height = 5;
-							wall.width = field_size+5;
+							wall.height = shorter_side;
+							wall.width = longer_side;
 							wall.x = x_self;
 							wall.y = y_self+field_size/2
 							break;
@@ -79,6 +82,23 @@ function create_walls (graph,dimensions,tex_wall,app) {
 					Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,textures.wall,wall.width,wall.height);
 					Wall.list_id_counter++;
 				}
+			}
+			//bal szélére, tetejére plusz falak
+			if (x == 0) {
+				wall.height = longer_side;
+				wall.width = shorter_side;
+				wall.x = x_self-field_size/2;
+				wall.y = y_self;
+				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,textures.wall,wall.width,wall.height);
+				Wall.list_id_counter++;
+			}
+			if (y == 0) {
+				wall.height = shorter_side;
+				wall.width = longer_side;
+				wall.x = x_self;
+				wall.y = y_self-field_size/2;
+				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,textures.wall,wall.width,wall.height);
+				Wall.list_id_counter++;
 			}
 		}
 	}
