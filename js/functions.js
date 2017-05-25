@@ -1,28 +1,28 @@
 
-//gener·lunk Ès amÈg nem tal·lunk megfelelı mÈret˚ blokkot, ˙jragener·ljuk a p·ly·t
+//gener√°lunk √©s am√©g nem tal√°lunk megfelel≈ë m√©ret≈± blokkot, √∫jragener√°ljuk a p√°ly√°t
 function generate_map(dimensions) {
-	var max_block_num = 0; //legnagyobb tal·lt darabsz·m
-	var actual_block = 0; //jelenleg kalkul·landÛ blokk id
-	var selected_block = 0; //eddig v·lasztott blokk id
+	var max_block_num = 0; //legnagyobb tal√°lt darabsz√°m
+	var actual_block = 0; //jelenleg kalkul√°land√≥ blokk id
+	var selected_block = 0; //eddig v√°lasztott blokk id
 	do {
-		max_block_num = 0; //null·zunk minden gener·l·s elıtt
+		max_block_num = 0; //null√°zunk minden gener√°l√°s el≈ëtt
 		actual_block = 0;
 		selected_block = 0;
 		//console.log('generalas');
-		var graph =[]; //2 dimenziÛs m·trix, elemei node-ok
+		var graph =[]; //2 dimenzi√≥s m√°trix, elemei node-ok
 		for (var x = 0; x < dimensions.x; x++) {
 			graph[x] = [];
 			for (var y = 0; y < dimensions.y; y++) {
 				graph[x][y] = new Node(x,y);
-				//legener·lunk random utakat
+				//legener√°lunk random utakat
 				graph[x][y].generate_paths();
 			}
 		}
 		
-		//megnÈzz¸k az ˆsszef¸ggı blokkokat
+		//megn√©zz√ºk az √∂sszef√ºgg≈ë blokkokat
 		for (var x = 0; x < dimensions.x; x++) {
 			for (var y = 0; y < dimensions.y; y++) {
-				//rekurzÌv funkciÛ
+				//rekurz√≠v funkci√≥
 				result_darab = graph[x][y].besorol(actual_block,graph);
 				if (max_block_num < result_darab) {
 					max_block_num = result_darab;
@@ -31,14 +31,14 @@ function generate_map(dimensions) {
 				actual_block++;
 			}
 		}
-	} while(max_block_num < player_num*player_distance_fields); //ha a legnagyobb blokk elegendı mÈret˚, r·tessz¸k a tankokat, ha nem, ˙jragener·l·s
+	} while(max_block_num < player_num*player_distance_fields); //ha a legnagyobb blokk elegend≈ë m√©ret≈±, r√°tessz√ºk a tankokat, ha nem, √∫jragener√°l√°s
 	return {
 		'graph':graph,
 		'selected_block':selected_block
 	};
 }
 
-//lekÈrdezi, hogy adott node-ra tehet-e tankot
+//lek√©rdezi, hogy adott node-ra tehet-e tankot
 function free_pos(node) {
 	var free = true;
 	for (id in Player.list) {
@@ -62,7 +62,7 @@ function create_walls (graph,dimensions,tex_wall,app) {
 			let longer_side = field_size + field_size/10;
 			let shorter_side = Math.ceil(field_size/10);
 			
-			//jobb oldali Ès lenti falak
+			//jobb oldali √©s lenti falak
 			for (let dir in node.path) {
 				if (node.path[dir] !== 1) {
 					switch (dir) {
@@ -83,7 +83,7 @@ function create_walls (graph,dimensions,tex_wall,app) {
 					Wall.list_id_counter++;
 				}
 			}
-			//bal szÈlÈre, tetejÈre plusz falak
+			//bal sz√©l√©re, tetej√©re plusz falak
 			if (x == 0) {
 				wall.height = longer_side;
 				wall.width = shorter_side;
@@ -104,7 +104,7 @@ function create_walls (graph,dimensions,tex_wall,app) {
 	}
 }
 
-//tˆmb sorrend keverÈs
+//t√∂mb sorrend kever√©s
 function shuffle(a) {
     for (let i = a.length; i; i--) {
         let j = Math.floor(Math.random() * i);

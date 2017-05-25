@@ -19,15 +19,15 @@ for (k in leteheto_nodes) {
 		break;
 	}
 	if (free_pos(node)) {
-		Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,textures.tank,35,22);
+		Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,textures.tank,41,26);
 		Player.list_count++;
 	}
 }
 if (Player.list_count < player_num) {
-	alert('baj van, nem elég nagy a pálya!');
+	alert('baj van, nem elÃ©g nagy a pÃ¡lya!');
 }
 
-//mozgatás
+//mozgatÃ¡s
 document.onkeydown = function(event){
 	if(event.keyCode === 37) //balra
 		Player.list[0].keypress.left = true;
@@ -52,13 +52,13 @@ document.onkeyup = function(event){
 
 create_walls(graph,dimensions,textures.wall,app);
 
-//minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
+//minden frame-n. szÃ¡mokat delta-val szorozva alacsony fps-en is ugyanakkora sebessÃ©get kapunk, mint 60-on.
 app.ticker.add(function(delta) {
 
 	Player.list[0].updatePosition();
 	
 	//oldal resize
-	site_orig_width = window.innerWidth-16; //16 egy medzsik érték, 8+8 a canvas alapértelmezett kerete. (igen megnéztem, a canvas egyes számban van. canvases a többes)
+	site_orig_width = window.innerWidth-16; //16 egy medzsik Ã©rtÃ©k, 8+8 a canvas alapÃ©rtelmezett kerete. (igen megnÃ©ztem, a canvas egyes szÃ¡mban van. canvases a tÃ¶bbes)
 	site_orig_height = site_orig_width*WRATIO;
 	if (site_orig_height > window.innerHeight-16) {
 		site_orig_height = window.innerHeight-16;

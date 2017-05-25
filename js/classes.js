@@ -27,14 +27,14 @@ class Wall extends Entity{
 		};
 	}
 }
-Wall.list = {}; //obj kell, hátha egyszer remove-oljuk az elemeket. tömbben összekavarodna az id-zés olyankor
-Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
+Wall.list = {}; //obj kell, hÃ¡tha egyszer remove-oljuk az elemeket. tÃ¶mbben Ã¶sszekavarodna az id-zÃ©s olyankor
+Wall.list_id_counter = 0; //Ãºj id-ket kapnak a falak, csak nÃ¶vekszik
 
 class Player extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
 		super(x,y,x_graph,y_graph,id,texture,width,height);
 		this.sprite.anchor.set(0.4,0.5);
-		this.x_graph = x; //a gráfban elfoglalt hely
+		this.x_graph = x; //a grÃ¡fban elfoglalt hely
 		this.y_graph = y;
 		this.hitbox = {
 			'width':Math.min(width,height),
@@ -71,19 +71,19 @@ class Player extends Entity{
 		}
 	};
 }
-Player.list = []; //statikus osztály-változó
+Player.list = []; //statikus osztÃ¡ly-vÃ¡ltozÃ³
 Player.list_count = 0;
 
-//labirintus egy mezõje
+//labirintus egy mezÅ‘je
 class Node {
 	constructor(x,y) {
-		this.x_graph = x; //0 -> n ig a gráfban elfoglalt x, y pozíció
+		this.x_graph = x; //0 -> n ig a grÃ¡fban elfoglalt x, y pozÃ­ciÃ³
 		this.y_graph = y;
-		this.x = border.x+x*field_size; //a pályán ténylegesen elfoglalt x, y pozíció
+		this.x = border.x+x*field_size; //a pÃ¡lyÃ¡n tÃ©nylegesen elfoglalt x, y pozÃ­ciÃ³
 		this.y = border.x+y*field_size;
-		this.block_id = -1; //melyik összefüggõ blokkba tartozik. -1=egyikbe sem.
-		this.unused_paths = 2; //mennyi utat tudna még létrehozni
-		this.path = [0,0]; // 0 vagy 1: nincs/van út jobbra / lefele. így azokra csak õ tehet utat, nincs ütközés. -1 akkor lesz, ha mellette/alatta vége a pályának
+		this.block_id = -1; //melyik Ã¶sszefÃ¼ggÅ‘ blokkba tartozik. -1=egyikbe sem.
+		this.unused_paths = 2; //mennyi utat tudna mÃ©g lÃ©trehozni
+		this.path = [0,0]; // 0 vagy 1: nincs/van Ãºt jobbra / lefele. Ã­gy azokra csak Å‘ tehet utat, nincs Ã¼tkÃ¶zÃ©s. -1 akkor lesz, ha mellette/alatta vÃ©ge a pÃ¡lyÃ¡nak
 		if (x == dimensions.x-1) {
 			this.path[0] = -1;
 			this.unused_paths--;
@@ -94,7 +94,7 @@ class Node {
 		}
 		
 	}
-	//csinál utakat magának
+	//csinÃ¡l utakat magÃ¡nak
 	generate_paths() {
 		for (var i = 0 ; i < 2 ; i++) {
 			if (this.path[i] == 0 && Math.random() < path_gen_chance) {
@@ -103,22 +103,22 @@ class Node {
 			}
 		}
 	}
-	//rekurzív funkció: besorolja egy blokkba magát és az összes hozzá kapcsolódó node-ot. visszatér a blokk tõle indult darabszámával
+	//rekurzÃ­v funkciÃ³: besorolja egy blokkba magÃ¡t Ã©s az Ã¶sszes hozzÃ¡ kapcsolÃ³dÃ³ node-ot. visszatÃ©r a blokk tÅ‘le indult darabszÃ¡mÃ¡val
 	besorol(actual_block,graph) {
 		if (this.block_id !== -1) {
-			//ha már be volt sorolva, nem folytatja
+			//ha mÃ¡r be volt sorolva, nem folytatja
 			return 0;
 		} else {
 			this.block_id = actual_block;
-			var children_size = 1; //1 mert önmaga is hozzáadódik a blokkhoz.
-			//elõször a balra és felette lévõket kérdezzük le
+			var children_size = 1; //1 mert Ã¶nmaga is hozzÃ¡adÃ³dik a blokkhoz.
+			//elÅ‘szÃ¶r a balra Ã©s felette lÃ©vÅ‘ket kÃ©rdezzÃ¼k le
 			if (graph[this.x_graph-1] !== undefined && graph[this.x_graph-1][this.y_graph].path[0] == 1) {
 				children_size += graph[this.x_graph-1][this.y_graph].besorol(actual_block,graph);
 			}
 			if (graph[this.x_graph][this.y_graph-1] !== undefined && graph[this.x_graph][this.y_graph-1].path[1] == 1) {
 				children_size += graph[this.x_graph][this.y_graph-1].besorol(actual_block,graph);
 			}
-			//majd a jobbra és alatta lévõket
+			//majd a jobbra Ã©s alatta lÃ©vÅ‘ket
 			if (this.path[0] == 1) {
 				children_size += graph[this.x_graph+1][this.y_graph].besorol(actual_block,graph);
 			}
