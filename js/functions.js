@@ -1,5 +1,9 @@
-
-//generálunk és amég nem találunk megfelelő méretű blokkot, újrageneráljuk a pályát
+/**
+ * generálunk és amég nem találunk megfelelő méretű blokkot, újrageneráljuk a pályát
+ * 
+ * @param obj dimensions, a gráf szélessége és hosszúsága (node-ok száma)
+ * @returns obj: {obj: gráf, int: választott blokk azonosítója}
+ */
 function generate_map(dimensions) {
 	var max_block_num = 0; //legnagyobb talált darabszám
 	var actual_block = 0; //jelenleg kalkulálandó blokk id
@@ -31,7 +35,7 @@ function generate_map(dimensions) {
 				actual_block++;
 			}
 		}
-	} while(max_block_num < player_num*player_distance_fields); //ha a legnagyobb blokk elegendő méretű, rátesszük a tankokat, ha nem, újragenerálás
+	} while(max_block_num < g_player_num*g_player_distance_fields); //ha a legnagyobb blokk elegendő méretű, rátesszük a tankokat, ha nem, újragenerálás
 	return {
 		'graph':graph,
 		'selected_block':selected_block
@@ -42,7 +46,7 @@ function generate_map(dimensions) {
 function free_pos(node) {
 	var free = true;
 	for (id in Player.list) {
-		if (Math.abs(Player.list[id].x_graph - node.x_graph)+Math.abs(Player.list[id].y_graph - node.y_graph) < 4) {
+		if (Math.abs(Player.list[id].x_graph - node.x_graph)+Math.abs(Player.list[id].y_graph - node.y_graph) < g_player_min_distance) {
 			free = false;
 		}
 	}
@@ -50,17 +54,17 @@ function free_pos(node) {
 }
 
 //draw walls
-function create_walls (graph,dimensions,tex_wall,app) {
+function create_walls (graph,dimensions) {
 	for (let x = 0; x < dimensions.x; x++) {
 		for (let y = 0; y < dimensions.y; y++) {
 			let node = graph[x][y];
 			
 			//fal adatok, amik csak a konstruktorokhoz kellenek
 			let wall = {};
-			let x_self = border.x+x*field_size;
-			let y_self = border.y+y*field_size;
-			let longer_side = field_size + field_size/10;
-			let shorter_side = Math.ceil(field_size/10);
+			let x_self = border.x+x*g_field_size;
+			let y_self = border.y+y*g_field_size;
+			let longer_side = g_field_size + g_field_size/10;
+			let shorter_side = Math.ceil(g_field_size/10);
 			
 			//jobb oldali és lenti falak
 			for (let dir in node.path) {
@@ -69,35 +73,38 @@ function create_walls (graph,dimensions,tex_wall,app) {
 						case '0': //jobbra kell a fal
 							wall.height = longer_side;
 							wall.width = shorter_side;
-							wall.x = x_self+field_size/2;
+							wall.x = x_self+g_field_size/2;
 							wall.y = y_self;
 							break;
 						case '1': //lefele kell a fal
 							wall.height = shorter_side;
 							wall.width = longer_side;
 							wall.x = x_self;
-							wall.y = y_self+field_size/2
+							wall.y = y_self+g_field_size/2
 							break;
 					}
-					Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,textures.wall,wall.width,wall.height);
+					Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,g_textures.wall,wall.width,wall.height);
+					g_collisioner.place(Wall.list[Wall.list_id_counter]);
 					Wall.list_id_counter++;
 				}
 			}
 			//bal szélére, tetejére plusz falak
-			if (x == 0) {
+			if (x === 0) {
 				wall.height = longer_side;
 				wall.width = shorter_side;
-				wall.x = x_self-field_size/2;
+				wall.x = x_self-g_field_size/2;
 				wall.y = y_self;
-				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,textures.wall,wall.width,wall.height);
+				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,g_textures.wall,wall.width,wall.height);
+				g_collisioner.place(Wall.list[Wall.list_id_counter]);
 				Wall.list_id_counter++;
 			}
-			if (y == 0) {
+			if (y === 0) {
 				wall.height = shorter_side;
 				wall.width = longer_side;
 				wall.x = x_self;
-				wall.y = y_self-field_size/2;
-				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,textures.wall,wall.width,wall.height);
+				wall.y = y_self-g_field_size/2;
+				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,g_textures.wall,wall.width,wall.height);
+				g_collisioner.place(Wall.list[Wall.list_id_counter]);
 				Wall.list_id_counter++;
 			}
 		}
