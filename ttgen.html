@@ -15,7 +15,35 @@
 			</div>
 			<div class="menu_container">
 				menu<br>bar
+				<div class="btn" id="btn_color_picker">color_picker</div>
 			</div>
 		</div>
+		
+		<div id="modal_window" class="modal">
+			<div class="modal-content">
+				<span id="modal_window_x" class="close">&times;</span>
+				<p>Some text in the Modal..</p>
+			</div>
+		</div>
+		
+		<script>
+			var modal_window = jQuery("#modal_window");
+			function open_modal() {
+				console.log('asd');
+				modal_window.css('display','block');
+			};
+			jQuery("#modal_window_x").click(function() {
+				modal_window.css('display','none');
+			});
+			window.onclick = function(event) {
+				console.log(event);
+				if (event.target === modal_window) {
+					modal_window.css('display','none');
+				}
+			};
+			
+			$('#btn_color_picker').click(function() {open_modal();});
+			
+		</script>
     </body>
 </html>

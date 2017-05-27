@@ -118,3 +118,11 @@ function shuffle(a) {
         [a[i - 1], a[j]] = [a[j], a[i - 1]];
     }
 }
+
+//futás megállítása
+function die(data = '') {
+	if (data !== '') {
+		console.log(data);
+	}
+	throw new Error('futás megállítva');
+}
