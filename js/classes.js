@@ -10,7 +10,7 @@ class Entity {
 		this.sprite.x = this.x;
 		this.sprite.y = this.y;
 		this.speed = speed;
-		this.collision_block = []; //collisionManager melyik dobozkájában van éppen
+		this.collision_block = []; //collisionManager melyik dobozkájában van éppen. több is lehet, ha átlóg
 		g_app.stage.addChild(this.sprite);
 		if (width !== false) {
 			this.sprite.width = width;
@@ -19,6 +19,15 @@ class Entity {
 			this.sprite.height = height;
 		}
 	}
+	//meg kell szüntetni minden referenciát ami rá mutat, akkor törlődik csak! (garbage collector) + a sprite-t is ki kell pucolni
+	destroy(lists = []) {
+		for (let list of lists) {
+			delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
+		}
+		this.collision_block = []; //emiatt elvileg a következő collision update kitörli onnan is az objectet TODO: tesztelni
+		g_app.stage.removeChild(this.sprite); //kiszedi a pixi-s referenciát a sprite-ra
+		this.sprite = null; //kiszedi a saját referenciát a sprite-ra (elvileg nem kötelező, mert ha törlődik ő, akkor a sprite-ja is)
+	};
 }
 
 class Wall extends Entity{
@@ -36,15 +45,12 @@ class Wall extends Entity{
 Wall.list = {}; //obj kell, hátha egyszer remove-oljuk az elemeket. tömbben összekavarodna az id-zés olyankor
 Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
 
-//TODO: csak tesztelésig
-/*var player_hit = new PIXI.Graphics();
-g_app.stage.addChild(player_hit);*/
-
 class Player extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
 		super(x,y,x_graph,y_graph,id,texture,width,height);
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = g_tank_colors[id];
+		this.enableshoot = true;
 		//console.log(id+': '+g_tank_colors[id]);
 		
 		this.keypress = {
@@ -56,6 +62,7 @@ class Player extends Entity{
 		this.updatePosition();
 	}
 	updatePosition() {
+		//this.createBullet(); ha esetleg tesztelni kéne a memory-ra
 		if (this.keypress.space)
 			this.createBullet();
 		
@@ -95,47 +102,33 @@ class Player extends Entity{
 			this.sprite.y += y_wannago;
 			this.y = this.sprite.y;
 		}
-	
-		
-		
-		
 	};
 	createBullet() {
-		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_count, g_textures.bullet, Bullet.width, Bullet.height);
+		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, Bullet.width, Bullet.height);
 		Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation);
-		
 		Bullet.list_id_count ++;
-		
-		//TODO: csak tesztelésig
-		/*player_hit.clear();
-		player_hit.moveTo (this.x-13,this.y-13);
-		player_hit.beginFill(0xFFFF00);
-		player_hit.lineStyle(1, 0xFF0000);
-		player_hit.drawRect(this.x-13, this.y-13, 26, 26);
-		player_hit.endFill();*/
 	};
 }
 Player.list = []; //statikus osztály-változó
 Player.list_count = 0;
-//l�ved�k
+
+//lövedék
 class Bullet extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
 		super(x,y,x_graph,y_graph,id,texture,width,height,3);
 		this.sprite.anchor.set(0.5,0.5);
-		this.x_graph = x; //a gr�fban elfoglalt hely
+		this.x_graph = x; //a gr�fban elfoglalt hely
 		this.y_graph = y;
 		this.hitbox = {
 			'width':Math.min(width,height),
 			'height':Math.min(width,height)
 		};
 		this.timer = 100;
-		
 	};
-	setSpriteRotation(asd){
-		this.sprite.rotation = asd;
-		
+	setSpriteRotation(rotation) {
+		this.sprite.rotation = rotation;
 	};
-	updatePosition(){
+	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
 		let cosos = Math.cos(this.sprite.rotation)*this.speed;
 		let sines =  Math.sin(this.sprite.rotation)*this.speed;
 		this.speed_x = cosos;
@@ -145,18 +138,15 @@ class Bullet extends Entity{
 		this.x = this.sprite.x;
 		this.y = this.sprite.y;
 		this.timer --;
-		console.log(this.timer);
 		if (this.timer < 1) {
-			Bullet.list[this.id] = null;
-			delete Bullet.list[this.id];
-			console.log(Bullet.list[this.id]);
-		};
-		
+			this.destroy([Bullet.list]);
+		}
 	};
 }
 Bullet.list = {}; 
 Bullet.list_id_count = 0;
-//labirintus egy mez�je
+
+//labirintus egy mezője
 class Node {
 	constructor(x,y) {
 		this.x_graph = x; //0 -> n ig a gráfban elfoglalt x, y pozíció
@@ -264,7 +254,7 @@ class CollisionManager {
 							cleared_obj.push(CollisionManager.map[i][j][key]);
 							CollisionManager.map[i][j][key].collision_block = [];
 						}
-						delete (CollisionManager.map[i][j][key]);
+						delete CollisionManager.map[i][j][key];
 					}
 				}
 			}

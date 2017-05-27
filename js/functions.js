@@ -120,9 +120,8 @@ function shuffle(a) {
 }
 
 //futás megállítása
-function die(data = '') {
-	if (data !== '') {
-		console.log(data);
-	}
-	throw new Error('futás megállítva');
+function die(data) {
+	console.log('die:');
+	console.log(data);
+	throw new Error('run_stopped');
 }

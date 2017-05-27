@@ -46,8 +46,12 @@ document.onkeydown = function(event){
 		Player.list[0].keypress.right = true;
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = true;
-	else if(event.keyCode === 32) //space
-		Player.list[0].createBullet();
+	else if(event.keyCode === 32) { //space
+		if (Player.list[0].enableshoot === true) {
+			Player.list[0].createBullet();
+			Player.list[0].enableshoot = false;
+		}
+	}
 }
 
 document.onkeyup = function(event){
@@ -59,28 +63,23 @@ document.onkeyup = function(event){
 		Player.list[0].keypress.right = false;
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = false;
-	
-		
+	else if(event.keyCode === 32) { //space
+		Player.list[0].enableshoot = true;
+	}
 }
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
 
 	Player.list[0].updatePosition();
-	console.log(Bullet.list);
 	for (let n in Bullet.list) {
-		console.log(n);
 		Bullet.list[n].updatePosition();
-		
-		
 	};
 	
 	//oldal resize
-	
 	let block_width = jQuery("#game_container").width();
 	let block_height = jQuery("#game_container").height();
-	
-	
+
 	g_site_orig_width = block_width//window.innerWidth-103;
 	g_site_orig_height = g_site_orig_width*WRATIO;
 	if (g_site_orig_height > block_height) {
@@ -92,5 +91,4 @@ g_app.ticker.add(function(delta) {
 
 	g_collisioner.update_arrays_except([Wall]);
 	//console.log(Player.list[0].collision_block);
-
 });
