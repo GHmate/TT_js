@@ -46,6 +46,8 @@ document.onkeydown = function(event){
 		Player.list[0].keypress.right = true;
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = true;
+	else if(event.keyCode === 32) //space
+		Player.list[0].createBullet();
 }
 
 document.onkeyup = function(event){
@@ -57,12 +59,21 @@ document.onkeyup = function(event){
 		Player.list[0].keypress.right = false;
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = false;
+	
+		
 }
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
 
 	Player.list[0].updatePosition();
+	console.log(Bullet.list);
+	for (let n in Bullet.list) {
+		console.log(n);
+		Bullet.list[n].updatePosition();
+		
+		
+	};
 	
 	//oldal resize
 	
