@@ -56,6 +56,8 @@ class Player extends Entity{
 		this.updatePosition();
 	}
 	updatePosition() {
+		if (this.keypress.space)
+			this.createBullet();
 		
 		if (this.keypress.right)
 			this.sprite.rotation += 0.07; //*delta
@@ -71,13 +73,14 @@ class Player extends Entity{
 
 		let x_wannago = 0;
 		let y_wannago = 0;
-		
+		let cosos = Math.cos(this.sprite.rotation)*this.speed;
+		let sines =  Math.sin(this.sprite.rotation)*this.speed;
 		if (this.keypress.up) {
-			x_wannago = Math.cos(this.sprite.rotation)*this.speed; //*delta
-			y_wannago = Math.sin(this.sprite.rotation)*this.speed; //*delta
+			x_wannago = cosos; //*delta
+			y_wannago = sines; //*delta
 		} else if (this.keypress.down) {
-			x_wannago = -1*Math.cos(this.sprite.rotation)*this.speed*0.7; //*delta
-			y_wannago = -1*Math.sin(this.sprite.rotation)*this.speed*0.7; //*delta
+			x_wannago = -1*cosos*0.7; //*delta
+			y_wannago = -1*sines*0.7; //*delta
 		}
 		
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
@@ -92,6 +95,16 @@ class Player extends Entity{
 			this.sprite.y += y_wannago;
 			this.y = this.sprite.y;
 		}
+	
+		
+		
+		
+	};
+	createBullet() {
+		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_count, g_textures.bullet, Bullet.width, Bullet.height);
+		Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation);
+		
+		Bullet.list_id_count ++;
 		
 		//TODO: csak tesztelésig
 		/*player_hit.clear();
@@ -104,8 +117,46 @@ class Player extends Entity{
 }
 Player.list = []; //statikus osztály-változó
 Player.list_count = 0;
-
-//labirintus egy mezője
+//l�ved�k
+class Bullet extends Entity{
+	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
+		super(x,y,x_graph,y_graph,id,texture,width,height,3);
+		this.sprite.anchor.set(0.5,0.5);
+		this.x_graph = x; //a gr�fban elfoglalt hely
+		this.y_graph = y;
+		this.hitbox = {
+			'width':Math.min(width,height),
+			'height':Math.min(width,height)
+		};
+		this.timer = 100;
+		
+	};
+	setSpriteRotation(asd){
+		this.sprite.rotation = asd;
+		
+	};
+	updatePosition(){
+		let cosos = Math.cos(this.sprite.rotation)*this.speed;
+		let sines =  Math.sin(this.sprite.rotation)*this.speed;
+		this.speed_x = cosos;
+		this.speed_y = sines;
+		this.sprite.x += cosos;
+		this.sprite.y += sines;
+		this.x = this.sprite.x;
+		this.y = this.sprite.y;
+		this.timer --;
+		console.log(this.timer);
+		if (this.timer < 1) {
+			Bullet.list[this.id] = null;
+			delete Bullet.list[this.id];
+			console.log(Bullet.list[this.id]);
+		};
+		
+	};
+}
+Bullet.list = {}; 
+Bullet.list_id_count = 0;
+//labirintus egy mez�je
 class Node {
 	constructor(x,y) {
 		this.x_graph = x; //0 -> n ig a gráfban elfoglalt x, y pozíció
