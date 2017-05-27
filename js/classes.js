@@ -73,7 +73,21 @@ class Player extends Entity{
 }
 Player.list = []; //statikus osztály-változó
 Player.list_count = 0;
-
+//lövedék
+class Bullet extends Entity{
+	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
+		super(x,y,x_graph,y_graph,id,texture,width,height,speed=10);
+		this.sprite.anchor.set(0.5,0.5);
+		this.x_graph = x; //a gráfban elfoglalt hely
+		this.y_graph = y;
+		this.hitbox = {
+			'width':Math.min(width,height),
+			'height':Math.min(width,height)
+		};
+		
+	};
+	updatePosition(){};
+}
 //labirintus egy mezõje
 class Node {
 	constructor(x,y) {
