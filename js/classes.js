@@ -43,8 +43,10 @@ g_app.stage.addChild(player_hit);*/
 class Player extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
 		super(x,y,x_graph,y_graph,id,texture,width,height);
-		this.sprite.anchor.set(0.4,0.5);
-
+		this.sprite.anchor.set(0.45,0.5);
+		this.sprite.tint = g_tank_colors[id];
+		//console.log(id+': '+g_tank_colors[id]);
+		
 		this.keypress = {
 			'left':false,
 			'up':false,
@@ -61,10 +63,10 @@ class Player extends Entity{
 			this.sprite.rotation -= 0.07; //*delta
 		
 		this.hitbox = { //téglalap 4 sarka
-			'x1':this.x-12,
-			'x2':this.x+12,
-			'y1':this.y-12,
-			'y2':this.y+12
+			'x1':this.x-13,
+			'x2':this.x+13,
+			'y1':this.y-13,
+			'y2':this.y+13
 		};
 
 		let x_wannago = 0;
@@ -93,10 +95,10 @@ class Player extends Entity{
 		
 		//TODO: csak tesztelésig
 		/*player_hit.clear();
-		player_hit.moveTo (this.x-12,this.y-12);
+		player_hit.moveTo (this.x-13,this.y-13);
 		player_hit.beginFill(0xFFFF00);
 		player_hit.lineStyle(1, 0xFF0000);
-		player_hit.drawRect(this.x-12, this.y-12, 24, 24);
+		player_hit.drawRect(this.x-13, this.y-13, 26, 26);
 		player_hit.endFill();*/
 	};
 }

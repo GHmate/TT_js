@@ -13,6 +13,11 @@ for (var x = 0; x < g_dimensions.x; x++) {
 	}
 }
 
+//legyártjuk a falakat
+create_walls(graph,g_dimensions);
+
+//legyártjuk a tankokat
+shuffle(g_tank_colors);
 shuffle(leteheto_nodes);
 for (k in leteheto_nodes) {
 	var node = graph[leteheto_nodes[k][0]][leteheto_nodes[k][1]];
@@ -54,18 +59,21 @@ document.onkeyup = function(event){
 		Player.list[0].keypress.down = false;
 }
 
-create_walls(graph,g_dimensions);
-
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
 
 	Player.list[0].updatePosition();
 	
 	//oldal resize
-	g_site_orig_width = window.innerWidth-16; //16 egy medzsik érték, 8+8 a canvas alapértelmezett kerete. (igen megnéztem, a canvas egyes számban van. canvases a többes)
+	
+	let block_width = jQuery("#game_container").width();
+	let block_height = jQuery("#game_container").height();
+	
+	
+	g_site_orig_width = block_width//window.innerWidth-103;
 	g_site_orig_height = g_site_orig_width*WRATIO;
-	if (g_site_orig_height > window.innerHeight-16) {
-		g_site_orig_height = window.innerHeight-16;
+	if (g_site_orig_height > block_height) {
+		g_site_orig_height = block_height;
 		g_site_orig_width = g_site_orig_height/WRATIO;
 	}
 	g_app.renderer.view.style.width = g_site_orig_width;
@@ -75,20 +83,3 @@ g_app.ticker.add(function(delta) {
 	//console.log(Player.list[0].collision_block);
 
 });
-
-/*
-//g_app.stage.addChild(circles);
-	
-	for (id in Player.list) {
-		var x = border.x+Player.list[id].x_graph*g_field_size;
-		var y = border.y+Player.list[id].y_graph*g_field_size;
-		lines.beginFill('0x'+g_tank_colors[id], 1);
-		lines.drawCircle(x, y, 7);
-		lines.endFill();
-	}
-	
-*/
-
-
-
-
