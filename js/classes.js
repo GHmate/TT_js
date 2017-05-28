@@ -59,6 +59,7 @@ class Player extends Entity{
 			'right':false,
 			'down':false
 		};
+		this.bullet_count = 5;
 		this.updatePosition();
 	}
 	updatePosition() {
@@ -104,9 +105,14 @@ class Player extends Entity{
 		}
 	};
 	createBullet() {
-		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, Bullet.width, Bullet.height);
-		Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation);
-		Bullet.list_id_count ++;
+		
+		if (this.bullet_count > 0){ 
+			
+			Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, Bullet.width, Bullet.height, this.id);
+			Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation);
+			Bullet.list_id_count ++;
+			this.bullet_count --;
+		};
 	};
 }
 Player.list = []; //statikus osztály-változó
@@ -114,7 +120,7 @@ Player.list_count = 0;
 
 //lövedék
 class Bullet extends Entity{
-	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
+	constructor(x,y,x_graph,y_graph,id,texture,width,height, player_id) {
 		super(x,y,x_graph,y_graph,id,texture,width,height,3);
 		this.sprite.anchor.set(0.5,0.5);
 		this.x_graph = x; //a gr�fban elfoglalt hely
@@ -124,6 +130,7 @@ class Bullet extends Entity{
 			'height':Math.min(width,height)
 		};
 		this.timer = 100;
+		this.player_id = player_id;
 	};
 	setSpriteRotation(rotation) {
 		this.sprite.rotation = rotation;
@@ -140,7 +147,9 @@ class Bullet extends Entity{
 		this.timer --;
 
 		if (this.timer < 1) {
+			Player.list[this.player_id].bullet_count ++;
 			this.destroy([Bullet.list]);
+			
 		}
 
 	};
