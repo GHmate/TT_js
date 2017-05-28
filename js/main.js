@@ -27,7 +27,6 @@ for (k in leteheto_nodes) {
 	}
 	if (free_pos(node)) {
 		Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,g_textures.tank,41,26);
-		g_collisioner.place(Player.list[Player.list_count]);
 		Player.list_count++;
 	}
 }
@@ -97,6 +96,6 @@ g_app.ticker.add(function(delta) {
 	g_app.renderer.view.style.width = g_site_orig_width;
 	g_app.renderer.view.style.height = g_site_orig_height;
 
-	g_collisioner.update_arrays_except([Wall]);
+	g_collisioner.update_arrays();
 	//console.log(Player.list[0].collision_block);
 });

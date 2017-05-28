@@ -29,14 +29,14 @@
 		<script>
 			var modal_window = jQuery("#modal_window");
 			function open_modal() {
-				console.log('asd');
+				//console.log('asd');
 				modal_window.css('display','block');
 			};
 			jQuery("#modal_window_x").click(function() {
 				modal_window.css('display','none');
 			});
 			window.onclick = function(event) {
-				console.log(event);
+				//console.log(event);
 				if (event.target === modal_window) {
 					modal_window.css('display','none');
 				}

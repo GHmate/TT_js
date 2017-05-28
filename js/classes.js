@@ -24,7 +24,6 @@ class Entity {
 		for (let list of lists) {
 			delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
 		}
-		this.collision_block = []; //emiatt elvileg a következő collision update kitörli onnan is az objectet TODO: tesztelni
 		g_app.stage.removeChild(this.sprite); //kiszedi a pixi-s referenciát a sprite-ra
 		this.sprite = null; //kiszedi a saját referenciát a sprite-ra (elvileg nem kötelező, mert ha törlődik ő, akkor a sprite-ja is)
 	};
@@ -51,7 +50,6 @@ class Player extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = g_tank_colors[id];
 		this.enableshoot = true;
-		//console.log(id+': '+g_tank_colors[id]);
 		
 		this.keypress = {
 			'left':false,
@@ -59,13 +57,16 @@ class Player extends Entity{
 			'right':false,
 			'down':false
 		};
-		this.bullet_count = 5;
+		this.bullet_count = 5000;
 		this.updatePosition();
 	}
 	updatePosition() {
-		//this.createBullet(); ha esetleg tesztelni kéne a memory-ra
-		if (this.keypress.space)
+		//this.createBullet(); //ha esetleg tesztelni kéne a memory-ra
+		if (this.keypress.space) {
 			this.createBullet();
+		}
+		
+		this.sprite.rotation = normalize_rad(this.sprite.rotation);
 		
 		if (this.keypress.right)
 			this.sprite.rotation += 0.07; //*delta
@@ -106,14 +107,16 @@ class Player extends Entity{
 		//if check_collision_one_to_n (this.Player, Extra) {}
 	};
 	createBullet() {
-		
-		if (this.bullet_count > 0){ 
-			
-			Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, Bullet.width, Bullet.height, this.id);
-			Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation);
-			Bullet.list_id_count ++;
-			this.bullet_count --;
-		};
+		for(let i=0;i<50;i++) {
+			if (this.bullet_count > 0){ 
+				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
+				//Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation); //sprite-nak nem kell forognia
+				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation +(Math.random()-0.5)/3; //helyette maga a bullet forog
+				Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
+				Bullet.list_id_count ++;
+				this.bullet_count --;
+			};
+		}
 	};
 }
 Player.list = []; //statikus osztály-változó
@@ -124,33 +127,56 @@ class Bullet extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height, player_id) {
 		super(x,y,x_graph,y_graph,id,texture,width,height,3);
 		this.sprite.anchor.set(0.5,0.5);
-		this.x_graph = x; //a gr�fban elfoglalt hely
+		this.x_graph = x; //a gráfban elfoglalt hely
 		this.y_graph = y;
-		this.hitbox = {
-			'width':Math.min(width,height),
-			'height':Math.min(width,height)
-		};
-		this.timer = 100;
+		this.rotation = 0;
+		this.timer = 200;
 		this.player_id = player_id;
+		this.updatePosition();
 	};
-	setSpriteRotation(rotation) {
+	/*setSpriteRotation(rotation) { //nem kell forognia
 		this.sprite.rotation = rotation;
-	};
+	};*/
 	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
-		let cosos = Math.cos(this.sprite.rotation)*this.speed;
-		let sines =  Math.sin(this.sprite.rotation)*this.speed;
-		this.speed_x = cosos;
-		this.speed_y = sines;
-		this.sprite.x += cosos;
-		this.sprite.y += sines;
+		
+		this.rotation = normalize_rad(this.rotation);
+		
+		this.hitbox = {
+			'x1':this.x-5,
+			'x2':this.x+5,
+			'y1':this.y-5,
+			'y2':this.y+5
+		};
+		
+		let x_wannago = 0;
+		let y_wannago = 0;
+		let cosos = Math.cos(this.rotation)*this.speed;
+		let sines = Math.sin(this.rotation)*this.speed;
+
+		x_wannago = cosos; //*delta
+		y_wannago = sines; //*delta
+
+		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
+		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
+		let colliding = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
+			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
+			x_wannago = -x_wannago; //és a mostani célzott helyet is felülírom
+		} else 
+		if ((y_wannago > 0 && colliding.down) || (y_wannago < 0 && colliding.up)) {
+			this.rotation = 2*Math.PI-this.rotation; //függőlegesen tükrözöm az irányát
+			y_wannago = -y_wannago; //és a mostani célzott helyet is felülírom
+		}
+		this.sprite.x += x_wannago;
 		this.x = this.sprite.x;
+		this.sprite.y += y_wannago;
 		this.y = this.sprite.y;
+		
 		this.timer --;
 
 		if (this.timer < 1) {
 			Player.list[this.player_id].bullet_count ++;
 			this.destroy([Bullet.list]);
-			
 		}
 
 	};
@@ -258,7 +284,7 @@ class CollisionManager {
 	}
 	//elhelyezi a kapott entity-t a felosztott táblázatában. több helyre is teheti, ha nem fér pont egybe
 	place (entity) {
-		let boxes = this.get_placing_boxes (entity);
+		let boxes = this.get_placing_boxes(entity);
 		for (let box of boxes) {
 			if (CollisionManager.map[box[0]] === undefined) {
 				CollisionManager.map[box[0]] = [];
@@ -270,37 +296,20 @@ class CollisionManager {
 			entity.collision_block.push([box[0],box[1]]);
 		}
 	}
-	//osztály kivételekkel pucol mindent. visszatér a kipucolt objektumok tömbjével, ez kell az update funkcióhoz
-	clear_except (classtypes = []) {
-		let cleared_obj = [];
-		for (let i = 0 ; i < CollisionManager.map.length ; i++) {
-			if (CollisionManager.map[i] === undefined) {continue;}
-			for (let j = 0 ; j < CollisionManager.map[i].length ; j++) {
-				if (CollisionManager.map[i][j] === undefined) {continue;}
-				for (let key in CollisionManager.map[i][j]) {
-					let toremove = true;
-					for (let classtype of classtypes) {
-						if (CollisionManager.map[i][j][key] instanceof classtype) {
-							toremove = false;
-						}
-					}
-					if (toremove) {
-						if (CollisionManager.map[i][j][key].collision_block.length > 0) {
-							cleared_obj.push(CollisionManager.map[i][j][key]);
-							CollisionManager.map[i][j][key].collision_block = [];
-						}
-						delete CollisionManager.map[i][j][key];
-					}
-				}
-			}
+	//mindent updatel
+	update_arrays (){
+		CollisionManager.map = [];
+		for (let key in Player.list) {
+			Player.list[key].collision_block = [];
+			this.place(Player.list[key]);
 		}
-		return cleared_obj;
-	}
-	//frissíti minden objektum blokk-pozícióját ami benne van, kivéve a kivétel-osztályok tagjait
-	update_arrays_except (classtypes = []){
-		let removed_objs = this.clear_except(classtypes);
-		for (let obj of removed_objs) {
-			this.place(obj);
+		for (let key in Wall.list) {
+			Wall.list[key].collision_block = [];
+			this.place(Wall.list[key]);
+		}
+		for (let key in Bullet.list) {
+			Bullet.list[key].collision_block = [];
+			this.place(Bullet.list[key]);
 		}
 	}
 	//sima egy az n-hez ütközést ellenőriz, tömbbel tér vissza. (4 irány)
@@ -308,11 +317,15 @@ class CollisionManager {
 		let t_width = Math.abs(target.hitbox.x1 - target.hitbox.x2);
 		let t_height = Math.abs(target.hitbox.y1 - target.hitbox.y2);
 		let collision = {'right':false,'up':false,'left':false,'down':false};
+		let cnt = 0;
+		
 		for (let block of target.collision_block) {
 			for (let obj of CollisionManager.map[block[0]][block[1]]) {
+				
 				if (!(obj instanceof c_class)) {
 					continue;
 				}
+				cnt++;
 				let c_width = Math.abs(obj.hitbox.x1 - obj.hitbox.x2);
 				let c_height = Math.abs(obj.hitbox.y1 - obj.hitbox.y2);
 				

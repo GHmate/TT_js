@@ -127,14 +127,24 @@ function die(data) {
 }
 function createExtra(){
 	
-	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length)];
+	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length-1)];
 	let customnode = graph[koordinata[0]][koordinata[1]];
-	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, Extra.width, Extra.height, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
-	console.log(Extra.list[Extra.list_id_count].type);
+	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, 20, 20, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
+	//console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
 	
 	
 }
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+//visszateszi a szöget 0 és 2pi közé, biztos ami biztos
+function normalize_rad(rad) {
+	while (rad < 0) {
+		rad += 2*Math.PI;
+	}
+	while (rad > 2*Math.PI) {
+		rad -= 2*Math.PI;
+	}
+	return rad;
 }
