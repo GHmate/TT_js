@@ -159,18 +159,24 @@ class Bullet extends Entity{
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
 		let colliding = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		//console.log(colliding);
 		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
 			x_wannago = -x_wannago; //és a mostani célzott helyet is felülírom
-		} else 
+			this.sprite.x += x_wannago;
+		}
 		if ((y_wannago > 0 && colliding.down) || (y_wannago < 0 && colliding.up)) {
 			this.rotation = 2*Math.PI-this.rotation; //függőlegesen tükrözöm az irányát
 			y_wannago = -y_wannago; //és a mostani célzott helyet is felülírom
+			this.sprite.y += y_wannago;
 		}
-		this.sprite.x += x_wannago;
+		if (!colliding.up && !colliding.down && !colliding.left && !colliding.right) {
+			this.sprite.x += x_wannago;
+			this.sprite.y += y_wannago;
+		}
 		this.x = this.sprite.x;
-		this.sprite.y += y_wannago;
 		this.y = this.sprite.y;
+		
 		
 		this.timer --;
 
@@ -338,25 +344,44 @@ class CollisionManager {
 
 				if (Math.abs(dx_m) <= w && Math.abs(dy_m) <= h)
 				{
-					let wy = w * dy_m;
-					let hx = h * dx_m;
-					if (wy > hx) {
-						if (wy > -hx) {
-							if (Math.abs(dx) <= w && Math.abs(dy_m) <= h) { //téves ütközés elkerülésére
-								collision.up = true;
+					
+					if (target instanceof Player) {
+						let wy = w * dy_m;
+						let hx = h * dx_m;
+						if (wy > hx) {
+							if (wy > -hx) {
+								if (Math.abs(dx) <= w && Math.abs(dy_m) <= h) { //téves ütközés elkerülésére
+									collision.up = true;
+								}
+							} else {
+								if (Math.abs(dx_m) <= w && Math.abs(dy) <= h) {
+									collision.right = true;
+								}
 							}
 						} else {
-							if (Math.abs(dx_m) <= w && Math.abs(dy) <= h) { //téves ütközés elkerülésére
-								collision.right = true;
+							if (wy > -hx) {
+								if (Math.abs(dx_m) <= w && Math.abs(dy) <= h) {
+									collision.left = true;
+								}
+							} else {
+								if (Math.abs(dx) <= w && Math.abs(dy_m) <= h) {
+									collision.down = true;
+								}
 							}
 						}
 					} else {
-						if (wy > -hx) {
-							if (Math.abs(dx_m) <= w && Math.abs(dy) <= h) { //téves ütközés elkerülésére
-								collision.left = true;
+						let wy = w * dy;
+						let hx = h * dx;
+						if (wy > hx) {
+							if (wy > -hx) {
+								collision.up = true;
+							} else {
+								collision.right = true;
 							}
 						} else {
-							if (Math.abs(dx) <= w && Math.abs(dy_m) <= h) { //téves ütközés elkerülésére
+							if (wy > -hx) {
+								collision.left = true;
+							} else {
 								collision.down = true;
 							}
 						}
