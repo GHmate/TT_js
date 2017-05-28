@@ -125,3 +125,15 @@ function die(data) {
 	console.log(data);
 	throw new Error('run_stopped');
 }
+function createExtra(){
+	
+	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length)];
+	let customnode = graph[koordinata[0]][koordinata[1]];
+	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, Extra.width, Extra.height );
+	Extra.list_id_count ++;
+	
+	
+}
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}

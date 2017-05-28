@@ -75,6 +75,14 @@ g_app.ticker.add(function(delta) {
 	for (let n in Bullet.list) {
 		Bullet.list[n].updatePosition();
 	};
+	//extra készítés
+	Extra.creator_timer --;
+	if(Extra.creator_timer < 1){
+		createExtra();
+		Extra.creator_timer = 600;
+		
+	};
+	
 	
 	//oldal resize
 	let block_width = jQuery("#game_container").width();

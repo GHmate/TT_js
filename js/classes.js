@@ -157,6 +157,28 @@ class Bullet extends Entity{
 Bullet.list = {}; 
 Bullet.list_id_count = 0;
 
+class Extra extends Entity{
+	constructor(x,y,x_graph,y_graph,id,texture,width,height,type){
+		super(x,y,x_graph,y_graph,id,texture,width,height);
+		this.sprite.anchor.set(0.5,0.5);
+		this.hitbox = { //téglalap 4 sarka
+			'x1':this.x-width/2,
+			'x2':this.x+width/2,
+			'y1':this.y-height/2,
+			'y2':this.y+height/2
+		};
+		this.type = type;
+		
+		
+	};
+	
+	
+	
+	
+};
+Extra.list = {};
+Extra.list_id_count = 0;
+Extra.creator_timer = 600;
 //labirintus egy mezője
 class Node {
 	constructor(x,y) {
