@@ -176,6 +176,7 @@ class Extra extends Entity{
 	
 	
 };
+Extra.type_list = ['1','2','3'];
 Extra.list = {};
 Extra.list_id_count = 0;
 Extra.creator_timer = 600;

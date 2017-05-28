@@ -129,7 +129,8 @@ function createExtra(){
 	
 	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length)];
 	let customnode = graph[koordinata[0]][koordinata[1]];
-	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, Extra.width, Extra.height );
+	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, Extra.width, Extra.height, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
+	console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
 	
 	
