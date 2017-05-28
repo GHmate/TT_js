@@ -138,20 +138,11 @@ class Bullet extends Entity{
 		this.x = this.sprite.x;
 		this.y = this.sprite.y;
 		this.timer --;
-<<<<<<< HEAD
-		//console.log(this.timer);
-		//console.log(Bullet.list[this.id])
-		if (this.timer < 1) {
-			Bullet.list[this.id] = null;
-			delete Bullet.list[this.id];
-			//console.log(Bullet.list[this.id]);
-		};
-		
-=======
+
 		if (this.timer < 1) {
 			this.destroy([Bullet.list]);
 		}
->>>>>>> c0d1a75ad2de93fc448df3d55f9d9e6e99b1de32
+
 	};
 }
 Bullet.list = {}; 
