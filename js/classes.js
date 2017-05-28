@@ -103,6 +103,7 @@ class Player extends Entity{
 			this.sprite.y += y_wannago;
 			this.y = this.sprite.y;
 		}
+		//if check_collision_one_to_n (this.Player, Extra) {}
 	};
 	createBullet() {
 		
