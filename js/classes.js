@@ -107,11 +107,22 @@ class Player extends Entity{
 		//if check_collision_one_to_n (this.Player, Extra) {}
 	};
 	createBullet() {
-		for(let i=0;i<50;i++) {
+		if (true) {
+			for(let i=0;i<50;i++) {
+				if (this.bullet_count > 0){ 
+					Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
+					//Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation); //sprite-nak nem kell forognia
+					Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation +(Math.random()-0.5)*1.3; //helyette maga a bullet forog
+					Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
+					Bullet.list_id_count ++;
+					this.bullet_count --;
+				};
+			}
+		} else {
 			if (this.bullet_count > 0){ 
 				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
 				//Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation); //sprite-nak nem kell forognia
-				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation +(Math.random()-0.5)/3; //helyette maga a bullet forog
+				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation; //helyette maga a bullet forog
 				Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 				Bullet.list_id_count ++;
 				this.bullet_count --;
@@ -170,10 +181,10 @@ class Bullet extends Entity{
 			y_wannago = -y_wannago; //és a mostani célzott helyet is felülírom
 			this.sprite.y += y_wannago;
 		}
-		if (!colliding.up && !colliding.down && !colliding.left && !colliding.right) {
+		//if (!colliding.up && !colliding.down && !colliding.left && !colliding.right) {
 			this.sprite.x += x_wannago;
 			this.sprite.y += y_wannago;
-		}
+		//}
 		this.x = this.sprite.x;
 		this.y = this.sprite.y;
 		
@@ -271,16 +282,16 @@ class Node {
 
 //ütközések vizsgálatáért felelős osztály (pálya-felosztósdival optimalizálva)
 class CollisionManager {
-	constructor(field_size = 150) {
+	constructor(field_size = 80) {
 		this.field_size = field_size; //hányszor hányas kockákra ossza fel a teret
 	}
 	//megnézi melyik dobozba/dobozokba kell tenni az entity-t
 	get_placing_boxes (entity) {
 		let results = [];
 		let x_start = Math.floor(entity.hitbox.x1/this.field_size);
-		let x_end = Math.floor(entity.hitbox.x2/this.field_size);
+		let x_end = Math.ceil(entity.hitbox.x2/this.field_size);
 		let y_start = Math.floor(entity.hitbox.y1/this.field_size);
-		let y_end = Math.floor(entity.hitbox.y2/this.field_size);
+		let y_end = Math.ceil(entity.hitbox.y2/this.field_size);
 		for (let i = x_start ; i <= x_end ; i++) {
 			for (let j = y_start ; j <= y_end ; j++) {
 				results.push([i,j]);
@@ -323,15 +334,13 @@ class CollisionManager {
 		let t_width = Math.abs(target.hitbox.x1 - target.hitbox.x2);
 		let t_height = Math.abs(target.hitbox.y1 - target.hitbox.y2);
 		let collision = {'right':false,'up':false,'left':false,'down':false};
-		let cnt = 0;
-		
 		for (let block of target.collision_block) {
 			for (let obj of CollisionManager.map[block[0]][block[1]]) {
 				
 				if (!(obj instanceof c_class)) {
 					continue;
 				}
-				cnt++;
+
 				let c_width = Math.abs(obj.hitbox.x1 - obj.hitbox.x2);
 				let c_height = Math.abs(obj.hitbox.y1 - obj.hitbox.y2);
 				
@@ -374,15 +383,23 @@ class CollisionManager {
 						let hx = h * dx;
 						if (wy > hx) {
 							if (wy > -hx) {
-								collision.up = true;
+								if (Math.abs(dx) <= w) { //téves ütközés elkerülésére
+									collision.up = true;
+								}
 							} else {
-								collision.right = true;
+								if (Math.abs(dy) <= h) {
+									collision.right = true;
+								}
 							}
 						} else {
 							if (wy > -hx) {
-								collision.left = true;
+								if (Math.abs(dy) <= h) {
+									collision.left = true;
+								}
 							} else {
-								collision.down = true;
+								if (Math.abs(dx) <= w) {
+									collision.down = true;
+								}
 							}
 						}
 					}
