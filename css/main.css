@@ -35,23 +35,59 @@ div.menu_container {
     background-color: rgba(0,0,0,0.4);
 }
 .modal-content {
-    background-color: #fefefe;
+	background-color: rgba(0, 0, 0, 0.8);
+	
     margin: auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 80%;
+    width: 200px;
+	height: 300px;
+	border-radius: 23px;
 }
-.close {
-    color: #aaaaaa;
-    float: right;
-    font-size: 28px;
+div.modal_header {
+	display: inline-block;
+    width: 100%;
+	font-size: 28px;
     font-weight: bold;
 }
-.close:hover,
-.close:focus {
-    color: #000;
-    text-decoration: none;
-    cursor: pointer;
+div.modal_header_left {
+	color: #aaaaaa;
+	display: inline-block;
+	float: left;
+	font-size: 18px;
+	margin-top: 6px;
+}
+hr.separator {
+    border: 0;
+    height: 3px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+	margin-bottom: 13px;
+}
+div.modal_inner {
+	color: #aaaaaa;
+}
+div.modal_header_close {
+	cursor: pointer;
+    color: #aaaaaa;
+	display: inline-block;
+    float: right;
+}
+div.modal_color_picker {
+	display: inline-block;
+	border-width: 3px;
+    border-style: solid;
+	border-color: white;
+	border-radius: 8px;
+	width: 30px;
+	height: 30px;
+	margin: 6px;
+	margin-right: 7px;
+}
+div.modal_color_picker:hover {
+	margin: 4px;
+	margin-right: 5px;
+	padding: 2px;
+	cursor: pointer;
 }
 div.btn {
 	cursor: pointer;

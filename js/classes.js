@@ -57,7 +57,7 @@ class Player extends Entity{
 			'right':false,
 			'down':false
 		};
-		this.bullet_count = 5000;
+		this.bullet_count = 50;
 		this.updatePosition();
 	}
 	updatePosition() {
@@ -107,11 +107,10 @@ class Player extends Entity{
 		//if check_collision_one_to_n (this.Player, Extra) {}
 	};
 	createBullet() {
-		if (true) {
+		if (false) { //TODO: test cucc, kiszedni, ha nem kell
 			for(let i=0;i<50;i++) {
 				if (this.bullet_count > 0){ 
 					Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
-					//Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation); //sprite-nak nem kell forognia
 					Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation +(Math.random()-0.5)*1.3; //helyette maga a bullet forog
 					Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 					Bullet.list_id_count ++;
@@ -121,7 +120,6 @@ class Player extends Entity{
 		} else {
 			if (this.bullet_count > 0){ 
 				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
-				//Bullet.list[Bullet.list_id_count].setSpriteRotation(this.sprite.rotation); //sprite-nak nem kell forognia
 				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation; //helyette maga a bullet forog
 				Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 				Bullet.list_id_count ++;
@@ -129,6 +127,9 @@ class Player extends Entity{
 			};
 		}
 	};
+	changeColor(color) {
+		this.sprite.tint = color;
+	}
 }
 Player.list = []; //statikus osztály-változó
 Player.list_count = 0;
@@ -141,13 +142,10 @@ class Bullet extends Entity{
 		this.x_graph = x; //a gráfban elfoglalt hely
 		this.y_graph = y;
 		this.rotation = 0;
-		this.timer = 200;
+		this.timer = 600;
 		this.player_id = player_id;
 		this.updatePosition();
 	};
-	/*setSpriteRotation(rotation) { //nem kell forognia
-		this.sprite.rotation = rotation;
-	};*/
 	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
 		
 		this.rotation = normalize_rad(this.rotation);

@@ -20,30 +20,67 @@
 		</div>
 		
 		<div id="modal_window" class="modal">
-			<div class="modal-content">
-				<span id="modal_window_x" class="close">&times;</span>
-				<p>Some text in the Modal..</p>
+			<div id="modal-content" class="modal-content">
+				<div class="modal_header">
+					<div class="modal_header_left">válassz színt!</div>
+					<div id="modal_window_x" class="modal_header_close">&times;</div>
+				</div>
+				<hr class="separator">
+				<div id="modal_inner" class="modal_inner">
+				</div>
 			</div>
 		</div>
 		
 		<script>
 			var modal_window = jQuery("#modal_window");
-			function open_modal() {
-				//console.log('asd');
+			function open_modal(name) {
+				name = 'color_picker';
+				switch(name) {
+					case 'color_picker':
+						let html = '';
+						for (let color of g_tank_colors) {
+							let trans_color = color.replace('0x','#');
+							html += '<div class="modal_color_picker" style="background-color: '+trans_color+'" data="'+trans_color+'"></div>';
+						}
+						jQuery('#modal_inner').html(html);
+						bind_onclick();
+						break;
+					default:
+						break;
+				}
 				modal_window.css('display','block');
 			};
+			jQuery("#modal-content").click(function(e) {
+				e.stopPropagation();
+			});
 			jQuery("#modal_window_x").click(function() {
 				modal_window.css('display','none');
 			});
-			window.onclick = function(event) {
-				//console.log(event);
-				if (event.target === modal_window) {
+			window.onclick = function(e) {
+				if (e.target !== modal_window) {
 					modal_window.css('display','none');
 				}
 			};
 			
-			$('#btn_color_picker').click(function() {open_modal();});
-			
+			$('#btn_color_picker').click(function(e) {
+				if (e.stopPropagation) {
+					e.stopPropagation();   // W3C model
+				} else {
+					e.cancelBubble = true; // IE model
+				}
+				open_modal();
+			});
+			function bind_onclick() {
+				jQuery(".modal_color_picker").click(function(e) {
+					e.stopPropagation();
+					let color = jQuery(this).attr('data').replace('#','0x');
+					let is_valid_color = true;
+					if (is_valid_color) {
+						Player.list[0].changeColor(color);
+					}
+					modal_window.css('display','none');
+				});
+			}
 		</script>
     </body>
 </html>
