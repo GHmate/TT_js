@@ -50,7 +50,8 @@ class Player extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = g_tank_colors[id];
 		this.enableshoot = true;
-		this.shoot_type = "mchg";
+		this.shoot_type = "mchg"; // mchg --- machinegun , normal--- sima bullet
+		this.timer = 3;
 		this.keypress = {
 			'left':false,
 			'up':false,
@@ -61,16 +62,29 @@ class Player extends Entity{
 		this.updatePosition();
 	}
 	updatePosition() {
-		//this.createBullet(); //ha esetleg tesztelni kéne a memory-ra
-		if (this.keypress.space) {
-			if (this.shoot_type == "mchg"){
-				this.ext_machinegun();
+		if (this.shoot_type === "mchg") {
+			console.log(this.shoot_type);
+			if (!this.enableshoot) {this.shoot_type = "mchg_s"};
+		};
+		if (this.shoot_type === "mchg_s") {
+			if (this.enableshoot){
 				this.shoot_type = "normal";
-				
-			console.log("x");	
 			};
-			this.createBullet();
+			if (!this.enableshoot) {
+				if (this.timer < 0){
+					this.ext_machinegun();
+					this.timer = 3;
+				};
+			};
+			
+			this.timer -= 0.75;	
+			
 		}
+		
+
+		
+			
+		
 		
 		this.sprite.rotation = normalize_rad(this.sprite.rotation);
 		
@@ -124,8 +138,10 @@ class Player extends Entity{
 			
 		};
 		
+		
+		
 	};
-		createBullet() {
+	createBullet() {
 		if (false) { //TODO: test cucc, kiszedni, ha nem kell
 			for(let i=0;i<50;i++) {
 				if (this.bullet_count > 0){ 
@@ -145,6 +161,17 @@ class Player extends Entity{
 				this.bullet_count --;
 			};
 		}
+	};	
+	//lövésváltoztatós extrák ide:
+	ext_machinegun(){
+		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
+		Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + Math.PI/8 * Math.random() - Math.PI/8 *Math.random(); //helyette maga a bullet forog
+		Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
+		Bullet.list_id_count ++;
+		
+			
+			
+	
 	};
 	changeColor(color) {
 		this.sprite.tint = color;
