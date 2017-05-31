@@ -50,7 +50,7 @@ class Player extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = g_tank_colors[id];
 		this.enableshoot = true;
-		
+		this.shoot_type = "mchg";
 		this.keypress = {
 			'left':false,
 			'up':false,
@@ -63,6 +63,12 @@ class Player extends Entity{
 	updatePosition() {
 		//this.createBullet(); //ha esetleg tesztelni kéne a memory-ra
 		if (this.keypress.space) {
+			if (this.shoot_type == "mchg"){
+				this.ext_machinegun();
+				this.shoot_type = "normal";
+				
+			console.log("x");	
+			};
 			this.createBullet();
 		}
 		
@@ -104,7 +110,18 @@ class Player extends Entity{
 			this.sprite.y += y_wannago;
 			this.y = this.sprite.y;
 		}
-		//if check_collision_one_to_n (this.Player, Extra) {}
+		let utk = g_collisioner.check_collision_one_to_n(this,Extra);
+		if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
+			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
+			
+		let utk2 = g_collisioner.check_collision_one_to_n(this,Bullet);
+		if (utk2.right == true || utk2.left == true || utk2.up == true || utk2.down == true){
+			console.log("Ütközés");
+			
+		};	
+			
+		};
+		
 	};
 	createBullet() {
 		if (false) { //TODO: test cucc, kiszedni, ha nem kell
@@ -126,6 +143,16 @@ class Player extends Entity{
 				this.bullet_count --;
 			};
 		}
+	};
+	//lövésváltoztatós extrák ide:
+	ext_machinegun(){
+		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
+		Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + Math.PI() * Math.random() - Math.PI() *Math.random(); //helyette maga a bullet forog
+		Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
+		Bullet.list_id_count ++;
+		
+			
+			
 	};
 	changeColor(color) {
 		this.sprite.tint = color;
@@ -193,6 +220,8 @@ class Bullet extends Entity{
 			Player.list[this.player_id].bullet_count ++;
 			this.destroy([Bullet.list]);
 		}
+		
+		
 
 	};
 }
@@ -287,9 +316,9 @@ class CollisionManager {
 	get_placing_boxes (entity) {
 		let results = [];
 		let x_start = Math.floor(entity.hitbox.x1/this.field_size);
-		let x_end = Math.ceil(entity.hitbox.x2/this.field_size);
+		let x_end = Math.floor(entity.hitbox.x2/this.field_size);
 		let y_start = Math.floor(entity.hitbox.y1/this.field_size);
-		let y_end = Math.ceil(entity.hitbox.y2/this.field_size);
+		let y_end = Math.floor(entity.hitbox.y2/this.field_size);
 		for (let i = x_start ; i <= x_end ; i++) {
 			for (let j = y_start ; j <= y_end ; j++) {
 				results.push([i,j]);
@@ -332,6 +361,7 @@ class CollisionManager {
 		let t_width = Math.abs(target.hitbox.x1 - target.hitbox.x2);
 		let t_height = Math.abs(target.hitbox.y1 - target.hitbox.y2);
 		let collision = {'right':false,'up':false,'left':false,'down':false};
+		let collided = [];
 		for (let block of target.collision_block) {
 			for (let obj of CollisionManager.map[block[0]][block[1]]) {
 				
@@ -351,6 +381,7 @@ class CollisionManager {
 
 				if (Math.abs(dx_m) <= w && Math.abs(dy_m) <= h)
 				{
+					collided.push(obj);
 					
 					if (target instanceof Player) {
 						let wy = w * dy_m;
@@ -404,7 +435,7 @@ class CollisionManager {
 				}
 			}
 		}
-		return collision;
+		return {'collision':collision, 'collided':collided};
 	}
 }
 CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel

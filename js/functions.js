@@ -125,6 +125,7 @@ function die(data) {
 	console.log(data);
 	throw new Error('run_stopped');
 }
+//extra spawn
 function createExtra(){
 	
 	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length-1)];
@@ -135,6 +136,7 @@ function createExtra(){
 	
 	
 }
+
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
