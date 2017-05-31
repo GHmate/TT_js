@@ -25,7 +25,7 @@ document.onkeydown = function(event){
 			Player.list[0].enableshoot = false;
 		}
 	}
-}
+};
 
 document.onkeyup = function(event){
 	if(event.keyCode === 37) //balra
@@ -39,11 +39,15 @@ document.onkeyup = function(event){
 	else if(event.keyCode === 32) { //space
 		Player.list[0].enableshoot = true;
 	}
-}
+};
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
-	Player.list[0].updatePosition();
+	for (let n in Player.list) {
+		if (Player.list[n] !== null) { //mert a tömbben benen marad az index
+			Player.list[n].updatePosition();
+		}
+	}
 	for (let n in Bullet.list) {
 		Bullet.list[n].updatePosition();
 	};
@@ -52,9 +56,7 @@ g_app.ticker.add(function(delta) {
 	if(Extra.creator_timer < 1){
 		createExtra();
 		Extra.creator_timer = 600;
-		
 	};
-	
 	
 	//oldal resize
 	let block_width = jQuery("#game_container").width();

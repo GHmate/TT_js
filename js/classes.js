@@ -20,7 +20,7 @@ class Entity {
 		}
 	}
 	//meg kell szüntetni minden referenciát ami rá mutat, akkor törlődik csak! (garbage collector) + a sprite-t is ki kell pucolni
-	destroy(lists = []) {
+	destroy(lists = []) {//tömb-tömböt vár, nem sima tömböt
 		for (let list of lists) {
 			delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
 		}
@@ -111,20 +111,24 @@ class Player extends Entity{
 			this.y = this.sprite.y;
 		}
 		
-		let utk = g_collisioner.check_collision_one_to_n(this,Extra);
-		if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
+		/*if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
 			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
-			
-		let utk2 = g_collisioner.check_collision_one_to_n(this,Bullet);
-		if (utk2.right == true || utk2.left == true || utk2.up == true || utk2.down == true){
-			console.log("Ütközés");
-			
-		};	
-			
+		};*/
+		
+		collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
+		let colliding_bullet = collision_data['collision'];
+		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
+			for (let b of collision_data['collided']) {
+				if (b.player_id !== this.id) {
+					this.destroy([Player.list]);
+					b.destroy([Bullet.list]);
+					g_playerdata.scores[b.player_id]++;
+				}
+			}
 		};
 		
 	};
-		createBullet() {
+	createBullet() {
 		if (false) { //TODO: test cucc, kiszedni, ha nem kell
 			for(let i=0;i<50;i++) {
 				if (this.bullet_count > 0){ 

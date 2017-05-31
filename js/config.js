@@ -13,6 +13,10 @@ var border = {'x':g_field_size,'y':g_field_size}; //falak ennyivel beljebb kezd�
 
 //game things
 var g_player_num = 3;
+var g_playerdata = {'scores':[]}; //játékosok (és nem tankok) adatai
+for (let i=0 ; i<g_player_num ; i++) {
+	g_playerdata['scores'][i] = 0;
+}
 var g_tank_colors = ['0x333333','0x999999','0xffffff','0xff4d4d','0xffa64d','0xffff4d','0x79ff4d','0x4dffa6','0x4dd2ff','0x4d4dff','0xd24dff','0xff4da6'];
 var g_player_min_distance = 4; //milyen távolságra lehetnek playerek
 var g_player_distance_fields = 25; //maximum mennyi node-ot foglal egy player a minimális táv miatt
