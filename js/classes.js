@@ -100,7 +100,8 @@ class Player extends Entity{
 		
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
-		let colliding = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let colliding = collision_data['collision'];
 		
 		if ((x_wannago > 0 && !colliding.right) || (x_wannago < 0 && !colliding.left)) {
 			this.sprite.x += x_wannago;
@@ -110,6 +111,7 @@ class Player extends Entity{
 			this.sprite.y += y_wannago;
 			this.y = this.sprite.y;
 		}
+		
 		let utk = g_collisioner.check_collision_one_to_n(this,Extra);
 		if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
 			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
@@ -123,7 +125,7 @@ class Player extends Entity{
 		};
 		
 	};
-	createBullet() {
+		createBullet() {
 		if (false) { //TODO: test cucc, kiszedni, ha nem kell
 			for(let i=0;i<50;i++) {
 				if (this.bullet_count > 0){ 
@@ -143,16 +145,6 @@ class Player extends Entity{
 				this.bullet_count --;
 			};
 		}
-	};
-	//lövésváltoztatós extrák ide:
-	ext_machinegun(){
-		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
-		Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + Math.PI() * Math.random() - Math.PI() *Math.random(); //helyette maga a bullet forog
-		Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
-		Bullet.list_id_count ++;
-		
-			
-			
 	};
 	changeColor(color) {
 		this.sprite.tint = color;
@@ -194,7 +186,8 @@ class Bullet extends Entity{
 
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
-		let colliding = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let colliding = collision_data['collision'];
 		//console.log(colliding);
 		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
