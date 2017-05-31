@@ -20,9 +20,10 @@ var g_path_gen_chance = 0.55; //útvonal generálási esély. célszerű 0.4 és
 
 //pixi setup
 var g_app = new PIXI.Application(g_window_size.x, g_window_size.y, { backgroundColor: 0xdddddd });
+jQuery("#game_container").append(g_app.view);
 //g_app.renderer = PIXI.autoDetectRenderer(320, 480, null, false, true);
 //g_app.renderer.antialias = false;
-jQuery("#game_container").append(g_app.view);
+
 // Scale mode for all textures, will retain pixelation
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;
 

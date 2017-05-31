@@ -41,8 +41,6 @@ class Wall extends Entity{
 		};
 	}
 }
-Wall.list = {}; //obj kell, hátha egyszer remove-oljuk az elemeket. tömbben összekavarodna az id-zés olyankor
-Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
 
 class Player extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
@@ -98,6 +96,7 @@ class Player extends Entity{
 			y_wannago = -1*sines*0.7; //*delta
 		}
 		
+		//mozgás és fal-ütközés
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
 		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
@@ -170,8 +169,6 @@ class Player extends Entity{
 		this.sprite.tint = color;
 	}
 }
-Player.list = []; //statikus osztály-változó
-Player.list_count = 0;
 
 //lövedék
 class Bullet extends Entity{
@@ -238,8 +235,6 @@ class Bullet extends Entity{
 
 	};
 }
-Bullet.list = {}; 
-Bullet.list_id_count = 0;
 
 class Extra extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height,type){
@@ -260,10 +255,7 @@ class Extra extends Entity{
 	
 	
 };
-Extra.type_list = ['1','2','3'];
-Extra.list = {};
-Extra.list_id_count = 0;
-Extra.creator_timer = 600;
+
 //labirintus egy mezője
 class Node {
 	constructor(x,y) {
@@ -328,10 +320,11 @@ class CollisionManager {
 	//megnézi melyik dobozba/dobozokba kell tenni az entity-t
 	get_placing_boxes (entity) {
 		let results = [];
-		let x_start = Math.floor(entity.hitbox.x1/this.field_size);
-		let x_end = Math.floor(entity.hitbox.x2/this.field_size);
-		let y_start = Math.floor(entity.hitbox.y1/this.field_size);
-		let y_end = Math.floor(entity.hitbox.y2/this.field_size);
+		let border = 3; //ennyi pixellel számol ráhagyást a tényleges hitboxra, hogy elkerüljük az épp blokk szélén lévő falak hiányának problémáját
+		let x_start = Math.floor((entity.hitbox.x1-border)/this.field_size);
+		let x_end = Math.floor((entity.hitbox.x2+border)/this.field_size);
+		let y_start = Math.floor((entity.hitbox.y1-border)/this.field_size);
+		let y_end = Math.floor((entity.hitbox.y2+border)/this.field_size);
 		for (let i = x_start ; i <= x_end ; i++) {
 			for (let j = y_start ; j <= y_end ; j++) {
 				results.push([i,j]);
@@ -451,4 +444,3 @@ class CollisionManager {
 		return {'collision':collision, 'collided':collided};
 	}
 }
-CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel

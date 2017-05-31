@@ -111,6 +111,62 @@ function create_walls (graph,dimensions) {
 	}
 }
 
+function regenerate_map () { //játék elején vagy egy pálya végén az új pályakezdésért felelő funkció
+	
+	for (let i = g_app.stage.children.length - 1; i >= 0; i--) {
+		g_app.stage.removeChild(g_app.stage.children[i]);
+	};
+	
+	Wall.list = {}; //obj kell, hátha egyszer remove-oljuk az elemeket. tömbben összekavarodna az id-zés olyankor
+	Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
+	Player.list = []; //statikus osztály-változó
+	Player.list_count = 0;
+	Bullet.list = {}; 
+	Bullet.list_id_count = 0;
+	CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel
+	
+	Extra.type_list = ['1','2','3'];
+	Extra.list = {};
+	Extra.list_id_count = 0;
+	Extra.creator_timer = 600;
+	
+	g_collisioner = new CollisionManager();
+	gen_result = generate_map(g_dimensions);
+	graph = gen_result.graph;
+	selected_block = gen_result.selected_block;
+
+	leteheto_nodes = []; //hova lehet tankot tenni
+	for (var x = 0; x < g_dimensions.x; x++) {
+		for (var y = 0; y < g_dimensions.y; y++) {
+			if (graph[x][y].block_id == selected_block) {
+				leteheto_nodes.push([x,y]);
+			}
+		}
+	}
+
+	//legyártjuk a falakat
+	create_walls(graph,g_dimensions);
+
+	//legyártjuk a tankokat
+	shuffle(g_tank_colors);
+	shuffle(leteheto_nodes);
+	for (k in leteheto_nodes) {
+		var node = graph[leteheto_nodes[k][0]][leteheto_nodes[k][1]];
+		//console.log(node);
+		if (Player.list_count >= g_player_num) {
+			break;
+		}
+		if (free_pos(node)) {
+			Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,g_textures.tank,41,26);
+			Player.list_count++;
+		}
+	}
+
+	if (Player.list_count < g_player_num) {
+		alert('baj van, nem elég nagy a pálya!');
+	}
+}
+
 //tömb sorrend keverés
 function shuffle(a) {
     for (let i = a.length; i; i--) {
@@ -127,14 +183,11 @@ function die(data) {
 }
 //extra spawn
 function createExtra(){
-	
 	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length-1)];
 	let customnode = graph[koordinata[0]][koordinata[1]];
 	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, 20, 20, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
 	//console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
-	
-	
 }
 function extra_mashinegun(){
 	

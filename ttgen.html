@@ -1,21 +1,20 @@
 <html>
 	<body style="margin: 0px;">
+		<link rel="stylesheet" href="css/main.css" />
+		<script src="js/jquery-3.2.1.min.js"></script>
+		<!-- or link to Pixi.js on CDN -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.2/pixi.min.js"></script>
+
 		<div class="main_container">
 			<div id="game_container" class="game_container">
-				<link rel="stylesheet" href="css/main.css" />
-				<script src="js/jquery-3.2.1.min.js"></script>
-				<!-- or link to Pixi.js on CDN -->
-				<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.2/pixi.min.js"></script>
-
-				<!-- the rest of our PIXI.js code goes here -->
-				<script src="js/config.js"></script>
-				<script src="js/classes.js"></script>
-				<script src="js/functions.js"></script>
-				<script src="js/main.js"></script>
+				
 			</div>
 			<div class="menu_container">
 				menu<br>bar
 				<div class="btn" id="btn_color_picker">color_picker</div>
+				<br/>
+				Player1: <span id="p1_score">0</span><br/>
+				Player2: <span id="p2_score">0</span><br/>
 			</div>
 		</div>
 		
@@ -30,6 +29,12 @@
 				</div>
 			</div>
 		</div>
+		
+		<!-- game js -->
+		<script src="js/config.js"></script>
+		<script src="js/classes.js"></script>
+		<script src="js/functions.js"></script>
+		<script src="js/main.js"></script>
 		
 		<script>
 			var modal_window = jQuery("#modal_window");
