@@ -125,6 +125,7 @@ function die(data) {
 	console.log(data);
 	throw new Error('run_stopped');
 }
+//extra spawn
 function createExtra(){
 	
 	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length-1)];
@@ -132,6 +133,10 @@ function createExtra(){
 	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, 20, 20, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
 	//console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
+	
+	
+}
+function extra_mashinegun(){
 	
 	
 }

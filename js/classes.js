@@ -50,7 +50,7 @@ class Player extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = g_tank_colors[id];
 		this.enableshoot = true;
-		
+		this.shoot_type = "mchg";
 		this.keypress = {
 			'left':false,
 			'up':false,
@@ -63,6 +63,12 @@ class Player extends Entity{
 	updatePosition() {
 		//this.createBullet(); //ha esetleg tesztelni kéne a memory-ra
 		if (this.keypress.space) {
+			if (this.shoot_type == "mchg"){
+				this.ext_machinegun();
+				this.shoot_type = "normal";
+				
+			console.log("x");	
+			};
 			this.createBullet();
 		}
 		
@@ -104,7 +110,18 @@ class Player extends Entity{
 			this.sprite.y += y_wannago;
 			this.y = this.sprite.y;
 		}
-		//if check_collision_one_to_n (this.Player, Extra) {}
+		let utk = g_collisioner.check_collision_one_to_n(this,Extra);
+		if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
+			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
+			
+		let utk2 = g_collisioner.check_collision_one_to_n(this,Bullet);
+		if (utk2.right == true || utk2.left == true || utk2.up == true || utk2.down == true){
+			console.log("Ütközés");
+			
+		};	
+			
+		};
+		
 	};
 	createBullet() {
 		if (false) { //TODO: test cucc, kiszedni, ha nem kell
@@ -126,6 +143,26 @@ class Player extends Entity{
 				this.bullet_count --;
 			};
 		}
+	};
+	//lövésváltoztatós extrák ide:
+	ext_machinegun(){
+		let timer = 0;
+		while (true) {
+			if (timer%3 === 0){		
+				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);	
+				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation * Math.random(); //helyette maga a bullet forog (Én is úgy másoltam)
+				Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
+				Bullet.list_id_count ++;
+			
+			}
+			
+			if (timer > 30){
+			break;
+			}
+			timer ++;
+		
+		};	
+			
 	};
 	changeColor(color) {
 		this.sprite.tint = color;
@@ -193,6 +230,8 @@ class Bullet extends Entity{
 			Player.list[this.player_id].bullet_count ++;
 			this.destroy([Bullet.list]);
 		}
+		
+		
 
 	};
 }
