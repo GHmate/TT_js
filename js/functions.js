@@ -189,10 +189,6 @@ function createExtra(){
 	//console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
 }
-function extra_mashinegun(){
-	
-	
-}
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }

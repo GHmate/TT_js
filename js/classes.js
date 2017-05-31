@@ -124,7 +124,7 @@ class Player extends Entity{
 		};
 		
 	};
-	createBullet() {
+		createBullet() {
 		if (false) { //TODO: test cucc, kiszedni, ha nem kell
 			for(let i=0;i<50;i++) {
 				if (this.bullet_count > 0){ 
@@ -144,26 +144,6 @@ class Player extends Entity{
 				this.bullet_count --;
 			};
 		}
-	};
-	//lövésváltoztatós extrák ide:
-	ext_machinegun(){
-		let timer = 0;
-		while (true) {
-			if (timer%3 === 0){		
-				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);	
-				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation * Math.random(); //helyette maga a bullet forog (Én is úgy másoltam)
-				Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
-				Bullet.list_id_count ++;
-			
-			}
-			
-			if (timer > 30){
-			break;
-			}
-			timer ++;
-		
-		};	
-			
 	};
 	changeColor(color) {
 		this.sprite.tint = color;
