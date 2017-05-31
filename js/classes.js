@@ -100,7 +100,8 @@ class Player extends Entity{
 		
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
-		let colliding = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let colliding = collision_data['collision'];
 		
 		if ((x_wannago > 0 && !colliding.right) || (x_wannago < 0 && !colliding.left)) {
 			this.sprite.x += x_wannago;
@@ -110,6 +111,7 @@ class Player extends Entity{
 			this.sprite.y += y_wannago;
 			this.y = this.sprite.y;
 		}
+		
 		let utk = g_collisioner.check_collision_one_to_n(this,Extra);
 		if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
 			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
@@ -204,7 +206,8 @@ class Bullet extends Entity{
 
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
-		let colliding = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+		let colliding = collision_data['collision'];
 		//console.log(colliding);
 		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
