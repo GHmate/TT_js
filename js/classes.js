@@ -287,9 +287,9 @@ class CollisionManager {
 	get_placing_boxes (entity) {
 		let results = [];
 		let x_start = Math.floor(entity.hitbox.x1/this.field_size);
-		let x_end = Math.ceil(entity.hitbox.x2/this.field_size);
+		let x_end = Math.floor(entity.hitbox.x2/this.field_size);
 		let y_start = Math.floor(entity.hitbox.y1/this.field_size);
-		let y_end = Math.ceil(entity.hitbox.y2/this.field_size);
+		let y_end = Math.floor(entity.hitbox.y2/this.field_size);
 		for (let i = x_start ; i <= x_end ; i++) {
 			for (let j = y_start ; j <= y_end ; j++) {
 				results.push([i,j]);
@@ -332,6 +332,7 @@ class CollisionManager {
 		let t_width = Math.abs(target.hitbox.x1 - target.hitbox.x2);
 		let t_height = Math.abs(target.hitbox.y1 - target.hitbox.y2);
 		let collision = {'right':false,'up':false,'left':false,'down':false};
+		let collided = [];
 		for (let block of target.collision_block) {
 			for (let obj of CollisionManager.map[block[0]][block[1]]) {
 				
@@ -351,6 +352,7 @@ class CollisionManager {
 
 				if (Math.abs(dx_m) <= w && Math.abs(dy_m) <= h)
 				{
+					collided.push(obj);
 					
 					if (target instanceof Player) {
 						let wy = w * dy_m;
@@ -404,7 +406,7 @@ class CollisionManager {
 				}
 			}
 		}
-		return collision;
+		return {'collision':collision, 'collided':collided};
 	}
 }
 CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel
