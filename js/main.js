@@ -20,11 +20,11 @@ document.onkeydown = function(event){
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = true;
 	else if(event.keyCode === 32) { //space
-		if (Player.list[0].enableshoot === true) {
-			Player.list[0].createBullet();
-			Player.list[0].enableshoot = false;
+			if (Player.list[0].enableshoot === true) {
+				if (Player.list[0].can_shoot){Player.list[0].createBullet()};
+				Player.list[0].enableshoot = false;
+			}
 		}
-	}
 };
 
 document.onkeyup = function(event){
@@ -37,8 +37,9 @@ document.onkeyup = function(event){
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = false;
 	else if(event.keyCode === 32) { //space
-		Player.list[0].enableshoot = true;
-	}
+			Player.list[0].enableshoot = true;
+		}
+	
 };
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.

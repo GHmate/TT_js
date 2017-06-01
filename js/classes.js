@@ -58,7 +58,8 @@ class Player extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = g_tank_colors[this.id];
 		this.enableshoot = true;
-		this.shoot_type = "normal"; // mchg --- machinegun , normal--- sima bullet
+		this.can_shoot = true;
+		this.shoot_type = "mchg"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
 		this.timer = 3;
 		this.keypress = {
 			'left':false,
@@ -70,12 +71,29 @@ class Player extends Entity{
 		this.updatePosition();
 	}
 	updatePosition() {
+		//fegyver összeszedési kapcsolók 
+		//mchg
 		if (this.shoot_type === "mchg") {
-			//console.log(this.shoot_type);
-			if (!this.enableshoot) {this.shoot_type = "mchg_s";};
+			this.can_shoot = false;
+			if (!this.enableshoot) {this.shoot_type = "mchg_s"};
 		};
+		//bb
+		if (this.shoot_type === "bb") {
+			this.can_shoot = false;
+			console.log("átállít");
+			if (!this.enableshoot) {
+				this.shoot_type = "bb_s";
+				Bullet.list[Bullet.list_id_count] = new BigBullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
+				Bullet.list_id_count++;
+				
+			};
+		};
+		
+		
+		//machine gun
 		if (this.shoot_type === "mchg_s") {
 			if (this.enableshoot){
+				this.can_shoot = true;
 				this.shoot_type = "normal";
 			};
 			if (!this.enableshoot) {
@@ -130,9 +148,7 @@ class Player extends Entity{
 			this.y = this.sprite.y;
 		}
 		
-		/*if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
-			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
-		};*/
+		
 		
 		//ha player ütközik bullettel
 		collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
@@ -205,11 +221,8 @@ class Player extends Entity{
 		Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + Math.PI/8 * Math.random() - Math.PI/8 *Math.random(); //helyette maga a bullet forog
 		Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 		Bullet.list_id_count ++;
-		
-			
-			
-	
 	};
+
 	changeColor(color) {
 		this.sprite.tint = color;
 	}
@@ -229,7 +242,9 @@ class Bullet extends Entity{
 		this.rotation = (data.rotation !== undefined ? data.rotation : 0);
 		this.timer = (data.timer !== undefined ? data.timer : 600);
 		this.player_id = (data.player_id !== undefined ? data.player_id : 0);
+		this.Boom = false;
 		this.updatePosition();
+		
 	};
 	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
 		
@@ -281,6 +296,48 @@ class Bullet extends Entity{
 		}
 	};
 }
+class BigBullet extends Bullet{
+		constructor(x,y,x_graph,y_graph,id,texture,width,height, player_id) {
+		super(x,y,x_graph,y_graph,id,texture,width,height,player_id);
+		console.log(this.sprite);
+		this.sprite.x = 2;
+		/*this.sprite.anchor.set(0.5,0.5);
+		this.x_graph = x; //a gráfban elfoglalt hely
+		this.y_graph = y;
+		this.rotation = 0;
+		this.timer = 600;
+		this.player_id = player_id;*/
+		this.speed = 2.5;
+		this.updatePosition();
+		this.Boom = true;
+	};
+	boom(){
+		if (Player.list[this.player_id].shoot_type === "bb_s" && !this.enableshoot){
+			console.log("jó?");
+			for (let i = 0; i < 12; i++) {
+				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.player_id);
+				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + i*Math.PI/6;
+				Bullet.list[Bullet.list_id_count].speed = 3 * Math.random();
+				Bullet.list_id_count ++;
+			};
+			Player.list[this.player_id].can_shoot = true;
+			this.destroy();
+			
+		};
+		
+	};
+	updatePosition() { 
+		super.updatePosition();
+		
+		if (this.timer < 550){
+			this.boom();
+		};
+		
+
+	};
+	
+}; 	
+	
 
 class Extra extends Entity{
 	constructor(data){
