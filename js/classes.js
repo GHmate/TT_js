@@ -1,22 +1,24 @@
 // minden osztály őse, amik a pályán / gráfon helyezkednek el
 class Entity {
-	constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false,speed = 2.2) {
-		this.x = x;
-		this.y = y;
-		this.x_graph = x_graph; //a gráfban elfoglalt hely
-		this.y_graph = y_graph;
-		this.id = id;
+	//constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false,speed = 2.2) {
+	constructor(data) {
+		this.x = (data.x !== undefined ? data.x : 0);
+		this.y = (data.y !== undefined ? data.y : 0);
+		this.x_graph = (data.x_graph !== undefined ? data.x_graph : 0); //a gráfban elfoglalt hely
+		this.y_graph = (data.y_graph !== undefined ? data.y_graph : 0);
+		this.id = (data.id !== undefined ? data.id : null);
+		let texture = (data.texture !== undefined ? data.texture : '');
 		this.sprite = new PIXI.Sprite(texture);
 		this.sprite.x = this.x;
 		this.sprite.y = this.y;
-		this.speed = speed;
+		this.speed = (data.speed !== undefined ? data.speed : 2.2);
 		this.collision_block = []; //collisionManager melyik dobozkájában van éppen. több is lehet, ha átlóg
 		g_app.stage.addChild(this.sprite);
-		if (width !== false) {
-			this.sprite.width = width;
+		if (data.width) {
+			this.sprite.width = data.width;
 		}
-		if (height !== false) {
-			this.sprite.height = height;
+		if (data.height) {
+			this.sprite.height = data.height;
 		}
 	}
 	//meg kell szüntetni minden referenciát ami rá mutat, akkor törlődik csak! (garbage collector) + a sprite-t is ki kell pucolni
@@ -30,9 +32,12 @@ class Entity {
 }
 
 class Wall extends Entity{
-	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
-		super(x,y,x_graph,y_graph,id,texture,width,height);
+	constructor(data) {
+		if (data.texture === undefined) {data.texture = g_textures.wall;}
+		super(data);
 		this.sprite.anchor.set(0.5,0.5);
+		let width = (data.width !== undefined ? data.width : 10);
+		let height = (data.height !== undefined ? data.height : 10);
 		this.hitbox = { //téglalap 4 sarka
 			'x1':this.x-width/2,
 			'x2':this.x+width/2,
@@ -43,12 +48,17 @@ class Wall extends Entity{
 }
 
 class Player extends Entity{
-	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
-		super(x,y,x_graph,y_graph,id,texture,width,height);
+	constructor(data) {
+		if (data.texture === undefined) {data.texture = g_textures.tank;}
+		if (data.width === undefined) {data.width = 41;}
+		if (data.height === undefined) {data.height = 26;}
+		super(data);
+		if (data.rotation === undefined) {data.rotation = Math.random()*2*Math.PI;}
+		this.sprite.rotation = data.rotation;
 		this.sprite.anchor.set(0.45,0.5);
-		this.sprite.tint = g_tank_colors[id];
+		this.sprite.tint = g_tank_colors[this.id];
 		this.enableshoot = true;
-		this.shoot_type = "mchg"; // mchg --- machinegun , normal--- sima bullet
+		this.shoot_type = "normal"; // mchg --- machinegun , normal--- sima bullet
 		this.timer = 3;
 		this.keypress = {
 			'left':false,
@@ -61,8 +71,8 @@ class Player extends Entity{
 	}
 	updatePosition() {
 		if (this.shoot_type === "mchg") {
-			console.log(this.shoot_type);
-			if (!this.enableshoot) {this.shoot_type = "mchg_s"};
+			//console.log(this.shoot_type);
+			if (!this.enableshoot) {this.shoot_type = "mchg_s";};
 		};
 		if (this.shoot_type === "mchg_s") {
 			if (this.enableshoot){
@@ -78,12 +88,7 @@ class Player extends Entity{
 			this.timer -= 0.75;	
 			
 		}
-		
 
-		
-			
-		
-		
 		this.sprite.rotation = normalize_rad(this.sprite.rotation);
 		
 		if (this.keypress.right)
@@ -129,6 +134,7 @@ class Player extends Entity{
 			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
 		};*/
 		
+		//ha player ütközik bullettel
 		collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
@@ -136,20 +142,33 @@ class Player extends Entity{
 				if (b.player_id !== this.id) {
 					this.destroy([Player.list]);
 					b.destroy([Bullet.list]);
-					g_playerdata.scores[b.player_id]++;
+					g_playerdata.tanks--;
+					if (g_playerdata.tanks < 2) {
+						for (let t of Player.list) {
+							if (t !== undefined) {
+								g_playerdata.scores[t.id]++;
+								jQuery("#p"+(t.id+1)+"_score").html(g_playerdata.scores[t.id].toString());
+								regenerate_map();
+							}
+						}
+					}
 				}
 			}
 		};
-		
-		
-		
 	};
 	createBullet() {
 		if (false) { //TODO: test cucc, kiszedni, ha nem kell
 			for(let i=0;i<50;i++) {
 				if (this.bullet_count > 0){ 
-					Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
-					Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation +(Math.random()-0.5)*1.3; //helyette maga a bullet forog
+					Bullet.list[Bullet.list_id_count] = new Bullet({
+						'x': this.x,
+						'y': this.y,
+						'x_graph': this.x_graph,
+						'y_graph': this.y_graph,
+						'id': Bullet.list_id_count,
+						'player_id': this.id,
+						'rotation': this.sprite.rotation+(Math.random()-0.5)*1.3
+					});
 					Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 					Bullet.list_id_count ++;
 					this.bullet_count --;
@@ -157,8 +176,15 @@ class Player extends Entity{
 			}
 		} else {
 			if (this.bullet_count > 0){ 
-				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
-				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation; //helyette maga a bullet forog
+				Bullet.list[Bullet.list_id_count] = new Bullet({
+						'x': this.x,
+						'y': this.y,
+						'x_graph': this.x_graph,
+						'y_graph': this.y_graph,
+						'id': Bullet.list_id_count,
+						'player_id': this.id,
+						'rotation': this.sprite.rotation
+					});
 				Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 				Bullet.list_id_count ++;
 				this.bullet_count --;
@@ -167,7 +193,15 @@ class Player extends Entity{
 	};	
 	//lövésváltoztatós extrák ide:
 	ext_machinegun(){
-		Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
+		Bullet.list[Bullet.list_id_count] = new Bullet({
+						'x': this.x,
+						'y': this.y,
+						'x_graph': this.x_graph,
+						'y_graph': this.y_graph,
+						'id': Bullet.list_id_count,
+						'player_id': this.id,
+						'rotation': this.sprite.rotation
+					});
 		Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + Math.PI/8 * Math.random() - Math.PI/8 *Math.random(); //helyette maga a bullet forog
 		Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 		Bullet.list_id_count ++;
@@ -183,14 +217,18 @@ class Player extends Entity{
 
 //lövedék
 class Bullet extends Entity{
-	constructor(x,y,x_graph,y_graph,id,texture,width,height, player_id) {
-		super(x,y,x_graph,y_graph,id,texture,width,height,3);
+	constructor(data) {
+		if (data.texture === undefined) {data.texture = g_textures.bullet;}
+		if (data.speed === undefined) {data.speed = 3;}
+		if (data.width === undefined) {data.width = 10;}
+		if (data.height === undefined) {data.height = 10;}
+		super(data);
 		this.sprite.anchor.set(0.5,0.5);
-		this.x_graph = x; //a gráfban elfoglalt hely
-		this.y_graph = y;
-		this.rotation = 0;
-		this.timer = 600;
-		this.player_id = player_id;
+		//this.x_graph = x; //a gráfban elfoglalt hely
+		//this.y_graph = y;
+		this.rotation = (data.rotation !== undefined ? data.rotation : 0);
+		this.timer = (data.timer !== undefined ? data.timer : 600);
+		this.player_id = (data.player_id !== undefined ? data.player_id : 0);
 		this.updatePosition();
 	};
 	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
@@ -241,47 +279,43 @@ class Bullet extends Entity{
 			Player.list[this.player_id].bullet_count ++;
 			this.destroy([Bullet.list]);
 		}
-		
-		
-
 	};
 }
 
 class Extra extends Entity{
-	constructor(x,y,x_graph,y_graph,id,texture,width,height,type){
-		super(x,y,x_graph,y_graph,id,texture,width,height);
+	constructor(data){
+		if (data.texture === undefined) {data.texture = g_textures.extra;}
+		if (data.width === undefined) {data.width = 20;}
+		if (data.height === undefined) {data.height = 20;}
+		super(data);
 		this.sprite.anchor.set(0.5,0.5);
+		let width = (data.width !== undefined ? data.width : 10);
+		let height = (data.height !== undefined ? data.height : 10);
 		this.hitbox = { //téglalap 4 sarka
 			'x1':this.x-width/2,
 			'x2':this.x+width/2,
 			'y1':this.y-height/2,
 			'y2':this.y+height/2
 		};
-		this.type = type;
-		
-		
+		this.type = (data.type !== undefined ? data.type : 0);
 	};
-	
-	
-	
-	
 };
 
 //labirintus egy mezője
 class Node {
-	constructor(x,y) {
-		this.x_graph = x; //0 -> n ig a gráfban elfoglalt x, y pozíció
-		this.y_graph = y;
-		this.x = border.x+x*g_field_size; //a pályán ténylegesen elfoglalt x, y pozíció
-		this.y = border.x+y*g_field_size;
+	constructor(data) {
+		this.x_graph = (data.x !== undefined ? data.x : 0); //0 -> n ig a gráfban elfoglalt x, y pozíció
+		this.y_graph = (data.y !== undefined ? data.y : 0);
+		this.x = border.x+this.x_graph*g_field_size; //a pályán ténylegesen elfoglalt x, y pozíció
+		this.y = border.x+this.y_graph*g_field_size;
 		this.block_id = -1; //melyik összefüggő blokkba tartozik. -1=egyikbe sem.
 		this.unused_paths = 2; //mennyi utat tudna még létrehozni
 		this.path = [0,0]; // 0 vagy 1: nincs/van út jobbra / lefele. így azokra csak ő tehet utat, nincs ütközés. -1 akkor lesz, ha mellette/alatta vége a pályának
-		if (x == g_dimensions.x-1) {
+		if (this.x_graph == g_dimensions.x-1) {
 			this.path[0] = -1;
 			this.unused_paths--;
 		}
-		if (y == g_dimensions.y-1) {
+		if (this.y_graph == g_dimensions.y-1) {
 			this.path[1] = -1;
 			this.unused_paths--;
 		}
@@ -325,8 +359,8 @@ class Node {
 
 //ütközések vizsgálatáért felelős osztály (pálya-felosztósdival optimalizálva)
 class CollisionManager {
-	constructor(field_size = 80) {
-		this.field_size = field_size; //hányszor hányas kockákra ossza fel a teret
+	constructor(data) {
+		this.field_size = (data.field_size !== undefined ? data.field_size : 80); //hányszor hányas kockákra ossza fel a teret
 	}
 	//megnézi melyik dobozba/dobozokba kell tenni az entity-t
 	get_placing_boxes (entity) {

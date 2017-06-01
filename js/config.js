@@ -12,8 +12,8 @@ var g_field_size = (g_site_orig_width)/(g_dimensions.x+1); //mezők mérete. ez 
 var border = {'x':g_field_size,'y':g_field_size}; //falak ennyivel beljebb kezdődjenek a saroktól
 
 //game things
-var g_player_num = 3;
-var g_playerdata = {'scores':[]}; //játékosok (és nem tankok) adatai
+var g_player_num = 2;
+var g_playerdata = {'tanks': g_player_num, 'scores':[]}; //játékosok (és nem tankok) adatai
 for (let i=0 ; i<g_player_num ; i++) {
 	g_playerdata['scores'][i] = 0;
 }

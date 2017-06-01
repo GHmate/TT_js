@@ -17,7 +17,10 @@ function generate_map(dimensions) {
 		for (var x = 0; x < dimensions.x; x++) {
 			graph[x] = [];
 			for (var y = 0; y < dimensions.y; y++) {
-				graph[x][y] = new Node(x,y);
+				graph[x][y] = new Node({
+					'x': x,
+					'y': y
+				});
 				//legenerálunk random utakat
 				graph[x][y].generate_paths();
 			}
@@ -83,7 +86,16 @@ function create_walls (graph,dimensions) {
 							wall.y = y_self+g_field_size/2
 							break;
 					}
-					Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,g_textures.wall,wall.width,wall.height);
+					//Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,g_textures.wall,wall.width,wall.height);
+					Wall.list[Wall.list_id_counter] = new Wall({
+						'x': wall.x,
+						'y': wall.y,
+						'x_graph': x,
+						'y_graph': y,
+						'id': Wall.list_id_counter,
+						'width': wall.width,
+						'height': wall.height
+					});
 					g_collisioner.place(Wall.list[Wall.list_id_counter]);
 					Wall.list_id_counter++;
 				}
@@ -94,7 +106,15 @@ function create_walls (graph,dimensions) {
 				wall.width = shorter_side;
 				wall.x = x_self-g_field_size/2;
 				wall.y = y_self;
-				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,g_textures.wall,wall.width,wall.height);
+				Wall.list[Wall.list_id_counter] = new Wall({
+						'x': wall.x,
+						'y': wall.y,
+						'x_graph': x,
+						'y_graph': y,
+						'id': Wall.list_id_counter,
+						'width': wall.width,
+						'height': wall.height
+					});
 				g_collisioner.place(Wall.list[Wall.list_id_counter]);
 				Wall.list_id_counter++;
 			}
@@ -103,7 +123,15 @@ function create_walls (graph,dimensions) {
 				wall.width = longer_side;
 				wall.x = x_self;
 				wall.y = y_self-g_field_size/2;
-				Wall.list[Wall.list_id_counter] = new Wall(wall.x,wall.y,x,y,Wall.list_id_counter,g_textures.wall,wall.width,wall.height);
+				Wall.list[Wall.list_id_counter] = new Wall({
+						'x': wall.x,
+						'y': wall.y,
+						'x_graph': x,
+						'y_graph': y,
+						'id': Wall.list_id_counter,
+						'width': wall.width,
+						'height': wall.height
+					});
 				g_collisioner.place(Wall.list[Wall.list_id_counter]);
 				Wall.list_id_counter++;
 			}
@@ -130,7 +158,7 @@ function regenerate_map () { //játék elején vagy egy pálya végén az új p�
 	Extra.list_id_count = 0;
 	Extra.creator_timer = 600;
 	
-	g_collisioner = new CollisionManager();
+	g_collisioner = new CollisionManager({});
 	gen_result = generate_map(g_dimensions);
 	graph = gen_result.graph;
 	selected_block = gen_result.selected_block;
@@ -157,7 +185,14 @@ function regenerate_map () { //játék elején vagy egy pálya végén az új p�
 			break;
 		}
 		if (free_pos(node)) {
-			Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,g_textures.tank,41,26);
+			//Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,g_textures.tank,41,26);
+			Player.list[Player.list_count] = new Player({
+				'x': node.x,
+				'y': node.y,
+				'x_graph': node.x_graph,
+				'y_graph': node.y_graph,
+				'id': Player.list_count
+			});
 			Player.list_count++;
 		}
 	}
@@ -185,8 +220,16 @@ function die(data) {
 function createExtra(){
 	let koordinata= leteheto_nodes[getRandomInt(0,leteheto_nodes.length-1)];
 	let customnode = graph[koordinata[0]][koordinata[1]];
-	Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, 20, 20, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
-	//console.log(Extra.list[Extra.list_id_count].type);
+	//Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, 20, 20, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
+	Extra.list[Extra.list_id_count] = new Extra({
+		'x': customnode.x,
+		'y': customnode.y,
+		'x_graph': customnode.x_graph,
+		'y_graph': customnode.y_graph,
+		'id': Extra.list_id_count,
+		'type': Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]
+	});
+//console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
 }
 function getRandomInt(min, max) {
