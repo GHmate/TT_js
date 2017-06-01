@@ -20,7 +20,7 @@ class Entity {
 		}
 	}
 	//meg kell szüntetni minden referenciát ami rá mutat, akkor törlődik csak! (garbage collector) + a sprite-t is ki kell pucolni
-	destroy(lists = []) {
+	destroy(lists = []) {//tömb-tömböt vár, nem sima tömböt
 		for (let list of lists) {
 			delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
 		}
@@ -41,8 +41,6 @@ class Wall extends Entity{
 		};
 	}
 }
-Wall.list = {}; //obj kell, hátha egyszer remove-oljuk az elemeket. tömbben összekavarodna az id-zés olyankor
-Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
 
 class Player extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height) {
@@ -50,7 +48,8 @@ class Player extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = g_tank_colors[id];
 		this.enableshoot = true;
-		this.shoot_type = "mchg"; // mchg --- machinegun , normal--- sima bullet
+		this.can_shoot = true;
+		this.shoot_type = "mchg"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
 		this.timer = 3;
 		this.keypress = {
 			'left':false,
@@ -62,12 +61,29 @@ class Player extends Entity{
 		this.updatePosition();
 	}
 	updatePosition() {
+		//fegyver összeszedési kapcsolók 
+		//mchg
 		if (this.shoot_type === "mchg") {
-			console.log(this.shoot_type);
+			this.can_shoot = false;
 			if (!this.enableshoot) {this.shoot_type = "mchg_s"};
 		};
+		//bb
+		if (this.shoot_type === "bb") {
+			this.can_shoot = false;
+			console.log("átállít");
+			if (!this.enableshoot) {
+				this.shoot_type = "bb_s";
+				Bullet.list[Bullet.list_id_count] = new BigBullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
+				Bullet.list_id_count++;
+				
+			};
+		};
+		
+		
+		//machine gun
 		if (this.shoot_type === "mchg_s") {
 			if (this.enableshoot){
+				this.can_shoot = true;
 				this.shoot_type = "normal";
 			};
 			if (!this.enableshoot) {
@@ -112,6 +128,7 @@ class Player extends Entity{
 			y_wannago = -1*sines*0.7; //*delta
 		}
 		
+		//mozgás és fal-ütközés
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
 		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
@@ -126,16 +143,18 @@ class Player extends Entity{
 			this.y = this.sprite.y;
 		}
 		
-		let utk = g_collisioner.check_collision_one_to_n(this,Extra);
-		if (utk.right == true || utk.left == true || utk.up == true || utk.down == true){
-			console.log("Ütközés"); //Extrás ütközések ide:   (kell egy függvény, ami átállítja erre this.shoot = "mchg", ha machinegun cucc kell)
-			
-		let utk2 = g_collisioner.check_collision_one_to_n(this,Bullet);
-		if (utk2.right == true || utk2.left == true || utk2.up == true || utk2.down == true){
-			console.log("Ütközés");
-			
-		};	
-			
+		
+		
+		collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
+		let colliding_bullet = collision_data['collision'];
+		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
+			for (let b of collision_data['collided']) {
+				if (b.player_id !== this.id) {
+					this.destroy([Player.list]);
+					b.destroy([Bullet.list]);
+					g_playerdata.scores[b.player_id]++;
+				}
+			}
 		};
 		
 		
@@ -168,17 +187,12 @@ class Player extends Entity{
 		Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + Math.PI/8 * Math.random() - Math.PI/8 *Math.random(); //helyette maga a bullet forog
 		Bullet.list[Bullet.list_id_count].sprite.tint = this.sprite.tint;
 		Bullet.list_id_count ++;
-		
-			
-			
-	
 	};
+
 	changeColor(color) {
 		this.sprite.tint = color;
 	}
 }
-Player.list = []; //statikus osztály-változó
-Player.list_count = 0;
 
 //lövedék
 class Bullet extends Entity{
@@ -190,7 +204,9 @@ class Bullet extends Entity{
 		this.rotation = 0;
 		this.timer = 600;
 		this.player_id = player_id;
+		this.Boom = false;
 		this.updatePosition();
+		
 	};
 	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
 		
@@ -245,8 +261,48 @@ class Bullet extends Entity{
 
 	};
 }
-Bullet.list = {}; 
-Bullet.list_id_count = 0;
+class BigBullet extends Bullet{
+		constructor(x,y,x_graph,y_graph,id,texture,width,height, player_id) {
+		super(x,y,x_graph,y_graph,id,texture,width,height,player_id);
+		console.log(this.sprite);
+		this.sprite.x = 2;
+		/*this.sprite.anchor.set(0.5,0.5);
+		this.x_graph = x; //a gráfban elfoglalt hely
+		this.y_graph = y;
+		this.rotation = 0;
+		this.timer = 600;
+		this.player_id = player_id;*/
+		this.speed = 2.5;
+		this.updatePosition();
+		this.Boom = true;
+	};
+	boom(){
+		if (Player.list[this.player_id].shoot_type === "bb_s" && !this.enableshoot){
+			console.log("jó?");
+			for (let i = 0; i < 12; i++) {
+				Bullet.list[Bullet.list_id_count] = new Bullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.player_id);
+				Bullet.list[Bullet.list_id_count].rotation = this.sprite.rotation + i*Math.PI/6;
+				Bullet.list[Bullet.list_id_count].speed = 3 * Math.random();
+				Bullet.list_id_count ++;
+			};
+			Player.list[this.player_id].can_shoot = true;
+			this.destroy();
+			
+		};
+		
+	};
+	updatePosition() { 
+		super.updatePosition();
+		
+		if (this.timer < 550){
+			this.boom();
+		};
+		
+
+	};
+	
+}; 	
+	
 
 class Extra extends Entity{
 	constructor(x,y,x_graph,y_graph,id,texture,width,height,type){
@@ -267,10 +323,7 @@ class Extra extends Entity{
 	
 	
 };
-Extra.type_list = ['1','2','3'];
-Extra.list = {};
-Extra.list_id_count = 0;
-Extra.creator_timer = 600;
+
 //labirintus egy mezője
 class Node {
 	constructor(x,y) {
@@ -335,10 +388,11 @@ class CollisionManager {
 	//megnézi melyik dobozba/dobozokba kell tenni az entity-t
 	get_placing_boxes (entity) {
 		let results = [];
-		let x_start = Math.floor(entity.hitbox.x1/this.field_size);
-		let x_end = Math.floor(entity.hitbox.x2/this.field_size);
-		let y_start = Math.floor(entity.hitbox.y1/this.field_size);
-		let y_end = Math.floor(entity.hitbox.y2/this.field_size);
+		let border = 3; //ennyi pixellel számol ráhagyást a tényleges hitboxra, hogy elkerüljük az épp blokk szélén lévő falak hiányának problémáját
+		let x_start = Math.floor((entity.hitbox.x1-border)/this.field_size);
+		let x_end = Math.floor((entity.hitbox.x2+border)/this.field_size);
+		let y_start = Math.floor((entity.hitbox.y1-border)/this.field_size);
+		let y_end = Math.floor((entity.hitbox.y2+border)/this.field_size);
 		for (let i = x_start ; i <= x_end ; i++) {
 			for (let j = y_start ; j <= y_end ; j++) {
 				results.push([i,j]);
@@ -458,4 +512,3 @@ class CollisionManager {
 		return {'collision':collision, 'collided':collided};
 	}
 }
-CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel

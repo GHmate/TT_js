@@ -13,6 +13,10 @@ var border = {'x':g_field_size,'y':g_field_size}; //falak ennyivel beljebb kezd�
 
 //game things
 var g_player_num = 3;
+var g_playerdata = {'scores':[]}; //játékosok (és nem tankok) adatai
+for (let i=0 ; i<g_player_num ; i++) {
+	g_playerdata['scores'][i] = 0;
+}
 var g_tank_colors = ['0x333333','0x999999','0xffffff','0xff4d4d','0xffa64d','0xffff4d','0x79ff4d','0x4dffa6','0x4dd2ff','0x4d4dff','0xd24dff','0xff4da6'];
 var g_player_min_distance = 4; //milyen távolságra lehetnek playerek
 var g_player_distance_fields = 25; //maximum mennyi node-ot foglal egy player a minimális táv miatt
@@ -20,9 +24,10 @@ var g_path_gen_chance = 0.55; //útvonal generálási esély. célszerű 0.4 és
 
 //pixi setup
 var g_app = new PIXI.Application(g_window_size.x, g_window_size.y, { backgroundColor: 0xdddddd });
+jQuery("#game_container").append(g_app.view);
 //g_app.renderer = PIXI.autoDetectRenderer(320, 480, null, false, true);
 //g_app.renderer.antialias = false;
-jQuery("#game_container").append(g_app.view);
+
 // Scale mode for all textures, will retain pixelation
 PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;
 

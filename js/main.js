@@ -1,39 +1,13 @@
 
-var g_collisioner = new CollisionManager();
-var gen_result = generate_map(g_dimensions);
-var graph = gen_result.graph;
-var selected_block = gen_result.selected_block;
+//csak deklaráljuk a globál dolgokat
+var g_collisioner;
+var gen_result;
+var graph;
+var selected_block;
 
 var leteheto_nodes = []; //hova lehet tankot tenni
-for (var x = 0; x < g_dimensions.x; x++) {
-	for (var y = 0; y < g_dimensions.y; y++) {
-		if (graph[x][y].block_id == selected_block) {
-			leteheto_nodes.push([x,y]);
-		}
-	}
-}
 
-//legyártjuk a falakat
-create_walls(graph,g_dimensions);
-
-//legyártjuk a tankokat
-shuffle(g_tank_colors);
-shuffle(leteheto_nodes);
-for (k in leteheto_nodes) {
-	var node = graph[leteheto_nodes[k][0]][leteheto_nodes[k][1]];
-	//console.log(node);
-	if (Player.list_count >= g_player_num) {
-		break;
-	}
-	if (free_pos(node)) {
-		Player.list[Player.list_count] = new Player(node.x,node.y,node.x_graph,node.y_graph,Player.list_count,g_textures.tank,41,26);
-		Player.list_count++;
-	}
-}
-
-if (Player.list_count < g_player_num) {
-	alert('baj van, nem elég nagy a pálya!');
-}
+regenerate_map();
 
 //mozgatás
 document.onkeydown = function(event){
@@ -46,12 +20,12 @@ document.onkeydown = function(event){
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = true;
 	else if(event.keyCode === 32) { //space
-		if (Player.list[0].enableshoot === true) {
-			Player.list[0].createBullet();
-			Player.list[0].enableshoot = false;
+			if (Player.list[0].enableshoot === true) {
+				if (Player.list[0].can_shoot){Player.list[0].createBullet()};
+				Player.list[0].enableshoot = false;
+			}
 		}
-	}
-}
+};
 
 document.onkeyup = function(event){
 	if(event.keyCode === 37) //balra
@@ -63,14 +37,18 @@ document.onkeyup = function(event){
 	else if(event.keyCode === 40) //le
 		Player.list[0].keypress.down = false;
 	else if(event.keyCode === 32) { //space
-		Player.list[0].enableshoot = true;
-	}
-}
+			Player.list[0].enableshoot = true;
+		}
+	
+};
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
-
-	Player.list[0].updatePosition();
+	for (let n in Player.list) {
+		if (Player.list[n] !== null) { //mert a tömbben benen marad az index
+			Player.list[n].updatePosition();
+		}
+	}
 	for (let n in Bullet.list) {
 		Bullet.list[n].updatePosition();
 	};
@@ -79,9 +57,7 @@ g_app.ticker.add(function(delta) {
 	if(Extra.creator_timer < 1){
 		createExtra();
 		Extra.creator_timer = 600;
-		
 	};
-	
 	
 	//oldal resize
 	let block_width = jQuery("#game_container").width();
