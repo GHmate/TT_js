@@ -1,0 +1,25 @@
+{
+  "name": "ttjs",
+  "version": "1.0.0",
+  "description": "tt",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.15.3",
+    "socket.io": "^2.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "test",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GHmate/TT_js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GHmate/TT_js/issues"
+  },
+  "homepage": "https://github.com/GHmate/TT_js#readme"
+}
