@@ -38,3 +38,8 @@ var g_textures = { //textúrákat egyszer kell csak betölteni
 	'extra':PIXI.Texture.fromImage('images/tank_white.png') //TODO: változtasd meg
 };
 g_textures.tank.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
+
+g_self_data = {
+	'shoot_button_up': false,
+	'id': 0
+};

@@ -14,7 +14,7 @@ Entity = class Entity {
 		this.tint = (data.tint !== undefined ? data.tint : '0xffffff');
 	}
 	//meg kell szüntetni minden referenciát ami rá mutat, akkor törlődik csak! (garbage collector)
-	destroy(lists = []) {//tömb-tömböt vár, nem sima tömböt
+	destroy(lists = []) {//dupla-tömböt [[]] vár, nem sima tömböt
 		if (lists.length < 1) {
 			console.log('warning: destroy funkció nem kapott elem-tömböt');
 		}
@@ -113,17 +113,17 @@ Tank = class Tank extends Entity{
 			this.y += y_wannago;
 		}
 		
-		//ha player ütközik bullettel
+		//ha Tank ütközik bullettel
 		collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
 				if (b.player_id !== this.id) {
-					this.destroy([Player.list]);
+					this.destroy([Tank.list]);
 					b.destroy([Bullet.list]);
 					g_playerdata.tanks--;
 					if (g_playerdata.tanks < 2) {
-						for (let t of Player.list) {
+						for (let t of Tank.list) {
 							if (t !== undefined) {
 								g_playerdata.scores[t.id]++;
 								regenerate_map();
@@ -251,7 +251,7 @@ Bullet = class Bullet extends Entity{
 		this.timer --;
 
 		if (this.timer < 1) {
-			Player.list[this.player_id].bullet_count ++;
+			Tank.list[this.player_id].bullet_count ++;
 			this.destroy([Bullet.list]);
 		}
 	};
@@ -268,7 +268,7 @@ BigBullet = class BigBullet extends Bullet{
 		this.updatePosition();
 	};
 	boom(){
-		if (Player.list[this.player_id].shoot_type === "bb_s" && !this.shoot_button_up){
+		if (Tank.list[this.player_id].shoot_type === "bb_s" && !this.shoot_button_up){
 			for (let i = 0; i < 12; i++) {
 				Bullet.list[Bullet.list_id_count] = new Bullet({
 						'x': this.x,
@@ -282,7 +282,7 @@ BigBullet = class BigBullet extends Bullet{
 					});
 				Bullet.list_id_count ++;
 			};
-			Player.list[this.player_id].can_shoot = true;
+			Tank.list[this.player_id].can_shoot = true;
 			this.destroy([Bullet.list]);
 		};
 	};
@@ -410,9 +410,9 @@ CollisionManager = class CollisionManager {
 	//mindent updatel
 	update_arrays (){
 		CollisionManager.map = [];
-		for (let key in Player.list) {
-			Player.list[key].collision_block = [];
-			this.place(Player.list[key]);
+		for (let key in Tank.list) {
+			Tank.list[key].collision_block = [];
+			this.place(Tank.list[key]);
 		}
 		for (let key in Wall.list) {
 			Wall.list[key].collision_block = [];
@@ -435,7 +435,7 @@ CollisionManager = class CollisionManager {
 				if (!(obj instanceof c_class)) {
 					continue;
 				}
-
+				
 				let c_width = Math.abs(obj.hitbox.x1 - obj.hitbox.x2);
 				let c_height = Math.abs(obj.hitbox.y1 - obj.hitbox.y2);
 				
@@ -450,7 +450,7 @@ CollisionManager = class CollisionManager {
 				{
 					collided.push(obj);
 					
-					if (target instanceof Player) {
+					if (target instanceof Tank) {
 						let wy = w * dy_m;
 						let hx = h * dx_m;
 						if (wy > hx) {

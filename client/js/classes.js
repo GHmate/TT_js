@@ -50,7 +50,7 @@ class Wall extends Entity{
 	}
 }
 
-class Player extends Entity{
+class Tank extends Entity{
 	constructor(data) {
 		if (data.texture === undefined) {data.texture = g_textures.tank;}
 		if (data.width === undefined) {data.width = 41;}
@@ -73,21 +73,18 @@ class Player extends Entity{
 		//this.bullet_count = 50;
 		//this.updatePosition();
 	}
-	updatePosition() {
-		
-	};
-	triggerShoot() {
-		
-	}
-	createBullet() {
-		
-	};	
-	//lövésváltoztatós extrák ide:
-	ext_machinegun(){
-		
-	};
-	changeColor(color) {
-		//this.sprite.tint = color;
+	//updatePosition() {};
+	//triggerShoot() {}
+	//createBullet() {};	
+	//ext_machinegun(){};
+	//changeColor(color) {//this.sprite.tint = color;}
+	server_update(s_tank) {
+		if (s_tank.x !== undefined) {this.x = s_tank.x; this.sprite.x = s_tank.x;}
+		if (s_tank.y !== undefined) {this.y = s_tank.y; this.sprite.y = s_tank.y;}
+		if (s_tank.rotation !== undefined) {this.rotation = s_tank.rotation; this.sprite.rotation = s_tank.rotation;}
+		if (s_tank.width !== undefined) {this.width = s_tank.width;}
+		if (s_tank.height !== undefined) {this.height = s_tank.height;}
+		if (s_tank.tint !== undefined) {this.sprite.tint = s_tank.tint;}
 	}
 }
 
