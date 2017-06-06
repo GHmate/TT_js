@@ -38,12 +38,12 @@ generate_map = function generate_map(dimensions) {
 				actual_block++;
 			}
 		}
-	} while(max_block_num < g_player_num*g_player_distance_fields); //ha a legnagyobb blokk elegendő méretű, rátesszük a tankokat, ha nem, újragenerálás
+	} while(max_block_num < g_max_player_num*g_player_distance_fields); //ha a legnagyobb blokk elegendő méretű, rátesszük a tankokat, ha nem, újragenerálás
 	return {
 		'graph':graph,
 		'selected_block':selected_block
 	};
-}
+};
 
 //lekérdezi, hogy adott node-ra tehet-e tankot
 free_pos = function free_pos(node) {
@@ -54,7 +54,7 @@ free_pos = function free_pos(node) {
 		}
 	}
 	return free;
-}
+};
 
 create_walls = function create_walls (graph,dimensions) {
 	for (let x = 0; x < dimensions.x; x++) {
@@ -135,7 +135,7 @@ create_walls = function create_walls (graph,dimensions) {
 			}
 		}
 	}
-}
+};
 
 regenerate_map = function regenerate_map () { //játék elején vagy egy pálya végén az új pályakezdésért felelő funkció
 	
@@ -168,7 +168,7 @@ regenerate_map = function regenerate_map () { //játék elején vagy egy pálya 
 
 	//legyártjuk a falakat
 	create_walls(graph,g_dimensions);
-}
+};
 
 add_tank = function add_tank (id) {
 	
@@ -179,7 +179,7 @@ add_tank = function add_tank (id) {
 	for (k in g_worlds['0'].leteheto_nodes) {
 		var node = graph[g_worlds['0'].leteheto_nodes[k][0]][g_worlds['0'].leteheto_nodes[k][1]];
 		//console.log(node);
-		/*if (Tank.list_count >= g_player_num) {
+		/*if (Tank.list_count >= g_max_player_num) {
 			break;
 		}*/
 		if (free_pos(node)) {
@@ -198,7 +198,7 @@ add_tank = function add_tank (id) {
 	if (!success) {
 		die('baj van, nem elég nagy a pálya!');
 	}
-}
+};
 
 //tömb sorrend keverés
 shuffle = function shuffle(a) {
@@ -213,7 +213,7 @@ die = function die(data) {
 	console.log('die:');
 	console.log(data);
 	throw new Error('run_stopped');
-}
+};
 //extra spawn
 createExtra = function createExtra(){
 	let koordinata= g_worlds['0'].leteheto_nodes[getRandomInt(0,g_worlds['0'].leteheto_nodes.length-1)];
@@ -229,11 +229,11 @@ createExtra = function createExtra(){
 	});
 //console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
-}
+};
 //random int
 getRandomInt = function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+};
 //visszateszi a szöget 0 és 2pi közé, biztos ami biztos
 normalize_rad = function normalize_rad(rad) {
 	while (rad < 0) {
@@ -243,5 +243,26 @@ normalize_rad = function normalize_rad(rad) {
 		rad -= 2*Math.PI;
 	}
 	return rad;
-}
+};
 
+get_world_sockets = function get_world_sockets(socket_list,exception = -1) {
+	let ret = [];
+	for (var i in socket_list) {
+		if (socket_list[i].id !== exception) {
+			ret.push(socket_list[i]);
+		}
+	}
+	return ret;
+};
+
+broadcast_small_init = function broadcast_small_init (socket_list,data) {
+	for (var i in socket_list) {
+		socket_list[i].emit('small_init', data);
+	}
+};
+
+broadcast_destroy = function broadcast_destroy (socket_list,data) {
+	for (var i in socket_list) {
+		socket_list[i].emit('destroy', data);
+	}
+};

@@ -119,14 +119,16 @@ Tank = class Tank extends Entity{
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
 				if (b.player_id !== this.id) {
+					let world = g_worlds[g_playerdata[this.id].world_id];
 					this.destroy([Tank.list]);
 					b.destroy([Bullet.list]);
-					g_playerdata.tanks--;
-					if (g_playerdata.tanks < 2) {
-						for (let t of Tank.list) {
-							if (t !== undefined) {
-								g_playerdata.scores[t.id]++;
+					world.tank_count--;
+					if (world.tank_count < 2) {
+						for (let t in Tank.list) {
+							if (Tank.list[t] !== undefined) {
+								g_playerdata[Tank.list[t].id].score++;
 								regenerate_map();
+								break;
 							}
 						}
 					}
@@ -142,7 +144,6 @@ Tank = class Tank extends Entity{
 				//console.log("átállít");
 				
 				this.shoot_type = "bb_s";
-				//Bullet.list[Bullet.list_id_count] = new BigBullet(this.x, this.y, this.x_graph, this.y_graph, Bullet.list_id_count, g_textures.bullet, 10, 10, this.id);
 				Bullet.list[Bullet.list_id_count] = new BigBullet({
 					'x': this.x,
 					'y': this.y,
@@ -173,6 +174,10 @@ Tank = class Tank extends Entity{
 				'rotation': this.rotation,
 				'tint': this.tint
 			});
+			let bl = {
+				'bullets': {self_id: Bullet.list[Bullet.list_id_count]}
+			};
+			broadcast_small_init(get_world_sockets(SOCKET_LIST),bl);
 			Bullet.list_id_count ++;
 			this.bullet_count --;
 		};
@@ -195,12 +200,20 @@ Tank = class Tank extends Entity{
 	changeColor(color) {
 		this.tint = color;
 	}
+	
+	destroy (param) {
+		super.destroy(param);
+		let self_id = this.id;
+		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
+			'tanks': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
+		};
+		broadcast_destroy(get_world_sockets(SOCKET_LIST),data);
+	}
 }
 
 //lövedék
 Bullet = class Bullet extends Entity{
 	constructor(data) {
-		if (data.texture === undefined) {data.texture = g_textures.bullet;}
 		if (data.speed === undefined) {data.speed = 3;}
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
@@ -251,15 +264,24 @@ Bullet = class Bullet extends Entity{
 		this.timer --;
 
 		if (this.timer < 1) {
-			Tank.list[this.player_id].bullet_count ++;
+			if (Tank.list[this.player_id] !== undefined) {
+				Tank.list[this.player_id].bullet_count ++;
+			}
 			this.destroy([Bullet.list]);
 		}
 	};
+	destroy (param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
+		super.destroy(param);
+		let self_id = this.id;
+		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
+			'bullets': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
+		};
+		broadcast_destroy(get_world_sockets(SOCKET_LIST),data);
+	}
 }
 
 BigBullet = class BigBullet extends Bullet{
 		constructor(data) {
-		if (data.texture === undefined) {data.texture = g_textures.bullet;}
 		if (data.speed === undefined) {data.speed = 2;}
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
@@ -301,7 +323,6 @@ BigBullet = class BigBullet extends Bullet{
 
 Extra = class Extra extends Entity{
 	constructor(data){
-		if (data.texture === undefined) {data.texture = g_textures.extra;}
 		if (data.width === undefined) {data.width = 20;}
 		if (data.height === undefined) {data.height = 20;}
 		super(data);

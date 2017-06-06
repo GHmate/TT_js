@@ -96,19 +96,23 @@ class Bullet extends Entity{
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
 		super(data);
+		this.sprite.tint = this.tint;
 		this.sprite.anchor.set(0.5,0.5);
 		//this.x_graph = x; //a gráfban elfoglalt hely
 		//this.y_graph = y;
-		this.rotation = (data.rotation !== undefined ? data.rotation : 0);
+		//this.rotation = (data.rotation !== undefined ? data.rotation : 0);
 		//this.timer = (data.timer !== undefined ? data.timer : 600);
 		//this.player_id = (data.player_id !== undefined ? data.player_id : 0);
 		//this.Boom = false;
-		this.updatePosition();
+		//this.updatePosition();
 		
 	};
-	updatePosition() {
-		
-	};
+	server_update(s_bullet) {
+		if (s_bullet.x !== undefined) {this.x = s_bullet.x; this.sprite.x = s_bullet.x;}
+		if (s_bullet.y !== undefined) {this.y = s_bullet.y; this.sprite.y = s_bullet.y;}
+		if (s_bullet.width !== undefined) {this.width = s_bullet.width;}
+		if (s_bullet.height !== undefined) {this.height = s_bullet.height;}
+	}
 }
 
 class BigBullet extends Bullet{

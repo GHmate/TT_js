@@ -31,6 +31,7 @@ document.onkeyup = function(event){
 		socket.emit('keyPress', {inputId: 'down', state: false});
 	} else if(event.keyCode === 32) { //space
 		g_self_data.shoot_button_up = true;
+		socket.emit('keyPress', {inputId: 'shoot', state: false});
 	}
 };
 
@@ -57,6 +58,7 @@ socket.on('total_init', function(data){
 			'id': data.tanks[t].id
 		});
 	}
+	Bullet.list = {};
 });
 
 socket.on('small_init', function(data){
@@ -78,27 +80,45 @@ socket.on('small_init', function(data){
 			'id': data.tanks[t].id
 		});
 	}
+	for (let t in data.bullets) {
+		Bullet.list[data.bullets[t].id] = new Bullet({
+			'x': data.bullets[t].x,
+			'y': data.bullets[t].y,
+			'id': data.bullets[t].id,
+			'speed': data.bullets[t].speed,
+			//'player_id': data.bullets[t].player_id,
+			//'rotation': data.bullets[t].rotation,
+			'tint': data.bullets[t].tint
+		});
+	}
 });
 
 socket.on('update_tank', function(data){
 	for (let t in data) {
 		if (Tank.list[data[t].id] !== undefined) {
 			Tank.list[data[t].id].server_update(data[t]);
-		}/* else { //todo: nem jo még így
-			Tank.list[data.id] = new Tank({
-				'x': data.x,
-				'y': data.y,
-				'rotation': data.rotation,
-				'tint': data.tint,
-				'id': data.id
-			});
-		}*/
+		}
+	}
+});
+
+socket.on('update_bullet', function(data){
+	for (let t in data) {
+		if (Bullet.list[data[t].id] !== undefined) {
+			Bullet.list[data[t].id].server_update(data[t]);
+		}
 	}
 });
 
 socket.on('destroy', function(data){
 	for (let t in data.tanks) {
-		Tank.list[data.tanks[t]].destroy();
+		if (Tank.list[data.tanks[t]] !== undefined) {
+			Tank.list[data.tanks[t]].destroy([Tank.list]);
+		}
+	}
+	for (let t in data.bullets) {
+		if (Bullet.list[data.bullets[t]] !== undefined) {
+			Bullet.list[data.bullets[t]].destroy([Bullet.list]);
+		}
 	}
 });
 
