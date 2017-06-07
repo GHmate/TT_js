@@ -35,33 +35,15 @@ document.onkeyup = function(event){
 	}
 };
 
-socket.on('total_init', function(data){
-	g_self_data.id = data.global.id;
+socket.on('init', function(data){
+	if (data.global !== undefined) {
+		g_self_data.id = data.global.id;
+	}
 	
-	Wall.list = {};
-	for (let w in data.walls) {
-		Wall.list[data.walls[w].id] = new Wall({
-			'x': data.walls[w].x,
-			'y': data.walls[w].y,
-			'id': data.walls[w].id,
-			'width': data.walls[w].width,
-			'height': data.walls[w].height
-		});
+	if (data.clear_all === true) { //teljes reset
+		clear_local_map();
 	}
-	Tank.list = {};
-	for (let t in data.tanks) {
-		Tank.list[data.tanks[t].id] = new Tank({
-			'x': data.tanks[t].x,
-			'y': data.tanks[t].y,
-			'rotation': data.tanks[t].rotation,
-			'tint': data.tanks[t].tint,
-			'id': data.tanks[t].id
-		});
-	}
-	Bullet.list = {};
-});
 
-socket.on('small_init', function(data){
 	for (let w in data.walls) {
 		Wall.list[data.walls[w].id] = new Wall({
 			'x': data.walls[w].x,

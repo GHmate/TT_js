@@ -119,19 +119,7 @@ Tank = class Tank extends Entity{
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
 				if (b.player_id !== this.id) {
-					let world = g_worlds[g_playerdata[this.id].world_id];
-					this.destroy([Tank.list]);
-					b.destroy([Bullet.list]);
-					world.tank_count--;
-					if (world.tank_count < 2) {
-						for (let t in Tank.list) {
-							if (Tank.list[t] !== undefined) {
-								g_playerdata[Tank.list[t].id].score++;
-								regenerate_map();
-								break;
-							}
-						}
-					}
+					kill_one_tank(this,b);
 				}
 			}
 		};
@@ -177,7 +165,7 @@ Tank = class Tank extends Entity{
 			let bl = {
 				'bullets': {self_id: Bullet.list[Bullet.list_id_count]}
 			};
-			broadcast_small_init(get_world_sockets(SOCKET_LIST),bl);
+			broadcast_simple('init',bl,get_world_sockets(SOCKET_LIST));
 			Bullet.list_id_count ++;
 			this.bullet_count --;
 		};
@@ -207,7 +195,7 @@ Tank = class Tank extends Entity{
 		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
 			'tanks': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
 		};
-		broadcast_destroy(get_world_sockets(SOCKET_LIST),data);
+		broadcast_simple('destroy',data,get_world_sockets(SOCKET_LIST));
 	}
 }
 
@@ -276,7 +264,7 @@ Bullet = class Bullet extends Entity{
 		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
 			'bullets': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
 		};
-		broadcast_destroy(get_world_sockets(SOCKET_LIST),data);
+		broadcast_simple('destroy',data,get_world_sockets(SOCKET_LIST));
 	}
 }
 
