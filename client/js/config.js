@@ -27,5 +27,8 @@ g_textures.tank.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
 
 g_self_data = {
 	'shoot_button_up': true,
-	'id': 0
+	'id': 0,
+	'latency_check': false,
+	'latency_counter': 0,
+	'latency': 0
 };

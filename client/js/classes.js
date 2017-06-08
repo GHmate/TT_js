@@ -60,11 +60,6 @@ class Entity {
 			this.ipol_data.end.direction = dir;
 			this.ipol_data.speed = spd;
 			this.ipol_data.rotate_speed = rot_spd;
-		} else {
-			//nem interpoláljuk, hanem predicteljük, és ilyenkor, amikor jön a szerverről adat, felülírjuk a predictelt értékeket
-			this.x = this.sprite.x = x;
-			this.y = this.sprite.y = y;
-			this.rotation = dir;
 		}
 	}
 	//maga a mozgatás: 60 fps-sel fusson
@@ -145,6 +140,7 @@ class Tank extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = this.tint;
 		this.shoot_button_up = true;
+		this.predictedmoves = []; //az inputok listája, későbbi korrigáláshoz
 		//this.can_shoot = true;
 		//this.shoot_type = "bb"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
 		//this.bullet_timer = 3;
@@ -174,7 +170,20 @@ class Tank extends Entity{
 	start_ipol(x,y,dir,spd,rot_spd,self = false) {
 		super.start_ipol(x,y,dir,spd,rot_spd,self);
 		if (self) {
-			this.sprite.rotation = this.rotation;
+			//nem interpoláljuk, hanem predicteljük, és ilyenkor, amikor jön a szerverről adat, felülírjuk a predictelt értékeket
+			let re_calculated_position = {'x': x,'y': y,'d': dir};
+			let eldobando_darab = this.predictedmoves.length-g_self_data.latency;
+			this.predictedmoves.splice(0, eldobando_darab);
+			for (let i in this.predictedmoves) {
+				re_calculated_position.x += this.predictedmoves[i].x;
+				re_calculated_position.y += this.predictedmoves[i].y;
+				re_calculated_position.d += this.predictedmoves[i].d;
+			}
+			this.x = this.sprite.x = re_calculated_position.x;
+			this.y = this.sprite.y = re_calculated_position.y;
+			this.rotation = this.sprite.rotation = re_calculated_position.d;
+			
+			//this.sprite.rotation = this.rotation;
 		}
 	}
 	keyevent(name,value) {
@@ -188,6 +197,7 @@ class Tank extends Entity{
 		}
 	}
 	predict() {
+		let move_data = {'x': 0, 'y': 0, 'd':0};
 		let rotate = false;
 		if (this.keypress.right) {
 			if (this.rot_speed < 0) {this.rot_speed = -this.rot_speed;}
@@ -199,6 +209,7 @@ class Tank extends Entity{
 		}
 		if (rotate) {
 			this.rotation += this.rot_speed; //*delta
+			move_data.d = this.rot_speed;
 		}
 		
 		this.hitbox = { //téglalap 4 sarka
@@ -219,7 +230,7 @@ class Tank extends Entity{
 			x_wannago = -1*cosos; //*delta
 			y_wannago = -1*sines; //*delta
 		}
-		
+
 		//mozgás és fal-ütközés
 		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
@@ -227,10 +238,14 @@ class Tank extends Entity{
 		let colliding = collision_data['collision'];
 		if ((x_wannago > 0 && !colliding.right) || (x_wannago < 0 && !colliding.left)) {
 			this.x += x_wannago;
+			move_data.x = x_wannago;
 		}
 		if ((y_wannago > 0 && !colliding.down) || (y_wannago < 0 && !colliding.up)) {
 			this.y += y_wannago;
+			move_data.y = y_wannago;
 		}
+		
+		this.predictedmoves.push(move_data);
 		
 		this.sprite.x = this.x;
 		this.sprite.y = this.y;

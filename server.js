@@ -40,6 +40,10 @@ io.sockets.on('connection', function (socket) {
 	add_tank(socket.id);
 	
 	new_players_emit_stuff.push(socket);
+
+	socket.on('pingu', function (data) {
+		socket.emit('pong');
+	});
 	
 	socket.on('keyPress', function (data) {
 		if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
@@ -128,4 +132,4 @@ setInterval(function () {
 	for (var i in SOCKET_LIST) {
 		SOCKET_LIST[i].emit('update_entities', {'tank': update_tank, 'bullet': update_bullet});
 	}
-}, 1000 / 25); //25 fps
+}, 1000 / 20); //20-30 fps

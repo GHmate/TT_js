@@ -29,6 +29,10 @@ document.onkeydown = function(event){
 			Tank.list[g_self_data.id].keyevent(tank_control,true);
 		}
 	}
+	if (!g_self_data.latency_check) {
+		socket.emit('pingu');
+		g_self_data.latency_check = true;
+	}
 };
 
 document.onkeyup = function(event){
@@ -123,6 +127,14 @@ socket.on('update_entities', function(data){
 	}
 });
 
+socket.on('pong', function(){
+	if (g_self_data.latency_check) {
+		g_self_data.latency = g_self_data.latency_counter;
+		g_self_data.latency_counter = 0;
+		g_self_data.latency_check = false;
+	}
+});
+
 socket.on('destroy', function(data){
 	for (let t in data.tanks) {
 		if (Tank.list[data.tanks[t]] !== undefined) {
@@ -138,6 +150,11 @@ socket.on('destroy', function(data){
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
+	
+	if (g_self_data.latency_check) {
+		g_self_data.latency_counter++;
+	}
+	
 	//oldal resize
 	let block_width = jQuery("#game_container").width();
 	let block_height = jQuery("#game_container").height();
@@ -165,5 +182,4 @@ g_app.ticker.add(function(delta) {
 	for (let i in Bullet.list) {
 		Bullet.list[i].ipol();
 	}
-	
 });
