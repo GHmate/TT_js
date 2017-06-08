@@ -46,7 +46,8 @@ io.sockets.on('connection', function (socket) {
 			return;
 		}
 		if (data.inputId == 'left' || data.inputId == 'right' || data.inputId == 'up' || data.inputId == 'down' ) {
-			Tank.list[socket.id].keypress[data.inputId] = data.state;
+			//Tank.list[socket.id].keypress[data.inputId] = data.state;
+			Tank.list[socket.id].keyevent(data.inputId,data.state);
 		}
 		if(data.inputId === 'shoot' && data.state) {
 			Tank.list[socket.id].triggerShoot();
@@ -74,40 +75,57 @@ setInterval(function () {
 		for (let t in Tank.list) {
 			Tank.list[t].updatePosition();
 		}
-		
-		//----- kommunikáció start
-		
-		for (let socket of new_players_emit_stuff) {
-			//elmeséljük az újonnan érkezett zöldfülűnek, hogy mi a helyzet a pályán
-			socket.emit ('init',{ //TODO: bugos volt több emittel -> kiszervezni, hogy ne az onconnect-ben emitelgessen, hanem a loopban
-				'clear_all': true,
-				'global': {'id': socket.id},
-				'walls': Wall.list,
-				'tanks': Tank.list,
-				'bullets': Bullet.list
-			});
-
-			//megmondjuk mindenki másnak, hogy hol az új játékos tankja
-			let self_id = socket.id;//kényszerűségből... nem akarja kulcsként engedni a socket.id-t vagy a socket['id']-t
-			let init = {
-				'tanks': {self_id: Tank.list[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
-			};
-			broadcast_simple('init',init,get_world_sockets(SOCKET_LIST,socket.id));
-		}
-		new_players_emit_stuff = [];
-		
-		let update_tank = Tank.list; //TODO: ne küldjük a teljes objecteket. és ne 60-at másodpercenként. A fizika lehet 60, csak a networking ne legyen
 		for (let t in Bullet.list) {
 			Bullet.list[t].updatePosition();
 		}
-		let update_bullet = Bullet.list;
-
-		for (var i in SOCKET_LIST) {
-			SOCKET_LIST[i].emit('update_tank', update_tank);
-			SOCKET_LIST[i].emit('update_bullet', update_bullet);
-		}
-		
-		//----- kommunikáció end
 	}
-	
-}, 1000 / 60);
+}, 1000 / 60); //60 fps
+
+//komenikáció
+setInterval(function () {
+	for (let socket of new_players_emit_stuff) {
+		//elmeséljük az újonnan érkezett zöldfülűnek, hogy mi a helyzet a pályán
+		socket.emit ('init',{ //TODO: bugos volt több emittel -> kiszervezni, hogy ne az onconnect-ben emitelgessen, hanem a loopban
+			'clear_all': true,
+			'global': {'id': socket.id},
+			'walls': Wall.list,
+			'tanks': Tank.list,
+			'bullets': Bullet.list
+		});
+
+		//megmondjuk mindenki másnak, hogy hol az új játékos tankja
+		let self_id = socket.id;//kényszerűségből... nem akarja kulcsként engedni a socket.id-t vagy a socket['id']-t
+		let init = {
+			'tanks': {self_id: Tank.list[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
+		};
+		broadcast_simple('init',init,get_world_sockets(SOCKET_LIST,socket.id));
+	}
+	new_players_emit_stuff = [];
+
+	let update_tank = [];
+	let update_bullet = [];
+	for (let i in Tank.list) {
+		update_tank.push({
+			'id': Tank.list[i].id,
+			'x': Tank.list[i].x,
+			'y': Tank.list[i].y,
+			'rotation': Tank.list[i].rotation,
+			'spd': Tank.list[i].speed,
+			'rot_spd': Tank.list[i].rot_speed
+		});
+	}
+	for (let i in Bullet.list) {
+		update_bullet.push({
+			'id': Bullet.list[i].id,
+			'x': Bullet.list[i].x,
+			'y': Bullet.list[i].y,
+			'rotation': Bullet.list[i].rotation,
+			'spd': Bullet.list[i].speed,
+			'rot_spd': Bullet.list[i].rot_speed
+		});
+	}
+
+	for (var i in SOCKET_LIST) {
+		SOCKET_LIST[i].emit('update_entities', {'tank': update_tank, 'bullet': update_bullet});
+	}
+}, 1000 / 25); //25 fps

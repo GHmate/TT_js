@@ -7,6 +7,7 @@ Entity = class Entity {
 		this.y_graph = (data.y_graph !== undefined ? data.y_graph : 0);
 		this.id = (data.id !== undefined ? data.id : null);
 		this.speed = (data.speed !== undefined ? data.speed : 2.2);
+		this.rot_speed = (data.rot_speed !== undefined ? data.rot_speed : 0.07);
 		this.collision_block = []; //collisionManager melyik dobozkájában van éppen. több is lehet, ha átlóg
 		this.width = (data.width !== undefined ? data.width : 10);
 		this.height = (data.height !== undefined ? data.height : 10);
@@ -41,6 +42,7 @@ Tank = class Tank extends Entity{
 		if (data.rotation === undefined) {data.rotation = Math.random()*2*Math.PI;}
 		if (data.tint === undefined) {data.tint = g_tank_colors[0];}
 		super(data);
+		this.normal_speed = this.speed;
 		this.can_shoot = true;
 		this.shoot_type = "normal"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
 		this.bullet_timer = 3;
@@ -50,8 +52,18 @@ Tank = class Tank extends Entity{
 			'right':false,
 			'down':false
 		};
-		this.bullet_count = 50;
+		this.bullet_count = 5;
 		this.updatePosition();
+	}
+	keyevent(name,value) {
+		this.keypress[name] = value;
+		if (name === 'down') {
+			if (value) {
+				this.speed = this.normal_speed*0.7;
+			} else {
+				this.speed = this.normal_speed;
+			}
+		}
 	}
 	updatePosition() {
 		//fegyver összeszedési kapcsolók 
@@ -76,10 +88,18 @@ Tank = class Tank extends Entity{
 			this.bullet_timer -= 0.75;	
 		}
 		
-		if (this.keypress.right)
-			this.rotation += 0.07; //*delta
-		if (this.keypress.left)
-			this.rotation -= 0.07; //*delta
+		let rotate = false;
+		if (this.keypress.right) {
+			if (this.rot_speed < 0) {this.rot_speed = -this.rot_speed;}
+			rotate = !rotate;
+		}
+		if (this.keypress.left) {
+			if (this.rot_speed > 0) {this.rot_speed = -this.rot_speed;}
+			rotate = !rotate;
+		}
+		if (rotate) {
+			this.rotation += this.rot_speed; //*delta
+		}
 		
 		this.hitbox = { //téglalap 4 sarka
 			'x1':this.x-13,
@@ -96,8 +116,8 @@ Tank = class Tank extends Entity{
 			x_wannago = cosos; //*delta
 			y_wannago = sines; //*delta
 		} else if (this.keypress.down) {
-			x_wannago = -1*cosos*0.7; //*delta
-			y_wannago = -1*sines*0.7; //*delta
+			x_wannago = -1*cosos; //*delta
+			y_wannago = -1*sines; //*delta
 		}
 		
 		//mozgás és fal-ütközés
