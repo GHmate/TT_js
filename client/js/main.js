@@ -171,15 +171,15 @@ socket.on('input_response', function(position){
 		//az utolsó n daradb inputot újra-szimulálja a szervertől kapott pozícióra (instant), és korrigálja a jelenlegi helyet.
 		//(n a ping és pong közt eltelt tik-ek száma) majd törli a szimuláltaknál is régebbi input adatokat.
 		
-		let list_length = Tank.list[g_self_data.id].list_of_inputs.length;
-		let index = list_length-g_self_data.tiks_after_input_sent;
+		/*let list_length = Tank.list[g_self_data.id].list_of_inputs.length;
+		let index = list_length-g_self_data.tiks_after_input_sent-Math.ceil(g_self_data.latency*2);
+		console.log(g_self_data.latency);
 		if (index < 0) {
 			index = 0;
-		}
+		}*/
 		//console.log('length: '+list_length);
 		//console.log('index: '+index);
-		Tank.list[g_self_data.id].apply_input_movement_data(index,position);
-		Tank.list[g_self_data.id].list_of_inputs.splice(0,index);
+		Tank.list[g_self_data.id].apply_input_movement_data(position.next_processed,position);
 	}
 	g_self_data.tiks_after_input_sent = 0;
 });

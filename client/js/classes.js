@@ -140,6 +140,7 @@ class Tank extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = this.tint;
 		this.shoot_button_up = true;
+		this.movement_timer = 0;
 		this.list_of_inputs = []; //az inputok listája, predictionhöz
 		this.list_of_inputs_temp = []; //csak a szervernek nem elküldött inputokat tárolja
 		//this.can_shoot = true;
@@ -194,12 +195,17 @@ class Tank extends Entity{
 			this.keypress['up']?1:0,
 			this.keypress['down']?1:0,
 			this.keypress['left']?1:0,
-			this.keypress['right']?1:0
+			this.keypress['right']?1:0,
+			this.movement_timer
 		]; //fel, le, balra, jobbra
+		this.movement_timer++;
+		if (this.movement_timer > 30000) {
+			this.movement_timer = 0;
+		}
 		this.list_of_inputs.push(input_data); //saját használatra
 		this.list_of_inputs_temp.push(input_data); //szervernek küldéshez, mert ezt mindig ürítjük
 		
-		this.apply_input_movement_data(this.list_of_inputs.length-1);
+		this.apply_input_movement_data(this.movement_timer-1);
 	};
 	send_move_data_to_server () {
 		//elküldjük a szervernek az utolsó néhány tik mozgását.
@@ -207,6 +213,12 @@ class Tank extends Entity{
 		this.list_of_inputs_temp = [];
 	};
 	apply_input_movement_data (index,starting_point = false) { 
+		this.hitbox = { //téglalap 4 sarka
+			'x1':this.x-13,
+			'x2':this.x+13,
+			'y1':this.y-13,
+			'y2':this.y+13
+		};
 		
 		g_collisioner.update_arrays(); //nem baj, mert elvileg csak a saját tankra futtatom le ezt a kódrészt, nem multiplikálódik a tankok számával
 
@@ -218,11 +230,24 @@ class Tank extends Entity{
 		/*if (starting_point) {
 			console.log(starting_point.x);
 		}*/
+		let start_doing = false;
+		let remove_count = 0;
 		//itt a loop nem a tömb elejéről dolgozza fel az elemeket, hanem az index és a tömb vége közt mindet. jelentősen eltér a szerver kódtól.
-		for (let loop_index = index; loop_index < this.list_of_inputs.length; loop_index++) {
+		for (let loop_index = 0; loop_index < this.list_of_inputs.length; loop_index++) {
 			
 			let input_data = this.list_of_inputs[loop_index]; //kiszedjük a tömbből
-			
+			if (input_data[4] === undefined) {
+				console.log('nincs index');
+				continue;
+			}
+			if (input_data[4] === index) {
+				start_doing = true;
+			}
+			if (!start_doing) {
+				remove_count++;
+				continue;
+			}
+
 			if (input_data[1] === 1) {
 				this.speed = this.normal_speed*0.7;
 			} else {
@@ -276,6 +301,10 @@ class Tank extends Entity{
 				}
 			}
 		}
+		if (starting_point) { //ha volt megadott kezdőpont, akkor korrigáltunk, és akkor a szerver állapot előtti dolgokat kidobhatjuk, mert nem kellenek.
+			this.list_of_inputs.splice(0,remove_count);
+		}
+		
 		this.sprite.x = this.x;
 		this.sprite.y = this.y;
 		this.sprite.rotation = this.rotation;

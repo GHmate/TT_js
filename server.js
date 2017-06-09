@@ -54,6 +54,7 @@ io.sockets.on('connection', function (socket) {
 		if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
 			return;
 		}
+		let next_id = (data[0] === undefined?0:data[0][4]);
 		Tank.list[socket.id].apply_input_movement_data(Tank.list[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
 		Tank.list[socket.id].list_of_inputs = Tank.list[socket.id].list_of_inputs.concat(data);
 		let response_data = {
@@ -61,7 +62,8 @@ io.sockets.on('connection', function (socket) {
 			'y': Tank.list[socket.id].y,
 			'rotation': Tank.list[socket.id].rotation,
 			'spd': Tank.list[socket.id].speed,
-			'rot_spd': Tank.list[socket.id].rot_speed
+			'rot_spd': Tank.list[socket.id].rot_speed,
+			'next_processed': next_id
 		};
 		socket.emit('input_response', response_data);
 	});
