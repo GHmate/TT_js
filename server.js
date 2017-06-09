@@ -40,22 +40,30 @@ io.sockets.on('connection', function (socket) {
 	add_tank(socket.id);
 	
 	new_players_emit_stuff.push(socket);
-
-	socket.on('pingu', function (data) {
-		socket.emit('pong');
-	});
 	
 	socket.on('keyPress', function (data) {
 		if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
 			return;
 		}
-		if (data.inputId == 'left' || data.inputId == 'right' || data.inputId == 'up' || data.inputId == 'down' ) {
-			//Tank.list[socket.id].keypress[data.inputId] = data.state;
-			Tank.list[socket.id].keyevent(data.inputId,data.state);
-		}
 		if(data.inputId === 'shoot' && data.state) {
 			Tank.list[socket.id].triggerShoot();
 		}
+	});
+	
+	socket.on('input_list', function (data) {
+		if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
+			return;
+		}
+		Tank.list[socket.id].apply_input_movement_data(Tank.list[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
+		Tank.list[socket.id].list_of_inputs = Tank.list[socket.id].list_of_inputs.concat(data);
+		let response_data = {
+			'x': Tank.list[socket.id].x,
+			'y': Tank.list[socket.id].y,
+			'rotation': Tank.list[socket.id].rotation,
+			'spd': Tank.list[socket.id].speed,
+			'rot_spd': Tank.list[socket.id].rot_speed
+		};
+		socket.emit('input_response', response_data);
 	});
 	
 	socket.on('disconnect', function () {

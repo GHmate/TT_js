@@ -46,26 +46,15 @@ Tank = class Tank extends Entity{
 		this.can_shoot = true;
 		this.shoot_type = "normal"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
 		this.bullet_timer = 3;
-		this.keypress = {
-			'left':false,
-			'up':false,
-			'right':false,
-			'down':false
-		};
+		this.list_of_inputs = [];
 		this.bullet_count = 5;
 		this.updatePosition();
 	}
-	keyevent(name,value) {
-		this.keypress[name] = value;
-		if (name === 'down') {
-			if (value) {
-				this.speed = this.normal_speed*0.7;
-			} else {
-				this.speed = this.normal_speed;
-			}
-		}
-	}
 	updatePosition() {
+		
+		//többet, mint 1, ha ugrani kell
+		this.apply_input_movement_data(1);
+		
 		//fegyver összeszedési kapcsolók 
 		//mchg
 		if (this.shoot_type === "mchg") {
@@ -88,53 +77,8 @@ Tank = class Tank extends Entity{
 			this.bullet_timer -= 0.75;	
 		}
 		
-		let rotate = false;
-		if (this.keypress.right) {
-			if (this.rot_speed < 0) {this.rot_speed = -this.rot_speed;}
-			rotate = !rotate;
-		}
-		if (this.keypress.left) {
-			if (this.rot_speed > 0) {this.rot_speed = -this.rot_speed;}
-			rotate = !rotate;
-		}
-		if (rotate) {
-			this.rotation += this.rot_speed; //*delta
-		}
-		
-		this.hitbox = { //téglalap 4 sarka
-			'x1':this.x-13,
-			'x2':this.x+13,
-			'y1':this.y-13,
-			'y2':this.y+13
-		};
-
-		let x_wannago = 0;
-		let y_wannago = 0;
-		let cosos = Math.cos(this.rotation)*this.speed;
-		let sines =  Math.sin(this.rotation)*this.speed;
-		if (this.keypress.up) {
-			x_wannago = cosos; //*delta
-			y_wannago = sines; //*delta
-		} else if (this.keypress.down) {
-			x_wannago = -1*cosos; //*delta
-			y_wannago = -1*sines; //*delta
-		}
-		
-		//mozgás és fal-ütközés
-		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
-		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
-		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
-		let colliding = collision_data['collision'];
-		
-		if ((x_wannago > 0 && !colliding.right) || (x_wannago < 0 && !colliding.left)) {
-			this.x += x_wannago;
-		}
-		if ((y_wannago > 0 && !colliding.down) || (y_wannago < 0 && !colliding.up)) {
-			this.y += y_wannago;
-		}
-		
 		//ha Tank ütközik bullettel
-		collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
+		let collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
@@ -144,6 +88,67 @@ Tank = class Tank extends Entity{
 			}
 		};
 	};
+	apply_input_movement_data (repeat) {
+		for (let rep = 0; rep < repeat; rep++) {
+			
+			let input_data = this.list_of_inputs.splice(0,1); //kiszedjük a tömbből
+			input_data = (input_data[0] === undefined ? [0,0,0,0] : input_data[0]); //csak az elsőre vagyunk kíváncsiak. a splice tömböt ad vissza mindig. ha üres, nem megy.
+			let rotate = false;
+			
+			if (input_data[1] === 1) {
+				this.speed = this.normal_speed*0.7;
+			} else {
+				this.speed = this.normal_speed;
+			}
+			
+			
+			if (input_data[3] === 1) { //right
+				if (this.rot_speed < 0) {this.rot_speed = -this.rot_speed;}
+				rotate = !rotate;
+			}
+			if (input_data[2] === 1) { //left
+				if (this.rot_speed > 0) {this.rot_speed = -this.rot_speed;}
+				rotate = !rotate;
+			}
+			if (rotate) {
+				this.rotation += this.rot_speed; //*delta
+			}
+
+			this.hitbox = { //téglalap 4 sarka
+				'x1':this.x-13,
+				'x2':this.x+13,
+				'y1':this.y-13,
+				'y2':this.y+13
+			};
+
+			let x_wannago = 0;
+			let y_wannago = 0;
+			let cosos = Math.cos(this.rotation)*this.speed;
+			let sines =  Math.sin(this.rotation)*this.speed;
+			if (input_data[0] === 1) { //up
+				x_wannago = cosos; //*delta
+				y_wannago = sines; //*delta
+			} else if (input_data[1] === 1) { //down
+				x_wannago = -1*cosos; //*delta
+				y_wannago = -1*sines; //*delta
+			}
+
+			//mozgás és fal-ütközés
+			if (x_wannago !== 0 || y_wannago !== 0) {
+				let x_w_rounded = x_wannago > 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
+				let y_w_rounded = y_wannago > 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
+				let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+				let colliding = collision_data['collision'];
+
+				if ((x_wannago > 0 && !colliding.right) || (x_wannago < 0 && !colliding.left)) {
+					this.x += x_wannago;
+				}
+				if ((y_wannago > 0 && !colliding.down) || (y_wannago < 0 && !colliding.up)) {
+					this.y += y_wannago;
+				}
+			}
+		}
+	}
 	triggerShoot() {
 		if (this.can_shoot){
 			//bb

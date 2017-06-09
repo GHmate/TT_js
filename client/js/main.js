@@ -1,21 +1,14 @@
 
-//socket dolgai
-var socket = io();
-
 //mozgatás
 document.onkeydown = function(event){
 	let tank_control = '';
 	if(event.keyCode === 37) { //balra
-		socket.emit('keyPress', {inputId: 'left', state: true});
 		tank_control = 'left';
 	} else if(event.keyCode === 38) { //fel
-		socket.emit('keyPress', {inputId: 'up', state: true});
 		tank_control = 'up';
 	} else if(event.keyCode === 39) { //jobbra
-		socket.emit('keyPress', {inputId: 'right', state: true});
 		tank_control = 'right';
 	} else if(event.keyCode === 40) { //le
-		socket.emit('keyPress', {inputId: 'down', state: true});
 		tank_control = 'down';
 	} else if(event.keyCode === 32) { //space
 		if (g_self_data.shoot_button_up === true) {
@@ -29,25 +22,17 @@ document.onkeydown = function(event){
 			Tank.list[g_self_data.id].keyevent(tank_control,true);
 		}
 	}
-	if (!g_self_data.latency_check) {
-		socket.emit('pingu');
-		g_self_data.latency_check = true;
-	}
 };
 
 document.onkeyup = function(event){
 	let tank_control = '';
 	if(event.keyCode === 37) { //balra
-		socket.emit('keyPress', {inputId: 'left', state: false});
 		tank_control = 'left';
 	} else if(event.keyCode === 38) { //fel
-		socket.emit('keyPress', {inputId: 'up', state: false});
 		tank_control = 'up';
 	} else if(event.keyCode === 39) { //jobbra
-		socket.emit('keyPress', {inputId: 'right', state: false});
 		tank_control = 'right';
 	} else if(event.keyCode === 40) { //le
-		socket.emit('keyPress', {inputId: 'down', state: false});
 		tank_control = 'down';
 	} else if(event.keyCode === 32) { //space
 		g_self_data.shoot_button_up = true;
@@ -127,14 +112,6 @@ socket.on('update_entities', function(data){
 	}
 });
 
-socket.on('pong', function(){
-	if (g_self_data.latency_check) {
-		g_self_data.latency = g_self_data.latency_counter;
-		g_self_data.latency_counter = 0;
-		g_self_data.latency_check = false;
-	}
-});
-
 socket.on('destroy', function(data){
 	for (let t in data.tanks) {
 		if (Tank.list[data.tanks[t]] !== undefined) {
@@ -154,6 +131,7 @@ g_app.ticker.add(function(delta) {
 	if (g_self_data.latency_check) {
 		g_self_data.latency_counter++;
 	}
+	g_self_data.tiks_after_input_sent++;
 	
 	//oldal resize
 	let block_width = jQuery("#game_container").width();
@@ -168,8 +146,6 @@ g_app.ticker.add(function(delta) {
 	g_app.renderer.view.style.width = g_site_orig_width;
 	g_app.renderer.view.style.height = g_site_orig_height;
 	
-	g_collisioner.update_arrays();
-	
 	for (let i in Tank.list) {
 		if (Tank.list[i].id !== g_self_data.id) {
 			Tank.list[i].ipol();
@@ -183,3 +159,39 @@ g_app.ticker.add(function(delta) {
 		Bullet.list[i].ipol();
 	}
 });
+
+socket.on('input_response', function(position){
+	if (g_self_data.latency_check) {
+		g_self_data.latency = g_self_data.latency_counter;
+		g_self_data.latency_counter = 0;
+		g_self_data.latency_check = false;
+	}
+	//console.log(g_self_data.tiks_after_input_sent);
+	if (Tank.list[g_self_data.id] !== undefined) {
+		//az utolsó n daradb inputot újra-szimulálja a szervertől kapott pozícióra (instant), és korrigálja a jelenlegi helyet.
+		//(n a ping és pong közt eltelt tik-ek száma) majd törli a szimuláltaknál is régebbi input adatokat.
+		
+		let list_length = Tank.list[g_self_data.id].list_of_inputs.length;
+		let index = list_length-g_self_data.tiks_after_input_sent;
+		if (index < 0) {
+			index = 0;
+		}
+		//console.log('length: '+list_length);
+		//console.log('index: '+index);
+		Tank.list[g_self_data.id].apply_input_movement_data(index,position);
+		Tank.list[g_self_data.id].list_of_inputs.splice(0,index);
+	}
+	g_self_data.tiks_after_input_sent = 0;
+});
+
+setInterval(function () {
+	if (Tank.list !== undefined) {
+		if (Tank.list[g_self_data.id] !== undefined) {
+			Tank.list[g_self_data.id].send_move_data_to_server();
+		}
+		if (!g_self_data.latency_check) {
+			socket.emit('ping_time');
+			g_self_data.latency_check = true;
+		}
+	}
+}, 1000 / g_timing.input_sending);

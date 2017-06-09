@@ -8,6 +8,11 @@ g_tank_colors = ['0x333333','0x999999','0xffffff','0xff4d4d','0xffa64d','0xffff4
 
 g_ipol_on = true;
 
+//timing
+g_timing = { //amennyi a szám, annyi tik/sec (vagy fps)
+	'input_sending': 30
+};
+
 //pixi setup
 g_app = new PIXI.Application(g_window_size.x, g_window_size.y, { backgroundColor: 0xdddddd });
 jQuery("#game_container").append(g_app.view);
@@ -30,5 +35,9 @@ g_self_data = {
 	'id': 0,
 	'latency_check': false,
 	'latency_counter': 0,
-	'latency': 0
+	'latency': 0,
+	'tiks_after_input_sent': 0
 };
+
+//socket dolgai
+socket = io();

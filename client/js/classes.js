@@ -140,7 +140,8 @@ class Tank extends Entity{
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = this.tint;
 		this.shoot_button_up = true;
-		this.predictedmoves = []; //az inputok listája, későbbi korrigáláshoz
+		this.list_of_inputs = []; //az inputok listája, predictionhöz
+		this.list_of_inputs_temp = []; //csak a szervernek nem elküldött inputokat tárolja
 		//this.can_shoot = true;
 		//this.shoot_type = "bb"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
 		//this.bullet_timer = 3;
@@ -171,7 +172,7 @@ class Tank extends Entity{
 		super.start_ipol(x,y,dir,spd,rot_spd,self);
 		if (self) {
 			//nem interpoláljuk, hanem predicteljük, és ilyenkor, amikor jön a szerverről adat, felülírjuk a predictelt értékeket
-			let re_calculated_position = {'x': x,'y': y,'d': dir};
+			/*let re_calculated_position = {'x': x,'y': y,'d': dir};
 			let eldobando_darab = this.predictedmoves.length-g_self_data.latency;
 			this.predictedmoves.splice(0, eldobando_darab);
 			for (let i in this.predictedmoves) {
@@ -181,72 +182,100 @@ class Tank extends Entity{
 			}
 			this.x = this.sprite.x = re_calculated_position.x;
 			this.y = this.sprite.y = re_calculated_position.y;
-			this.rotation = this.sprite.rotation = re_calculated_position.d;
-			
-			//this.sprite.rotation = this.rotation;
+			this.rotation = this.sprite.rotation = re_calculated_position.d;*/
 		}
 	}
 	keyevent(name,value) {
 		this.keypress[name] = value;
-		if (name === 'down') {
-			if (value) {
+	}
+	predict() {
+		//logoljuk az inputokat
+		let input_data = [
+			this.keypress['up']?1:0,
+			this.keypress['down']?1:0,
+			this.keypress['left']?1:0,
+			this.keypress['right']?1:0
+		]; //fel, le, balra, jobbra
+		this.list_of_inputs.push(input_data); //saját használatra
+		this.list_of_inputs_temp.push(input_data); //szervernek küldéshez, mert ezt mindig ürítjük
+		
+		this.apply_input_movement_data(this.list_of_inputs.length-1);
+	};
+	send_move_data_to_server () {
+		//elküldjük a szervernek az utolsó néhány tik mozgását.
+		socket.emit('input_list', this.list_of_inputs_temp);
+		this.list_of_inputs_temp = [];
+	};
+	apply_input_movement_data (index,starting_point = false) { 
+		
+		g_collisioner.update_arrays(); //nem baj, mert elvileg csak a saját tankra futtatom le ezt a kódrészt, nem multiplikálódik a tankok számával
+
+		if (starting_point) { //ha van starting point, akkor oda állítja a playert és onnan futtatja a cuccot
+			this.x = starting_point.x;
+			this.y = starting_point.y;
+			this.rotation = starting_point.rotation;
+		}
+		/*if (starting_point) {
+			console.log(starting_point.x);
+		}*/
+		//itt a loop nem a tömb elejéről dolgozza fel az elemeket, hanem az index és a tömb vége közt mindet. jelentősen eltér a szerver kódtól.
+		for (let loop_index = index; loop_index < this.list_of_inputs.length; loop_index++) {
+			
+			let input_data = this.list_of_inputs[loop_index]; //kiszedjük a tömbből
+			
+			if (input_data[1] === 1) {
 				this.speed = this.normal_speed*0.7;
 			} else {
 				this.speed = this.normal_speed;
 			}
-		}
-	}
-	predict() {
-		let move_data = {'x': 0, 'y': 0, 'd':0};
-		let rotate = false;
-		if (this.keypress.right) {
-			if (this.rot_speed < 0) {this.rot_speed = -this.rot_speed;}
-			rotate = !rotate;
-		}
-		if (this.keypress.left) {
-			if (this.rot_speed > 0) {this.rot_speed = -this.rot_speed;}
-			rotate = !rotate;
-		}
-		if (rotate) {
-			this.rotation += this.rot_speed; //*delta
-			move_data.d = this.rot_speed;
-		}
-		
-		this.hitbox = { //téglalap 4 sarka
-			'x1':this.x-13,
-			'x2':this.x+13,
-			'y1':this.y-13,
-			'y2':this.y+13
-		};
+			
+			let rotate = false;
+			if (input_data[3] === 1) { //right
+				if (this.rot_speed < 0) {this.rot_speed = -this.rot_speed;}
+				rotate = !rotate;
+			}
+			if (input_data[2] === 1) { //left
+				if (this.rot_speed > 0) {this.rot_speed = -this.rot_speed;}
+				rotate = !rotate;
+			}
+			if (rotate) {
+				this.rotation += this.rot_speed; //*delta
+			}
 
-		let x_wannago = 0;
-		let y_wannago = 0;
-		let cosos = Math.cos(this.rotation)*this.speed;
-		let sines =  Math.sin(this.rotation)*this.speed;
-		if (this.keypress.up) {
-			x_wannago = cosos; //*delta
-			y_wannago = sines; //*delta
-		} else if (this.keypress.down) {
-			x_wannago = -1*cosos; //*delta
-			y_wannago = -1*sines; //*delta
-		}
+			this.hitbox = { //téglalap 4 sarka
+				'x1':this.x-13,
+				'x2':this.x+13,
+				'y1':this.y-13,
+				'y2':this.y+13
+			};
 
-		//mozgás és fal-ütközés
-		let x_w_rounded = x_wannago >= 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
-		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
-		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
-		let colliding = collision_data['collision'];
-		if ((x_wannago > 0 && !colliding.right) || (x_wannago < 0 && !colliding.left)) {
-			this.x += x_wannago;
-			move_data.x = x_wannago;
+			let x_wannago = 0;
+			let y_wannago = 0;
+			let cosos = Math.cos(this.rotation)*this.speed;
+			let sines =  Math.sin(this.rotation)*this.speed;
+			if (input_data[0] === 1) { //up
+				x_wannago = cosos; //*delta
+				y_wannago = sines; //*delta
+			} else if (input_data[1] === 1) { //down
+				x_wannago = -1*cosos; //*delta
+				y_wannago = -1*sines; //*delta
+			}
+
+			//mozgás és fal-ütközés
+			if (x_wannago !== 0 || y_wannago !== 0) {
+				let x_w_rounded = x_wannago > 0 ? Math.ceil(x_wannago) : Math.floor(x_wannago);
+				let y_w_rounded = y_wannago > 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
+				let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
+				let colliding = collision_data['collision'];
+
+				if ((x_wannago > 0 && !colliding.right) || (x_wannago < 0 && !colliding.left)) {
+					this.x += x_wannago;
+				}
+				if ((y_wannago > 0 && !colliding.down) || (y_wannago < 0 && !colliding.up)) {
+					this.y += y_wannago;
+				}
+			}
 		}
-		if ((y_wannago > 0 && !colliding.down) || (y_wannago < 0 && !colliding.up)) {
-			this.y += y_wannago;
-			move_data.y = y_wannago;
-		}
-		
-		this.predictedmoves.push(move_data);
-		
 		this.sprite.x = this.x;
 		this.sprite.y = this.y;
 		this.sprite.rotation = this.rotation;
