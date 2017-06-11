@@ -6,11 +6,30 @@ g_window_size = {'x':g_site_orig_width,'y':g_site_orig_height};
 
 g_tank_colors = ['0x333333','0x999999','0xffffff','0xff4d4d','0xffa64d','0xffff4d','0x79ff4d','0x4dffa6','0x4dd2ff','0x4d4dff','0xd24dff','0xff4da6'];
 
+//tesztelős cuccok
 g_ipol_on = true;
-
+g_ghost = false;
+function t_ipol(data) {
+	g_ipol_on = data;
+}
+function t_ghost(data) {
+	if (data) {
+		if (g_ghost === false) {
+			ghosttank = new PIXI.Sprite(g_textures.tank);//teszteléshez
+			ghosttank.anchor.set(0.45,0.5);
+			g_app.stage.addChild(ghosttank);
+		}
+		g_ghost = true;
+	} else {
+		if (g_ghost === true) {
+			g_app.stage.removeChild(ghosttank);
+		}
+		g_ghost = false;
+	}
+}
 //timing
 g_timing = { //amennyi a szám, annyi tik/sec (vagy fps)
-	'input_sending': 30
+	'input_sending': 20
 };
 
 //pixi setup
@@ -41,3 +60,4 @@ g_self_data = {
 
 //socket dolgai
 socket = io();
+		

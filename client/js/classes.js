@@ -60,6 +60,13 @@ class Entity {
 			this.ipol_data.end.direction = dir;
 			this.ipol_data.speed = spd;
 			this.ipol_data.rotate_speed = rot_spd;
+		} else {
+			//teszteléshez
+			if (g_ghost) {
+				ghosttank.x = x;
+				ghosttank.y = y;
+				ghosttank.rotation = dir;
+			}
 		}
 	}
 	//maga a mozgatás: 60 fps-sel fusson
@@ -141,7 +148,8 @@ class Tank extends Entity{
 		this.sprite.tint = this.tint;
 		this.shoot_button_up = true;
 		this.movement_timer = 0;
-		this.list_of_inputs = []; //az inputok listája, predictionhöz
+		this.list_of_inputs = []; //az inputok listája, predictionhöz (TODO: talán ki kéne szervezni innen ezeket?)
+		this.server_lastpos = {'x':0,'y':0,'d':0};
 		this.list_of_inputs_temp = []; //csak a szervernek nem elküldött inputokat tárolja
 		//this.can_shoot = true;
 		//this.shoot_type = "bb"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
@@ -213,19 +221,17 @@ class Tank extends Entity{
 		this.list_of_inputs_temp = [];
 	};
 	apply_input_movement_data (index,starting_point = false) { 
-		this.hitbox = { //téglalap 4 sarka
-			'x1':this.x-13,
-			'x2':this.x+13,
-			'y1':this.y-13,
-			'y2':this.y+13
-		};
 		
-		g_collisioner.update_arrays(); //nem baj, mert elvileg csak a saját tankra futtatom le ezt a kódrészt, nem multiplikálódik a tankok számával
 
 		if (starting_point) { //ha van starting point, akkor oda állítja a playert és onnan futtatja a cuccot
 			this.x = starting_point.x;
 			this.y = starting_point.y;
 			this.rotation = starting_point.rotation;
+			this.server_lastpos = {'x':starting_point.x,'y':starting_point.y,'d':starting_point.rotation};
+			if (index === false) {
+				return; //kihagyott a szerver valamiért. nem csinálunk semmit
+			}
+			//console.log('index: '+index+'starting: '+this.list_of_inputs[0][4]);
 		}
 		/*if (starting_point) {
 			console.log(starting_point.x);
@@ -234,6 +240,15 @@ class Tank extends Entity{
 		let remove_count = 0;
 		//itt a loop nem a tömb elejéről dolgozza fel az elemeket, hanem az index és a tömb vége közt mindet. jelentősen eltér a szerver kódtól.
 		for (let loop_index = 0; loop_index < this.list_of_inputs.length; loop_index++) {
+			
+			this.hitbox = { //téglalap 4 sarka
+				'x1':this.x-13,
+				'x2':this.x+13,
+				'y1':this.y-13,
+				'y2':this.y+13
+			};
+			
+			g_collisioner.update_arrays(); //nem baj, mert elvileg csak a saját tankra futtatom le ezt a kódrészt, nem multiplikálódik a tankok számával
 			
 			let input_data = this.list_of_inputs[loop_index]; //kiszedjük a tömbből
 			if (input_data[4] === undefined) {
@@ -302,6 +317,7 @@ class Tank extends Entity{
 			}
 		}
 		if (starting_point) { //ha volt megadott kezdőpont, akkor korrigáltunk, és akkor a szerver állapot előtti dolgokat kidobhatjuk, mert nem kellenek.
+			//console.log(remove_count);
 			this.list_of_inputs.splice(0,remove_count);
 		}
 		

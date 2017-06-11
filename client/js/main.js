@@ -54,6 +54,11 @@ socket.on('init', function(data){
 	if (data.clear_all === true) { //teljes reset
 		g_collisioner = new CollisionManager({});
 		clear_local_map();
+		if (g_ghost) {
+			ghosttank = new PIXI.Sprite(g_textures.tank);//teszteléshez
+			ghosttank.anchor.set(0.45,0.5);
+			g_app.stage.addChild(ghosttank);
+		}
 	}
 
 	for (let w in data.walls) {
@@ -85,6 +90,7 @@ socket.on('init', function(data){
 			'tint': data.bullets[t].tint
 		});
 	}
+	
 });
 
 //TODO: a server_update funkció már nem használandó sehol

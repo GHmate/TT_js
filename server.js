@@ -54,7 +54,7 @@ io.sockets.on('connection', function (socket) {
 		if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
 			return;
 		}
-		let next_id = (data[0] === undefined?0:data[0][4]);
+		let next_id = (data[0] === undefined?false:data[0][4]);
 		Tank.list[socket.id].apply_input_movement_data(Tank.list[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
 		Tank.list[socket.id].list_of_inputs = Tank.list[socket.id].list_of_inputs.concat(data);
 		let response_data = {
