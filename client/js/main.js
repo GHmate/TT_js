@@ -120,12 +120,21 @@ socket.on('update_entities', function(data){
 socket.on('destroy', function(data){
 	for (let t in data.tanks) {
 		if (Tank.list[data.tanks[t]] !== undefined) {
+			Tank.list[data.tanks[t]].inactive = true;
 			Tank.list[data.tanks[t]].destroy([Tank.list]);
 		}
 	}
 	for (let t in data.bullets) {
 		if (Bullet.list[data.bullets[t]] !== undefined) {
 			Bullet.list[data.bullets[t]].destroy([Bullet.list]);
+		}
+	}
+});
+
+socket.on('world_active', function(data){
+	if (data) {
+		if (Tank.list[g_self_data.id] !== undefined) {
+			Tank.list[g_self_data.id].inactive = false;
 		}
 	}
 });
@@ -171,19 +180,15 @@ socket.on('input_response', function(position){
 		g_self_data.latency_counter = 0;
 		g_self_data.latency_check = false;
 	}
-	//console.log(g_self_data.tiks_after_input_sent);
 	if (Tank.list[g_self_data.id] !== undefined) {
 		//az utolsó n daradb inputot újra-szimulálja a szervertől kapott pozícióra (instant), és korrigálja a jelenlegi helyet.
 		//(n a ping és pong közt eltelt tik-ek száma) majd törli a szimuláltaknál is régebbi input adatokat.
 		
 		/*let list_length = Tank.list[g_self_data.id].list_of_inputs.length;
 		let index = list_length-g_self_data.tiks_after_input_sent-Math.ceil(g_self_data.latency*2);
-		console.log(g_self_data.latency);
 		if (index < 0) {
 			index = 0;
 		}*/
-		//console.log('length: '+list_length);
-		//console.log('index: '+index);
 		Tank.list[g_self_data.id].apply_server_info(position.next_processed,position);
 	}
 	g_self_data.tiks_after_input_sent = 0;

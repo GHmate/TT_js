@@ -18,7 +18,7 @@ g_playerdata = {}; //játékosok (és nem tankok) adatai
 g_tank_colors = ['0x333333','0x999999','0xffffff','0xff4d4d','0xffa64d','0xffff4d','0x79ff4d','0x4dffa6','0x4dd2ff','0x4d4dff','0xd24dff','0xff4da6'];
 g_player_min_distance = 4; //milyen távolságra lehetnek playerek
 g_player_distance_fields = 25; //maximum mennyi node-ot foglal egy player a minimális táv miatt
-g_path_gen_chance = 0.55; //útvonal generálási esély. célszerű 0.4 és 0.7 között tartani.
+g_path_gen_chance = 0.6; //útvonal generálási esély. célszerű 0.4 és 0.7 között tartani.
 
 g_worlds_number = 0;
 g_worlds = {};

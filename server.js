@@ -8,7 +8,7 @@ app.get('/', function (req, res) {
 app.use('/', express.static(__dirname + '/client'));
 
 serv.listen(process.env.PORT || 8080);
-console.log("Server started.");
+console.log("Ready to roll out!");
 SOCKET_LIST = {};
 
 var io = require('socket.io')(serv, {});
@@ -21,6 +21,7 @@ require("./server_files/s_classes.js");
 if (g_worlds_number < 1) {
 	g_worlds['0'] = {'leteheto_nodes':[],'tanks': []};
 	g_worlds_number++;
+	g_worlds['0'].countdown = 180;
 	regenerate_map();
 }
 
@@ -35,7 +36,7 @@ io.sockets.on('connection', function (socket) {
 		'world_id': '0',
 		'score': 0
 	};
-
+	
 	//kreálunk új tankot, ha játék közben lépett be (ami ki lesz szedve a végleges verzióban amúgy)
 	add_tank(socket.id);
 	
@@ -51,7 +52,7 @@ io.sockets.on('connection', function (socket) {
 	});
 	
 	socket.on('input_list', function (data) {
-		if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
+		if (Tank.list[socket.id] === undefined || Tank.list[socket.id].inactive === true) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
 			return;
 		}
 		let next_id = (data[0] === undefined?false:data[0][4]);
@@ -93,6 +94,20 @@ setInterval(function () {
 			Bullet.list[t].updatePosition();
 		}
 	}
+	for (let i in g_worlds) {
+		let world = g_worlds[i];
+		if (world.countdown > 0) {
+			world.countdown--;
+			if (world.countdown === 0) {
+				broadcast_simple('world_active',true);
+				for (let index in world.tanks) {
+					if (Tank.list[world.tanks[index]] !== undefined) {
+						Tank.list[world.tanks[index]].inactive = false;
+					}
+				}
+			}
+		}
+	}
 }, 1000 / 60); //60 fps
 
 //komenikáció
@@ -106,6 +121,11 @@ setInterval(function () {
 			'tanks': Tank.list,
 			'bullets': Bullet.list
 		});
+		
+		if (g_worlds['0'].countdown === 0) {
+			socket.emit('world_active',true);
+			Tank.list[socket.id].inactive = false;
+		}
 
 		//megmondjuk mindenki másnak, hogy hol az új játékos tankja
 		let self_id = socket.id;//kényszerűségből... nem akarja kulcsként engedni a socket.id-t vagy a socket['id']-t

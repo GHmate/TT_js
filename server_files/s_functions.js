@@ -12,7 +12,6 @@ generate_map = function (dimensions) {
 		max_block_num = 0; //nullázunk minden generálás előtt
 		actual_block = 0;
 		selected_block = 0;
-		//console.log('generalas');
 		var graph =[]; //2 dimenziós mátrix, elemei node-ok
 		for (var x = 0; x < dimensions.x; x++) {
 			graph[x] = [];
@@ -178,6 +177,8 @@ regenerate_map = function () { //játék elején vagy egy pálya végén az új 
 		'tanks': Tank.list
 	};
 	broadcast_simple('init',init);
+	g_worlds['0'].countdown = 180;
+	
 };
 
 add_tank = function (id) {
@@ -188,7 +189,6 @@ add_tank = function (id) {
 	shuffle(g_tank_colors);
 	for (k in g_worlds['0'].leteheto_nodes) {
 		var node = graph[g_worlds['0'].leteheto_nodes[k][0]][g_worlds['0'].leteheto_nodes[k][1]];
-		//console.log(node);
 		/*if (Tank.list_count >= g_max_player_num) {
 			break;
 		}*/
@@ -240,7 +240,6 @@ createExtra = function (){
 		'id': Extra.list_id_count,
 		'type': Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]
 	});
-//console.log(Extra.list[Extra.list_id_count].type);
 	Extra.list_id_count ++;
 };
 //random int
@@ -274,12 +273,17 @@ broadcast_simple = function(name,data = '',socket_list = get_world_sockets(SOCKE
 	}
 };
 
+/*broadcast_world = function(name,data = '',socket_list = get_world_sockets(SOCKET_LIST)) { //TODO: minden emberkének broadcastol, még ha nincs tankja akkor is
+	
+}*/
+
 kill_one_tank = function (tank, bullet) {
 	let world_id = g_playerdata[tank.id].world_id;
 	if (!world_has_tank(world_id,tank.id)) {
 		return;
 	}
 	world_add_remove_tank (world_id,tank.id,0);
+	tank.inactive = true;
 	tank.destroy([Tank.list]);
 	bullet.destroy([Bullet.list]);
 	

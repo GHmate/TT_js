@@ -43,6 +43,7 @@ Tank = class Tank extends Entity{
 		if (data.rotation === undefined) {data.rotation = Math.random()*2*Math.PI;}
 		if (data.tint === undefined) {data.tint = g_tank_colors[0];}
 		super(data);
+		this.inactive = true;
 		this.normal_speed = this.speed;
 		this.can_shoot = true;
 		this.shoot_type = "normal"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
@@ -52,7 +53,15 @@ Tank = class Tank extends Entity{
 		this.updatePosition();
 	}
 	updatePosition() {
-		
+		this.hitbox = { //téglalap 4 sarka
+			'x1':this.x-13,
+			'x2':this.x+13,
+			'y1':this.y-13,
+			'y2':this.y+13
+		};
+		if (this.inactive) {
+			return;
+		}
 		//többet, mint 1, ha ugrani kell
 		this.apply_input_movement_data(1);
 		
@@ -77,7 +86,6 @@ Tank = class Tank extends Entity{
 			};
 			this.bullet_timer -= 0.75;	
 		}
-		
 		//ha Tank ütközik bullettel
 		let collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
 		let colliding_bullet = collision_data['collision'];
@@ -89,8 +97,12 @@ Tank = class Tank extends Entity{
 				}
 			}
 		};
+		
 	};
 	apply_input_movement_data (repeat) {
+		if (this.inactive) {
+			return;
+		}
 		for (let rep = 0; rep < repeat; rep++) {
 			
 			let input_data = this.list_of_inputs.splice(0,1); //kiszedjük a tömbből
@@ -152,12 +164,13 @@ Tank = class Tank extends Entity{
 		}
 	}
 	triggerShoot() {
+		if (this.inactive) {
+			return;
+		}
 		if (this.can_shoot){
 			//bb
 			if (this.shoot_type === "bb") {
 				this.can_shoot = false;
-				//console.log("átállít");
-				
 				this.shoot_type = "bb_s";
 				Bullet.list[Bullet.list_id_count] = new BigBullet({
 					'x': this.x,
@@ -224,7 +237,7 @@ Tank = class Tank extends Entity{
 		};
 		broadcast_simple('destroy',data,get_world_sockets(SOCKET_LIST));
 	}
-}
+};
 
 //lövedék
 Bullet = class Bullet extends Entity{
@@ -262,7 +275,6 @@ Bullet = class Bullet extends Entity{
 		let y_w_rounded = y_wannago >= 0 ? Math.ceil(y_wannago) : Math.floor(y_wannago);
 		let collision_data = g_collisioner.check_collision_one_to_n(this,Wall,x_w_rounded,y_w_rounded);
 		let colliding = collision_data['collision'];
-		//console.log(colliding);
 		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
 			x_wannago = -x_wannago; //és a mostani célzott helyet is felülírom
@@ -286,6 +298,7 @@ Bullet = class Bullet extends Entity{
 		}
 	};
 	destroy (param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
+		this.inactive = true;
 		super.destroy(param);
 		let self_id = this.id;
 		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
@@ -293,7 +306,7 @@ Bullet = class Bullet extends Entity{
 		};
 		broadcast_simple('destroy',data,get_world_sockets(SOCKET_LIST));
 	}
-}
+};
 
 BigBullet = class BigBullet extends Bullet{
 		constructor(data) {

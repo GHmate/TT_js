@@ -142,6 +142,7 @@ class Tank extends Entity{
 		if (data.height === undefined) {data.height = 26;}
 		if (data.rotation === undefined) {data.rotation = Math.random()*2*Math.PI;}
 		super(data);
+		this.inactive = true;
 		this.normal_speed = this.speed;
 		this.sprite.rotation = this.rotation;
 		this.sprite.anchor.set(0.45,0.5);
@@ -165,7 +166,6 @@ class Tank extends Entity{
 		};
 		this.predict();
 	}
-	
 	//triggerShoot() {}
 	//createBullet() {};	
 	//ext_machinegun(){};
@@ -198,9 +198,14 @@ class Tank extends Entity{
 		}
 	}
 	keyevent(name,value) {
-		this.keypress[name] = value;
+		if (!this.inactive) {
+			this.keypress[name] = value;
+		}
 	}
 	predict() {
+		if (this.inactive) {
+			return;
+		}
 		//logoljuk az inputokat
 		let input_data = [
 			this.keypress['up']?1:0,
@@ -237,7 +242,6 @@ class Tank extends Entity{
 			last_rail_part = this.movement_rail[0];
 		}
 		
-		//console.log(this.movement_rail);
 		let self_start_position = {
 			'x': last_rail_part.x+last_rail_part.x_dist,
 			'y': last_rail_part.y+last_rail_part.y_dist
@@ -314,7 +318,7 @@ class Tank extends Entity{
 
 		//let input_data = this.list_of_inputs[loop_index]; //kiolvassuk a tömbből
 		if (input_data[4] === undefined) {
-			console.log('nincs index');
+			console.log('kapott input: nincs index');
 		}
 
 		if (input_data[1] === 1) {
@@ -386,7 +390,6 @@ class Tank extends Entity{
 		if (index === false) {
 			return; //kihagyott a szerver valamiért. nem csinálunk semmit
 		}
-		//console.log('index: '+index+'starting: '+this.list_of_inputs[0][4]);
 		
 		let start_doing = false;
 		let remove_count = 0;
@@ -406,7 +409,6 @@ class Tank extends Entity{
 			}
 		}
 		if (starting_point) { //korrigáltunk, és akkor a szerver állapot előtti dolgokat kidobhatjuk, mert nem kellenek.
-			//console.log(remove_count);
 			this.list_of_inputs.splice(0,remove_count);
 		}
 		
@@ -432,53 +434,21 @@ class Tank extends Entity{
 			}
 		}
 		if (starting_point) { //korrigáltunk, és akkor a szerver állapot előtti dolgokat kidobhatjuk, mert nem kellenek.
-			//console.log(remove_count);
 			this.movement_rail.splice(0,remove_count);
 		}
-		
-		if (this.list_of_inputs.length !== this.movement_rail.length-1) {
-			//console.log(this.list_of_inputs.length+' '+this.movement_rail.length);
-			//die('nagy baj: nem +1-gyel nagyobb a rail, mint az input');
-		}
-		
-		//this.repair_rail ();
 	};
-	repair_rail () { //itt a 2 használt tömb egyenlő méretű kell hogy legyen
-		this.movement_rail[0].x = this.server_lastpos.x;
-		this.movement_rail[0].y = this.server_lastpos.y;
-		//this.movement_rail[0].d = this.server_lastpos.d;
-		for (let loop_index = 0; loop_index < this.list_of_inputs.length; loop_index++) { //inputból mindig eggyel több van
-			let simulated_pos = this.simulate_input (this.movement_rail[loop_index],this.list_of_inputs[loop_index]);
-			
-			this.movement_rail[loop_index+1].d = simulated_pos.d;
-			this.movement_rail[loop_index+1].x_dist = simulated_pos.x-this.movement_rail[loop_index+1].x;
-			this.movement_rail[loop_index+1].y_dist = simulated_pos.y-this.movement_rail[loop_index+1].y;
-			this.movement_rail[loop_index+1].dist = Math.sqrt(Math.pow(this.movement_rail[loop_index+1].x_dist,2)+Math.pow(this.movement_rail[loop_index+1].y_dist,2));
-			this.movement_rail[loop_index+1].x = simulated_pos.x;
-			this.movement_rail[loop_index+1].y = simulated_pos.y;
-			
-			/*if (loop_index-1 < this.movement_rail.length) { //-1, mert az utolsó elemnél nem tudom az őt követő elemet javítani
-				this.movement_rail[i+1].x = simulated_pos.x;
-				this.movement_rail[i+1].y = simulated_pos.y;
-			}
-			this.movement_rail[i].d = simulated_pos.d;
-			this.movement_rail[i].x_dist = simulated_pos.x-last_rail_part.x,
-			this.movement_rail[i].y_dist = simulated_pos.y-last_rail_part.y,
-			this.movement_rail[i].dist = Math.sqrt(Math.pow(simulated_pos.x-last_rail_part.x,2)+Math.pow(simulated_pos.y-last_rail_part.y,2)),*/
-			
-			
-			/*let new_rail_part = {
-				'id': this.movement_timer,
-				'x': last_rail_part.x+last_rail_part.x_dist,
-				'y': last_rail_part.y+last_rail_part.y_dist,
-				'd': simulated_pos.d, //d nem baj, ha az új adat, mert a forgás itt nem befolyásolja a mozgást, és így természetesebbnek hat szerintem
-				'x_dist': simulated_pos.x-(last_rail_part.x+last_rail_part.x_dist),
-				'y_dist': simulated_pos.y-(last_rail_part.y+last_rail_part.y_dist),
-				'dist': Math.sqrt(Math.pow(simulated_pos.x-last_rail_part.x,2)+Math.pow(simulated_pos.y-last_rail_part.y,2)),
-				'processed': 0 //0: nincs processzálva. 1: végig processzáltuk. 0-1 közt: épp processzálva van, részben megtettük a szakasz távolságát (hány százalékban)
-			};*/
-		}
-	}
+	/*repair_movement (server_pos) { //TODO: ha a saját pozíció nagyon eltér a szervertől kapottól, ne updatelje magát egy darabig, csak várjon a szerver-pozícióra.
+		//console.log('reset');
+		this.x = server_pos.x;
+		this.y = server_pos.y;
+		this.rotation = server_pos.d;
+		console.log(server_pos.d);
+		this.movement_rail = [{ //hozzáadunk egy első elemet
+			'id': 0, 'x': server_pos.x, 'y': server_pos.y, 'd': server_pos.d, 'x_dist': 0, 'y_dist': 0, 'dist': 0, 'processed':0
+		}];
+		this.list_of_inputs = [];
+		this.list_of_inputs_temp = [];
+	}*/
 }
 
 //lövedék
