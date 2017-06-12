@@ -90,7 +90,6 @@ socket.on('init', function(data){
 			'tint': data.bullets[t].tint
 		});
 	}
-	
 });
 
 //TODO: a server_update funkció már nem használandó sehol
@@ -185,7 +184,7 @@ socket.on('input_response', function(position){
 		}*/
 		//console.log('length: '+list_length);
 		//console.log('index: '+index);
-		Tank.list[g_self_data.id].apply_input_movement_data(position.next_processed,position);
+		Tank.list[g_self_data.id].apply_server_info(position.next_processed,position);
 	}
 	g_self_data.tiks_after_input_sent = 0;
 });

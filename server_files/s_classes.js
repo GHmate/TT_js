@@ -13,6 +13,7 @@ Entity = class Entity {
 		this.height = (data.height !== undefined ? data.height : 10);
 		this.rotation = (data.rotation !== undefined ? data.rotation : 0);
 		this.tint = (data.tint !== undefined ? data.tint : '0xffffff');
+		this.inactive = false;
 	}
 	//meg kell szüntetni minden referenciát ami rá mutat, akkor törlődik csak! (garbage collector)
 	destroy(lists = []) {//dupla-tömböt [[]] vár, nem sima tömböt
@@ -82,7 +83,8 @@ Tank = class Tank extends Entity{
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
-				if (b.player_id !== this.id) {
+				if (b.player_id !== this.id && b.inactive === false) {
+					b.inactive = true;
 					kill_one_tank(this,b);
 				}
 			}

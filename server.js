@@ -19,7 +19,7 @@ require("./server_files/s_classes.js");
 
 //ha még nem volt generálva, legenerálja a pályát.
 if (g_worlds_number < 1) {
-	g_worlds['0'] = {'leteheto_nodes':[],'tanks': {},'tank_count': 0};
+	g_worlds['0'] = {'leteheto_nodes':[],'tanks': []};
 	g_worlds_number++;
 	regenerate_map();
 }
@@ -78,7 +78,7 @@ io.sockets.on('connection', function (socket) {
 		if (g_playerdata[socket.id] !== undefined) {
 			delete g_playerdata[socket.id];
 		}
-		g_worlds['0'].tank_count--;
+		world_add_remove_tank('0',socket.id,0);
 	});
 });
 
@@ -99,7 +99,7 @@ setInterval(function () {
 setInterval(function () {
 	for (let socket of new_players_emit_stuff) {
 		//elmeséljük az újonnan érkezett zöldfülűnek, hogy mi a helyzet a pályán
-		socket.emit ('init',{ //TODO: bugos volt több emittel -> kiszervezni, hogy ne az onconnect-ben emitelgessen, hanem a loopban
+		socket.emit ('init',{
 			'clear_all': true,
 			'global': {'id': socket.id},
 			'walls': Wall.list,
