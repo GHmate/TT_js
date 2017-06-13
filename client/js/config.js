@@ -76,6 +76,10 @@ function onAssetsLoaded()
     }
     focus_circle = new PIXI.extras.AnimatedSprite(frames);
     focus_circle.anchor.set(0.5);
+	
+	if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) { //TODO: ez a pár sor csak addig kell, amég betöltéskor egyből bedobja a tankot
+		start_circle_focus({'x': Tank.list[g_self_data.id].x, 'y': Tank.list[g_self_data.id].y});
+	}
 }
 
 //socket dolgai
