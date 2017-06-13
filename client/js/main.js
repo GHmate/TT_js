@@ -10,11 +10,14 @@ document.onkeydown = function(event){
 		tank_control = 'right';
 	} else if(event.keyCode === 40) { //le
 		tank_control = 'down';
-	} else if(event.keyCode === 32) { //space
+	} else if(event.keyCode === 86) { //V
 		if (g_self_data.shoot_button_up === true) {
-			socket.emit('keyPress', {inputId: 'shoot', state: true});
-			tank_control = 'shoot';
-			g_self_data.shoot_button_up = false;
+			if (Tank.list[g_self_data.id] !== undefined) {
+				//Tank.list[g_self_data.id].keyevent(tank_control,false);
+				g_self_data.shoot_button_up = false;
+				socket.emit('keyPress', {inputId: 'shoot', state: true, 'turning': Tank.list[g_self_data.id].keypress});
+				tank_control = 'shoot';
+			}
 		}
 	}
 	if (Tank.list !== undefined) {
@@ -34,10 +37,13 @@ document.onkeyup = function(event){
 		tank_control = 'right';
 	} else if(event.keyCode === 40) { //le
 		tank_control = 'down';
-	} else if(event.keyCode === 32) { //space
-		g_self_data.shoot_button_up = true;
-		socket.emit('keyPress', {inputId: 'shoot', state: false});
-		tank_control = 'shoot';
+	} else if(event.keyCode === 86) { //V
+		if (Tank.list[g_self_data.id] !== undefined) {
+			//Tank.list[g_self_data.id].keyevent(tank_control,false);
+			g_self_data.shoot_button_up = true;
+			socket.emit('keyPress', {inputId: 'shoot', state: false});
+			tank_control = 'shoot';
+		}
 	}
 	if (tank_control !== '' && Tank.list[g_self_data.id] !== undefined) {
 		Tank.list[g_self_data.id].keyevent(tank_control,false);
@@ -90,6 +96,9 @@ socket.on('init', function(data){
 			'tint': data.bullets[t].tint
 		});
 	}
+	if (data.clear_all === true && focus_circle_data.phase === -1) {
+		start_circle_focus({'x': Tank.list[g_self_data.id].x, 'y': Tank.list[g_self_data.id].y});
+	}
 });
 
 //TODO: a server_update funkció már nem használandó sehol
@@ -112,6 +121,17 @@ socket.on('update_entities', function(data){
 				Bullet.list[s_bullet.id].start_ipol(s_bullet.x,s_bullet.y,s_bullet.rotation,s_bullet.spd,s_bullet.rot_spd);
 			} else {
 				Bullet.list[s_bullet.id].server_update({'x': s_bullet.x, 'y': s_bullet.y, 'rotation': s_bullet.rotation});
+			}
+		}
+	}
+});
+
+socket.on('update_tint', function(data){
+	for (let t in data.tank) {
+		let s_tank = data.tank[t];
+		if (Tank.list[s_tank.id] !== undefined) {
+			if (s_tank.tint !== undefined) {
+				Tank.list[s_tank.id].changeColor(s_tank.tint);
 			}
 		}
 	}
@@ -171,6 +191,9 @@ g_app.ticker.add(function(delta) {
 	}
 	for (let i in Bullet.list) {
 		Bullet.list[i].ipol();
+	}
+	if (focus_circle_data.phase !== -1) {
+		circle_focus_steps();
 	}
 });
 

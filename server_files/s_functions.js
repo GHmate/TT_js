@@ -177,7 +177,7 @@ regenerate_map = function () { //játék elején vagy egy pálya végén az új 
 		'tanks': Tank.list
 	};
 	broadcast_simple('init',init);
-	g_worlds['0'].countdown = 180;
+	g_worlds['0'].countdown = 110;
 	
 };
 
@@ -186,7 +186,6 @@ add_tank = function (id) {
 	//legyártjuk a tankot
 	let success = false;
 	shuffle(g_worlds['0'].leteheto_nodes);
-	shuffle(g_tank_colors);
 	for (k in g_worlds['0'].leteheto_nodes) {
 		var node = graph[g_worlds['0'].leteheto_nodes[k][0]][g_worlds['0'].leteheto_nodes[k][1]];
 		/*if (Tank.list_count >= g_max_player_num) {
@@ -198,7 +197,8 @@ add_tank = function (id) {
 				'y': node.y,
 				'x_graph': node.x_graph,
 				'y_graph': node.y_graph,
-				'id': id
+				'id': id,
+				'tint': g_playerdata[id].tint
 			});
 			Tank.list_count++;
 			success = true;
@@ -313,4 +313,26 @@ world_check_for_winner = function(world_id) {
 		return g_worlds[world_id].tanks[0];
 	}
 	return false;
+};
+
+request_modify_user_data = function (socket_id,data) {
+	if (data.tint !== undefined) {
+		g_playerdata[socket_id].tint = data.tint;
+		if (Tank.list[socket_id] !== undefined) {
+			Tank.list[socket_id].tint = data.tint;
+		}
+		
+		let update_tank = [];
+		for (let i in Tank.list) {
+			update_tank.push({
+				'id': Tank.list[i].id,
+				'tint': Tank.list[i].tint
+			});
+		}
+
+		for (var i in SOCKET_LIST) {
+			SOCKET_LIST[i].emit('update_tint', {'tank': update_tank});
+		}
+		
+	}
 };

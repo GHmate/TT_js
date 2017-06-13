@@ -21,7 +21,7 @@ require("./server_files/s_classes.js");
 if (g_worlds_number < 1) {
 	g_worlds['0'] = {'leteheto_nodes':[],'tanks': []};
 	g_worlds_number++;
-	g_worlds['0'].countdown = 180;
+	g_worlds['0'].countdown = 110;
 	regenerate_map();
 }
 
@@ -34,7 +34,8 @@ io.sockets.on('connection', function (socket) {
 
 	g_playerdata[socket.id] = {
 		'world_id': '0',
-		'score': 0
+		'score': 0,
+		'tint': g_tank_colors[getRandomInt(0,g_tank_colors.length-1)]
 	};
 	
 	//kreálunk új tankot, ha játék közben lépett be (ami ki lesz szedve a végleges verzióban amúgy)
@@ -47,7 +48,14 @@ io.sockets.on('connection', function (socket) {
 			return;
 		}
 		if(data.inputId === 'shoot' && data.state) {
-			Tank.list[socket.id].triggerShoot();
+			let turn = '';
+			if (data.turning.left && !data.turning.right) {
+				turn = 'l';
+			}
+			if (!data.turning.left && data.turning.right) {
+				turn = (turn === '' ? 'r' : '');
+			}
+			Tank.list[socket.id].triggerShoot(turn);
 		}
 	});
 	
@@ -80,6 +88,10 @@ io.sockets.on('connection', function (socket) {
 			delete g_playerdata[socket.id];
 		}
 		world_add_remove_tank('0',socket.id,0);
+	});
+	
+	socket.on('request_modify_user_data', function (data) {
+		request_modify_user_data(socket.id,data);
 	});
 });
 
@@ -145,7 +157,8 @@ setInterval(function () {
 			'y': Tank.list[i].y,
 			'rotation': Tank.list[i].rotation,
 			'spd': Tank.list[i].speed,
-			'rot_spd': Tank.list[i].rot_speed
+			'rot_spd': Tank.list[i].rot_speed,
+			'tint': Tank.list[i].tint
 		});
 	}
 	for (let i in Bullet.list) {

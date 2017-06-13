@@ -169,7 +169,9 @@ class Tank extends Entity{
 	//triggerShoot() {}
 	//createBullet() {};	
 	//ext_machinegun(){};
-	//changeColor(color) {//this.sprite.tint = color;}
+	changeColor(color) {
+		this.tint = this.sprite.tint = color;
+	}
 	server_update(s_tank) { //tulajdonképpen csak teszteléshez marad itt
 		if (s_tank.x !== undefined) {this.x = s_tank.x; this.sprite.x = s_tank.x;}
 		if (s_tank.y !== undefined) {this.y = s_tank.y; this.sprite.y = s_tank.y;}
@@ -198,9 +200,7 @@ class Tank extends Entity{
 		}
 	}
 	keyevent(name,value) {
-		if (!this.inactive) {
-			this.keypress[name] = value;
-		}
+		this.keypress[name] = value;
 	}
 	predict() {
 		if (this.inactive) {
@@ -455,7 +455,7 @@ class Tank extends Entity{
 class Bullet extends Entity{
 	constructor(data) {
 		if (data.texture === undefined) {data.texture = g_textures.bullet;}
-		//if (data.speed === undefined) {data.speed = 3;}
+		//if (data.speed === undefined) {data.speed = 2.6;}
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
 		super(data);

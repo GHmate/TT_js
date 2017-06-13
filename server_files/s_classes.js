@@ -163,11 +163,18 @@ Tank = class Tank extends Entity{
 			}
 		}
 	}
-	triggerShoot() {
+	triggerShoot(turn) {
 		if (this.inactive) {
 			return;
 		}
 		if (this.can_shoot){
+			let t = 0;
+			if (turn === 'l') {
+				t = -1;
+			} else if (turn === 'r') {
+				t = 1;
+			}
+			let fixed_rotation = this.rotation + 5*t*Math.abs(this.rot_speed);
 			//bb
 			if (this.shoot_type === "bb") {
 				this.can_shoot = false;
@@ -179,18 +186,19 @@ Tank = class Tank extends Entity{
 					'y_graph': this.y_graph,
 					'id': Bullet.list_id_count,
 					'player_id': this.id,
-					'rotation': this.rotation,
+					'rotation': fixed_rotation,
 					'tint': this.tint
 				});
 				Bullet.list_id_count++;
 
 
 			} else if (this.shoot_type === "normal") {
-				this.createBullet();
+				this.createBullet({'rotation': fixed_rotation});
 			}
 		};
 	}
-	createBullet() {
+	createBullet(data) {
+		let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
 		if (this.bullet_count > 0){ 
 			Bullet.list[Bullet.list_id_count] = new Bullet({
 				'x': this.x,
@@ -199,7 +207,7 @@ Tank = class Tank extends Entity{
 				'y_graph': this.y_graph,
 				'id': Bullet.list_id_count,
 				'player_id': this.id,
-				'rotation': this.rotation,
+				'rotation': rot,
 				'tint': this.tint
 			});
 			let bl = {
@@ -225,10 +233,6 @@ Tank = class Tank extends Entity{
 		Bullet.list_id_count ++;
 	};
 
-	changeColor(color) {
-		this.tint = color;
-	}
-	
 	destroy (param) {
 		super.destroy(param);
 		let self_id = this.id;
@@ -242,7 +246,7 @@ Tank = class Tank extends Entity{
 //lövedék
 Bullet = class Bullet extends Entity{
 	constructor(data) {
-		if (data.speed === undefined) {data.speed = 3;}
+		if (data.speed === undefined) {data.speed = 2.6;}
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
 		super(data);

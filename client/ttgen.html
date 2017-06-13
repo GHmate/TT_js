@@ -80,10 +80,9 @@
 				jQuery(".modal_color_picker").click(function(e) {
 					e.stopPropagation();
 					let color = jQuery(this).attr('data').replace('#','0x');
-					let is_valid_color = true;
-					if (is_valid_color) {
-						Player.list[0].changeColor(color);
-					}
+					
+					socket.emit('request_modify_user_data',{'tint': color});
+
 					modal_window.css('display','none');
 				});
 			}

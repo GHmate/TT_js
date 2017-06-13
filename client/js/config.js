@@ -58,6 +58,25 @@ g_self_data = {
 	'tiks_after_input_sent': 0
 };
 
+focus_circle_data = {
+	'phase': -1,
+	'countdown': 0
+};
+
+//spritesheets
+PIXI.loader
+    .add('images/spritesheets/focus_circle.json')
+    .load(onAssetsLoaded);
+
+function onAssetsLoaded()
+{
+    var frames = [];
+    for (var i = 0; i < 29; i++) {
+        frames.push(PIXI.Texture.fromFrame('circle_frame_' + i + '.png'));
+    }
+    focus_circle = new PIXI.extras.AnimatedSprite(frames);
+    focus_circle.anchor.set(0.5);
+}
+
 //socket dolgai
 socket = io();
-		
