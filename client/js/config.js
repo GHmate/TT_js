@@ -67,7 +67,7 @@ focus_circle_data = {
 PIXI.loader
     .add('images/spritesheets/focus_circle.json')
     .load(onAssetsLoaded);
-
+focus_circle = undefined;
 function onAssetsLoaded()
 {
     var frames = [];
