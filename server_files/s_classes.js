@@ -295,14 +295,14 @@ Bullet = class Bullet extends Entity{
 		this.timer --;
 
 		if (this.timer < 1) {
-			if (Tank.list[this.player_id] !== undefined) {
-				Tank.list[this.player_id].bullet_count ++;
-			}
 			this.destroy([Bullet.list]);
 		}
 	};
 	destroy (param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
 		this.inactive = true;
+		if (Tank.list[this.player_id] !== undefined) {
+			Tank.list[this.player_id].bullet_count ++;
+		}
 		super.destroy(param);
 		let self_id = this.id;
 		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
@@ -346,10 +346,7 @@ BigBullet = class BigBullet extends Bullet{
 		if (this.timer < 550){
 			this.boom();
 		};
-		
-
 	};
-	
 }; 	
 	
 
