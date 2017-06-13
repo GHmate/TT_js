@@ -96,7 +96,7 @@ socket.on('init', function(data){
 			'tint': data.bullets[t].tint
 		});
 	}
-	if (data.clear_all === true && focus_circle_data.phase === -1 && focus_circle !== undefined) { //TODO: utolsó feltétel csak addig kell, amég betöltéskor egyből bedobja a tankot
+	if (data.clear_all === true && focus_circle !== undefined && focus_circle_data.phase === -1) {
 		start_circle_focus({'x': Tank.list[g_self_data.id].x, 'y': Tank.list[g_self_data.id].y});
 	}
 });
