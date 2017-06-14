@@ -1,4 +1,8 @@
 /*fő containerek*/
+html, body {
+    margin: 0;
+    height: 100%;
+}
 div.main_container {
 	overflow: hidden;
 	display: flex;
@@ -91,4 +95,72 @@ div.modal_color_picker:hover {
 }
 div.btn {
 	cursor: pointer;
+}
+
+/* ------ MAIN MENU -------- */
+input.input-field, 
+.tel-number-field, 
+.textarea-field, 
+.select-field{
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    border: 1px solid #C2C2C2;
+    box-shadow: 1px 1px 4px #EBEBEB;
+    -moz-box-shadow: 1px 1px 4px #EBEBEB;
+    -webkit-box-shadow: 1px 1px 4px #EBEBEB;
+    border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    padding: 7px;
+    outline: none;
+}
+.input-field:focus, 
+.tel-number-field:focus, 
+.textarea-field:focus,  
+.select-field:focus{
+    border: 1px solid #0C0;
+}
+.textarea-field{
+    height:100px;
+    width: 55%;
+}
+input[type=submit],
+input[type=button]{
+    border: none;
+    padding: 8px 15px 8px 15px;
+    background: #FF8500;
+    color: #fff;
+    box-shadow: 1px 1px 4px #DADADA;
+    -moz-box-shadow: 1px 1px 4px #DADADA;
+    -webkit-box-shadow: 1px 1px 4px #DADADA;
+    border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+}
+input[type=submit]:hover,
+input[type=button]:hover{
+	cursor: pointer;
+    background: #EA7B00;
+    color: #fff;
+}
+div.name_and_start {
+	width: 300px;
+	height: 300px;
+	margin-top: 100px;
+	margin-left: calc(50% - 150px);
+}
+div.name_and_start input[type=text] {
+	width: 200px;
+	margin-top: 60px;
+	margin-left: calc(50% - 100px);
+	background-color: #eaeaea;
+}
+div.name_and_start input[type=submit] {
+	width: 100px;
+	margin-top: 120px;
+	margin-left: calc(50% - 50px);
+}
+#c_game {
+	display: none;
 }

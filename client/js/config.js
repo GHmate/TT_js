@@ -55,7 +55,8 @@ g_self_data = {
 	'latency_check': false,
 	'latency_counter': 0,
 	'latency': 0,
-	'tiks_after_input_sent': 0
+	'tiks_after_input_sent': 0,
+	'display_name': 'unnamed'
 };
 
 focus_circle_data = {

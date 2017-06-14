@@ -77,11 +77,13 @@ socket.on('init', function(data){
 		});
 	}
 	for (let t in data.tanks) {
+		console.log(data.tanks[t]);
 		Tank.list[data.tanks[t].id] = new Tank({
 			'x': data.tanks[t].x,
 			'y': data.tanks[t].y,
 			'rotation': data.tanks[t].rotation,
 			'tint': data.tanks[t].tint,
+			'nametag': data.tanks[t].nametag,
 			'id': data.tanks[t].id
 		});
 	}
@@ -136,6 +138,12 @@ socket.on('update_tint', function(data){
 		}
 	}
 });
+
+/*socket.on('update_nametag', function(data){ //nem kell, ameddig pálya közben nem akarunk nevet váltani
+	if (Tank.list[data.id] !== undefined) {
+		Tank.list[data.id].nametag.text = data.val;
+	}
+});*/
 
 socket.on('destroy', function(data){
 	for (let t in data.tanks) {

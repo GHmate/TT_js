@@ -70,3 +70,10 @@ function circle_focus_steps () {
 			break;
 	}
 }
+function menu_join_world (world_id, name) {
+	let data = {'w_id': world_id};
+	socket.emit('request_modify_user_data', {'display_name': name});
+	socket.emit('request_world_join', data);
+	jQuery('#c_menu').css('display','none');
+	jQuery('#c_game').css('display','flex');
+}

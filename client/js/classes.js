@@ -147,6 +147,12 @@ class Tank extends Entity{
 		this.sprite.rotation = this.rotation;
 		this.sprite.anchor.set(0.45,0.5);
 		this.sprite.tint = this.tint;
+		this.nametag = new PIXI.Text((data.nametag === '' ? 'unnamed' : data.nametag),{fontFamily : 'Arial', fontSize: 18, fill : 0x000000, align : 'center'});
+		this.nametag.alpha = 0.6;
+		this.nametag.x = this.x;
+		this.nametag.y = this.y-30;
+		this.nametag.anchor.set(0.5,0.5);
+		g_app.stage.addChild(this.nametag);
 		this.shoot_button_up = true;
 		this.movement_timer = 0;
 		this.list_of_inputs = []; //az inputok listája, predictionhöz (TODO: talán ki kéne szervezni innen ezeket?)
@@ -181,6 +187,8 @@ class Tank extends Entity{
 	ipol() {
 		super.ipol();
 		this.sprite.rotation = this.rotation;
+		this.nametag.x = this.x;
+		this.nametag.y = this.y-30;
 	}
 	start_ipol(x,y,dir,spd,rot_spd,self = false) {
 		super.start_ipol(x,y,dir,spd,rot_spd,self);
@@ -273,6 +281,8 @@ class Tank extends Entity{
 
 		this.sprite.x = this.x;
 		this.sprite.y = this.y;
+		this.nametag.x = this.x;
+		this.nametag.y = this.y-30;
 
 		//hack-szerűen késleltetem a forgást, hogy valósabbnak tűnjön
 		if (this.sprite.rotation > this.rotation+0.02) {
@@ -449,6 +459,10 @@ class Tank extends Entity{
 		this.list_of_inputs = [];
 		this.list_of_inputs_temp = [];
 	}*/
+	destroy(param) {//tömb-tömböt vár, nem sima tömböt
+		g_app.stage.removeChild(this.nametag);
+		super.destroy(param);
+	};
 }
 
 //lövedék

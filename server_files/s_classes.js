@@ -43,6 +43,7 @@ Tank = class Tank extends Entity{
 		if (data.rotation === undefined) {data.rotation = Math.random()*2*Math.PI;}
 		if (data.tint === undefined) {data.tint = g_tank_colors[0];}
 		super(data);
+		this.nametag = ((data.nametag === undefined || data.nametag === '') ? 'unnamed' : data.nametag);
 		this.inactive = true;
 		this.normal_speed = this.speed;
 		this.can_shoot = true;

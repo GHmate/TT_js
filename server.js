@@ -19,29 +19,55 @@ require("./server_files/s_classes.js");
 
 //ha még nem volt generálva, legenerálja a pályát.
 if (g_worlds_number < 1) {
-	g_worlds['0'] = {'leteheto_nodes':[],'tanks': []};
+	g_worlds[0] = {'leteheto_nodes':[],'tanks': []};
 	g_worlds_number++;
-	g_worlds['0'].countdown = 110;
+	g_worlds[0].countdown = 110;
 	regenerate_map();
 }
-
-var new_players_emit_stuff = [];
 
 io.sockets.on('connection', function (socket) {
 	socket.id = Math.random();
 	SOCKET_LIST[socket.id] = socket;
 	console.log('new socket: '+socket.id);
-
+	
 	g_playerdata[socket.id] = {
-		'world_id': '0',
+		'world_id': -1,
 		'score': 0,
-		'tint': g_tank_colors[getRandomInt(0,g_tank_colors.length-1)]
+		'tint': g_tank_colors[getRandomInt(0,g_tank_colors.length-1)],
+		'display_name': 'unnamed'
 	};
 	
-	//kreálunk új tankot, ha játék közben lépett be (ami ki lesz szedve a végleges verzióban amúgy)
-	add_tank(socket.id);
-	
-	new_players_emit_stuff.push(socket);
+	socket.on('request_world_join', function (data) {
+		if (g_playerdata[socket.id].world_id !== -1) {
+			return;
+		}
+		g_playerdata[socket.id].world_id = data.w_id;
+		g_playerdata[socket.id].score = 0;
+
+		//kreálunk új tankot, ha játék közben lépett be (ami ki lesz szedve a végleges verzióban amúgy)
+		add_tank(socket.id);
+
+		//elmeséljük az újonnan érkezett zöldfülűnek, hogy mi a helyzet a pályán
+		socket.emit ('init',{
+			'clear_all': true,
+			'global': {'id': socket.id},
+			'walls': Wall.list,
+			'tanks': Tank.list,
+			'bullets': Bullet.list
+		});
+		
+		if (g_worlds[data.w_id].countdown === 0) {
+			socket.emit('world_active',true);
+			Tank.list[socket.id].inactive = false;
+		}
+
+		//megmondjuk mindenki másnak, hogy hol az új játékos tankja
+		let self_id = socket.id;//kényszerűségből... nem akarja kulcsként engedni a socket.id-t vagy a socket['id']-t
+		let init = {
+			'tanks': {self_id: Tank.list[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
+		};
+		broadcast_simple('init',init,get_world_sockets(SOCKET_LIST,socket.id));
+	});
 	
 	socket.on('keyPress', function (data) {
 		if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
@@ -87,12 +113,13 @@ io.sockets.on('connection', function (socket) {
 		if (g_playerdata[socket.id] !== undefined) {
 			delete g_playerdata[socket.id];
 		}
-		world_add_remove_tank('0',socket.id,0);
+		world_add_remove_tank(0,socket.id,0);
 	});
 	
 	socket.on('request_modify_user_data', function (data) {
 		request_modify_user_data(socket.id,data);
 	});
+	
 });
 
 setInterval(function () {
@@ -124,29 +151,6 @@ setInterval(function () {
 
 //komenikáció
 setInterval(function () {
-	for (let socket of new_players_emit_stuff) {
-		//elmeséljük az újonnan érkezett zöldfülűnek, hogy mi a helyzet a pályán
-		socket.emit ('init',{
-			'clear_all': true,
-			'global': {'id': socket.id},
-			'walls': Wall.list,
-			'tanks': Tank.list,
-			'bullets': Bullet.list
-		});
-		
-		if (g_worlds['0'].countdown === 0) {
-			socket.emit('world_active',true);
-			Tank.list[socket.id].inactive = false;
-		}
-
-		//megmondjuk mindenki másnak, hogy hol az új játékos tankja
-		let self_id = socket.id;//kényszerűségből... nem akarja kulcsként engedni a socket.id-t vagy a socket['id']-t
-		let init = {
-			'tanks': {self_id: Tank.list[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
-		};
-		broadcast_simple('init',init,get_world_sockets(SOCKET_LIST,socket.id));
-	}
-	new_players_emit_stuff = [];
 
 	let update_tank = [];
 	let update_bullet = [];
@@ -172,7 +176,12 @@ setInterval(function () {
 		});
 	}
 
-	for (var i in SOCKET_LIST) {
-		SOCKET_LIST[i].emit('update_entities', {'tank': update_tank, 'bullet': update_bullet});
-	}
+	//for (let w_id in g_worlds) { //TODO: majd saját lista kell minden world-nek, és itt loopolni.
+		for (var i in SOCKET_LIST) {
+			if (g_playerdata[SOCKET_LIST[i].id].world_id === 0) {
+				SOCKET_LIST[i].emit('update_entities', {'tank': update_tank, 'bullet': update_bullet});
+			}
+		}
+	//}
+	
 }, 1000 / 20); //20-30 fps
