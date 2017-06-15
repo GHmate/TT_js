@@ -24,7 +24,7 @@ Entity = class Entity {
 			delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
 		}
 	};
-}
+};
 
 Wall = class Wall extends Entity{
 	constructor(data) {
@@ -92,7 +92,7 @@ Tank = class Tank extends Entity{
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
-				if (b.player_id !== this.id && b.inactive === false) {
+				if (/*b.player_id !== this.id && */b.inactive === false) {
 					b.inactive = true;
 					kill_one_tank(this,b);
 				}
@@ -200,7 +200,7 @@ Tank = class Tank extends Entity{
 	}
 	createBullet(data) {
 		let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
-		if (this.bullet_count > 0){ 
+		if (this.bullet_count > 0){
 			Bullet.list[Bullet.list_id_count] = new Bullet({
 				'x': this.x,
 				'y': this.y,
@@ -211,6 +211,7 @@ Tank = class Tank extends Entity{
 				'rotation': rot,
 				'tint': this.tint
 			});
+			Bullet.list[Bullet.list_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
 			let bl = {
 				'bullets': {self_id: Bullet.list[Bullet.list_id_count]}
 			};
@@ -251,16 +252,23 @@ Bullet = class Bullet extends Entity{
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
 		super(data);
+		this.inactive = true; //amég elhagyja az őt kilövő tankot
+		this.left_his_parent = false;
+		this.leaving_parent = 0; //külön visszaszámláló. (előrébb tesszük a golyót, de kap kis időt is, hogy ne ölje magát véletlenül)
 		this.timer = (data.timer !== undefined ? data.timer : 600);
 		this.player_id = (data.player_id !== undefined ? data.player_id : 0);
 		this.Boom = false;
-		this.updatePosition();
-		
+		this.hitbox = {
+			'x1':this.x-5,
+			'x2':this.x+5,
+			'y1':this.y-5,
+			'y2':this.y+5
+		};
 	};
 	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
 		
 		this.rotation = normalize_rad(this.rotation);
-		
+
 		this.hitbox = {
 			'x1':this.x-5,
 			'x2':this.x+5,
@@ -284,14 +292,40 @@ Bullet = class Bullet extends Entity{
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
 			x_wannago = -x_wannago; //és a mostani célzott helyet is felülírom
 			this.x += x_wannago;
+			this.left_his_parent = true; //ha falnak lő két miliről, megszívja
+			this.leaving_parent = 2; //2 tik után pusztul, ha ott van a fal mellett
 		}
 		if ((y_wannago > 0 && colliding.down) || (y_wannago < 0 && colliding.up)) {
 			this.rotation = 2*Math.PI-this.rotation; //függőlegesen tükrözöm az irányát
 			y_wannago = -y_wannago; //és a mostani célzott helyet is felülírom
 			this.y += y_wannago;
+			this.left_his_parent = true;
+			this.leaving_parent = 2;
 		}
 		this.x += x_wannago;
 		this.y += y_wannago;
+		
+		if (!this.left_his_parent) {
+			if (Tank.list[this.player_id] === undefined) {
+				this.left_his_parent = true;
+			}
+			let dist = Math.sqrt(Math.pow(this.x-Tank.list[this.player_id].x,2)+Math.pow(this.y-Tank.list[this.player_id].y,2));
+			if (dist > 25) {
+				this.leaving_parent = 15;
+				this.left_his_parent = true;
+			}
+			/*let collision_data = g_collisioner.check_collision_one_to_n(this,Tank,this.x-x_wannago,this.y-y_wannago,this.player_id);
+			let colliding = collision_data['collision'];
+			if (!colliding.right && !colliding.left && !colliding.up && !colliding.down) {
+				this.left_his_parent = true;
+			}*/
+		}
+		if (this.leaving_parent > 0) {
+			this.leaving_parent--;
+			if (this.leaving_parent === 0) {
+				this.inactive = false;
+			}
+		}
 		
 		this.timer --;
 
@@ -300,7 +334,6 @@ Bullet = class Bullet extends Entity{
 		}
 	};
 	destroy (param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
-		this.inactive = true;
 		if (Tank.list[this.player_id] !== undefined) {
 			Tank.list[this.player_id].bullet_count ++;
 		}
@@ -310,6 +343,12 @@ Bullet = class Bullet extends Entity{
 			'bullets': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
 		};
 		broadcast_simple('destroy',data,get_world_sockets(SOCKET_LIST));
+	}
+	move_starting_pos() {
+		g_collisioner.update_arrays();
+		do {
+			this.updatePosition();
+		} while (!this.left_his_parent);
 	}
 };
 
@@ -475,21 +514,22 @@ CollisionManager = class CollisionManager {
 		}
 	}
 	//sima egy az n-hez ütközést ellenőriz, tömbbel tér vissza. (4 irány)
-	check_collision_one_to_n (target, c_class, xnext = 0, ynext = 0) {
+	check_collision_one_to_n (target, c_class, xnext = 0, ynext = 0, obj_id = false) {
 		let t_width = Math.abs(target.hitbox.x1 - target.hitbox.x2);
 		let t_height = Math.abs(target.hitbox.y1 - target.hitbox.y2);
 		let collision = {'right':false,'up':false,'left':false,'down':false};
 		let collided = [];
 		for (let block of target.collision_block) {
 			for (let obj of CollisionManager.map[block[0]][block[1]]) {
-				
 				if (!(obj instanceof c_class)) {
+					continue;
+				}
+				if (obj_id !== false && obj.id !== obj_id) {
 					continue;
 				}
 				
 				let c_width = Math.abs(obj.hitbox.x1 - obj.hitbox.x2);
 				let c_height = Math.abs(obj.hitbox.y1 - obj.hitbox.y2);
-				
 				let w = 0.5 * (t_width + c_width);
 				let h = 0.5 * (t_height + c_height);
 				let dx = target.x - obj.x;

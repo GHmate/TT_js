@@ -56,7 +56,9 @@ g_self_data = {
 	'latency_counter': 0,
 	'latency': 0,
 	'tiks_after_input_sent': 0,
-	'display_name': 'unnamed'
+	'actual_rail_pos': {'id': 0, 'pc': 0},
+	'display_name': 'unnamed',
+	'missed_packets': 0 //a saját fps alapján számolódik. egy tikben megmondja, hogy mennyi tikkel több futott a szerveren
 };
 
 focus_circle_data = {

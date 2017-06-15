@@ -77,7 +77,6 @@ socket.on('init', function(data){
 		});
 	}
 	for (let t in data.tanks) {
-		console.log(data.tanks[t]);
 		Tank.list[data.tanks[t].id] = new Tank({
 			'x': data.tanks[t].x,
 			'y': data.tanks[t].y,
@@ -161,7 +160,7 @@ socket.on('destroy', function(data){
 
 socket.on('world_active', function(data){
 	if (data) {
-		if (Tank.list[g_self_data.id] !== undefined) {
+		if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) {
 			Tank.list[g_self_data.id].inactive = false;
 		}
 	}
@@ -169,6 +168,12 @@ socket.on('world_active', function(data){
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
+	if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) {
+		if (delta < 1) {
+			delta = 1;
+		}
+		g_self_data.missed_packets += (60-(60/delta))/(60/delta);
+	}
 	
 	if (g_self_data.latency_check) {
 		g_self_data.latency_counter++;
@@ -193,7 +198,7 @@ g_app.ticker.add(function(delta) {
 			Tank.list[i].ipol();
 		} else {
 			if (g_ipol_on) {
-				Tank.list[i].predict();
+				Tank.list[i].predict(delta);
 			}
 		}
 	}
