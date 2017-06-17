@@ -5,98 +5,106 @@
 		<!-- or link to Pixi.js on CDN -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.2/pixi.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.2/socket.io.js"></script>
+		<script src="https://vuejs.org/js/vue.js"></script>
+		<script>Vue.config.productionTip = false;</script>
 
-		<div id="c_menu" class="main_container">
-			<div class="name_and_start">
-				<input id="name_field" class="input-field" type="text" placeholder="your name">
-				<input id="game_starter" class="input-field" type="submit" value="START">
-				<div class="changelog_div"><a href="changelog.html" target="_blank">changelog</a></div>
-			</div>
-		</div>
-		
-		<div id="c_game" class="main_container">
-			<div id="game_container" class="game_container">
-				
-			</div>
-			<div class="menu_container">
-				menu<br>bar
-				<div class="btn" id="btn_color_picker">color_picker</div>
-				<br/>
-				Player1: <span id="p1_score">0</span><br/>
-				Player2: <span id="p2_score">0</span><br/>
-			</div>
-		</div>
-		
-		<div id="modal_window" class="modal">
-			<div id="modal-content" class="modal-content">
-				<div class="modal_header">
-					<div class="modal_header_left">válassz színt!</div>
-					<div id="modal_window_x" class="modal_header_close">&times;</div>
-				</div>
-				<hr class="separator">
-				<div id="modal_inner" class="modal_inner">
+		<div id="vue_app">
+			<div id="c_menu" class="main_container">
+				<div class="name_and_start">
+					<input id="name_field" class="input-field" type="text" placeholder="your name">
+					<input id="game_starter" class="input-field" type="submit" value="START">
+					<div class="changelog_div"><a href="changelog.html" target="_blank">changelog</a></div>
 				</div>
 			</div>
+
+			<div id="c_game" class="main_container">
+				<div id="game_container" class="game_container">
+
+				</div>
+				<div class="menu_container">
+					menubar
+					<div class="btn" id="btn_color_picker" @click="showModal = true">color_picker</div>
+					<br/>
+					Player1: <span id="p1_score">0</span><br/>
+					Player2: <span id="p2_score">0</span><br/>
+				</div>
+			</div>
+
+			<modal v-if="showModal" @close="showModal = false">
+				<div slot='inner'>
+					<modal_color_block v-for="box_color in colors" v-bind:key="box_color.id" v-bind:color="box_color" @close="showModal = false">
+					</modal_color_block>
+				</div>
+			</modal>
 		</div>
+		
+		<!-- TEMPLATES (TODO: kiszervezni, vue-cli használatát bevezetni)-->
+		
+		<!-- modál ablak template -->
+		<script type="text/x-template" id="modal-template">
+			<div class="modal_mask" @click="$emit('close')">
+				<div id="modal-content" class="modal-content" @click.stop>
+					<slot name="header"> <!--ez a default, de a slot miatt felülírható később-->
+						<div class="modal_header">
+							<div class="modal_header_left">válassz színt!</div>
+							<div id="modal_window_x" class="modal_header_close" @click="$emit('close')">&times;</div>
+						</div>
+					</slot>
+					<hr class="separator">
+					<div class="modal_inner">
+						<slot name="inner"> <!--ez a default, de a slot miatt felülírható később-->
+							cuccok
+						</slot>
+					</div>
+				</div>
+			</div>
+		</script>
+		
+		<!-- modál ablak színes dobozok -->
+		<script type="text/x-template" id="modal-color-block">
+			<div v-bind:style="{'background-color': color}" class="modal_color_picker"  v-bind:data="color" @click="select()"></div>
+		</script>
+		
+		<!-- /TEMPLATES -->
+		
+		<!-- html interakcióért felelő scriptek -->
+		<script type="text/javascript">
+			//vue objektum, amibe a modál ablak is kerül
+			vue_app = new Vue({
+				el: '#vue_app',
+				data: {
+					showModal: false, //boolean változó: látsszon-e a modál ablak
+					colors: []
+				},
+				components: {
+					'modal': {
+						template: '#modal-template'
+					},
+					'modal_color_block': {
+						props: ['color'],
+						template: '#modal-color-block',
+						methods: {
+							select: function (event) {
+								this.$emit('close');
+								socket.emit('request_modify_user_data',{'tint': this.color.replace('#','0x')});
+							}
+						}
+					}
+				}
+			});
+
+			$('#game_starter').click(function() {
+				menu_join_world(0, $('#name_field').val());
+			});
+		</script>
+		<!-- /html interakcióért felelő scriptek -->
 		
 		<!-- game js -->
 		<script src="js/config.js"></script>
 		<script src="js/classes.js"></script>
 		<script src="js/functions.js"></script>
 		<script src="js/main.js"></script>
+		<!-- /game js -->
 		
-		<script>
-			var modal_window = jQuery("#modal_window");
-			function open_modal(name) {
-				name = 'color_picker';
-				switch(name) {
-					case 'color_picker':
-						let html = '';
-						for (let color of g_tank_colors) {
-							let trans_color = color.replace('0x','#');
-							html += '<div class="modal_color_picker" style="background-color: '+trans_color+'" data="'+trans_color+'"></div>';
-						}
-						jQuery('#modal_inner').html(html);
-						bind_onclick();
-						break;
-					default:
-						break;
-				}
-				modal_window.css('display','block');
-			};
-			jQuery("#modal-content").click(function(e) {
-				e.stopPropagation();
-			});
-			jQuery("#modal_window_x").click(function() {
-				modal_window.css('display','none');
-			});
-			window.onclick = function(e) {
-				if (e.target !== modal_window) {
-					modal_window.css('display','none');
-				}
-			};
-			
-			$('#btn_color_picker').click(function(e) {
-				if (e.stopPropagation) {
-					e.stopPropagation();   // W3C model
-				} else {
-					e.cancelBubble = true; // IE model
-				}
-				open_modal();
-			});
-			function bind_onclick() {
-				jQuery(".modal_color_picker").click(function(e) {
-					e.stopPropagation();
-					let color = jQuery(this).attr('data').replace('#','0x');
-					
-					socket.emit('request_modify_user_data',{'tint': color});
-
-					modal_window.css('display','none');
-				});
-			}
-			$('#game_starter').click(function() {
-				menu_join_world(0, $('#name_field').val());
-			});
-		</script>
     </body>
 </html>

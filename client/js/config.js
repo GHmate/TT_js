@@ -5,6 +5,11 @@ g_site_orig_height = g_site_orig_width*WRATIO;
 g_window_size = {'x':g_site_orig_width,'y':g_site_orig_height}; 
 
 g_tank_colors = ['0x333333','0x999999','0xffffff','0xff4d4d','0xffa64d','0xffff4d','0x79ff4d','0x4dffa6','0x4dd2ff','0x4d4dff','0xd24dff','0xff4da6'];
+vue_app.colors = [];
+for (let color of g_tank_colors) {
+	let trans_color = color.replace('0x','#');
+	vue_app.colors.push(trans_color);
+}
 
 //tesztelős cuccok
 g_ipol_on = true;

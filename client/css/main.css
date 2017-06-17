@@ -25,10 +25,9 @@ div.menu_container {
 }
 
 /*felugró modal ablakok*/
-.modal {
-    display: none;
+.modal_mask {
     position: fixed;
-    z-index: 1;
+    z-index: 9998;
     padding-top: 100px;
     left: 0;
     top: 0;
