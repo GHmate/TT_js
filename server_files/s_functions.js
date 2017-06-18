@@ -283,8 +283,12 @@ kill_one_tank = function (tank, bullet) {
 	
 	if (tank.id != bullet.player_id) {
 		g_playerdata[bullet.player_id].score++;
-		update_score_board(world_id);
+	} else {
+		if (g_playerdata[bullet.player_id].score > 0) {
+		g_playerdata[bullet.player_id].score--;
+		}
 	}
+	update_score_board(world_id);
 	
 	world_add_remove_tank (world_id,tank.id,0);
 	tank.inactive = true;

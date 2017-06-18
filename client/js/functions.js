@@ -85,7 +85,7 @@ function update_world_scores (scores) { //{id, name, score}
 	for (let score of scores) {
 		let pos_s = pos+"";
 		while (pos_s.length < 2) {pos_s = "0" + pos_s};
-		let name = score.name;
+		let name = (score.name !== '' ? score.name : 'unnamed');
 		if (name.length > 8) {
 			name = name.substring(0, 6)+'...';
 		}
@@ -100,7 +100,7 @@ function update_world_scores (scores) { //{id, name, score}
 			if (!self_showed) {
 				for (let i = pos-1; i < scores.length ; i++) {
 					if (scores[i].id == g_self_data.id) {
-						let name2 = scores[i].name;
+						let name2 = (scores[i].name !== '' ? scores[i].name : 'unnamed');
 						if (name2.length > 8) {
 							name2 = name2.substring(0, 6)+'...';
 						}
