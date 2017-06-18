@@ -23,6 +23,9 @@
 				</div>
 				<div class="menu_container">
 					menubar
+					<div class="highscores">
+						<highscore_row v-for="item in highscores" v-bind:item="item" v-bind:key="item.position"></highscore_row>
+					</div>
 					<div class="btn" id="btn_color_picker" @click="showModal = true">color_picker</div>
 					<br/>
 					Player1: <span id="p1_score">0</span><br/>
@@ -65,6 +68,11 @@
 			<div v-bind:style="{'background-color': color}" class="modal_color_picker"  v-bind:data="color" @click="select()"></div>
 		</script>
 		
+		<!-- high-score: egy sor -->
+		<script type="text/x-template" id="highscore_row">
+			<div v-bind:style="{'background-color': item.back_color}" class="highscore_row">#{{item.position}}&nbsp;{{item.name}}&nbsp;({{item.score}})</div>
+		</script>
+		
 		<!-- /TEMPLATES -->
 		
 		<!-- html interakcióért felelő scriptek -->
@@ -74,7 +82,8 @@
 				el: '#vue_app',
 				data: {
 					showModal: false, //boolean változó: látsszon-e a modál ablak
-					colors: []
+					colors: [],
+					highscores: []
 				},
 				components: {
 					'modal': {
@@ -89,6 +98,10 @@
 								socket.emit('request_modify_user_data',{'tint': this.color.replace('#','0x')});
 							}
 						}
+					},
+					'highscore_row': {
+						props: ['item'],
+						template: '#highscore_row'
 					}
 				}
 			});

@@ -138,6 +138,10 @@ socket.on('update_tint', function(data){
 	}
 });
 
+socket.on('update_world_scores', function(data){
+	update_world_scores(data);
+});
+
 /*socket.on('update_nametag', function(data){ //nem kell, ameddig pálya közben nem akarunk nevet váltani
 	if (Tank.list[data.id] !== undefined) {
 		Tank.list[data.id].nametag.text = data.val;

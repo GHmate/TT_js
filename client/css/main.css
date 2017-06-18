@@ -13,11 +13,11 @@ div.main_container {
 div.game_container {
 	display: block;
 	float: left;
-	width: calc(100% - 80px);
+	width: calc(100% - 130px);
 	height: 100%;
 }
 div.menu_container {
-	width: 80px;
+	width: 130px;
 	height: 100%;
 	display: block;
 	float: right;
@@ -94,6 +94,24 @@ div.modal_color_picker:hover {
 }
 div.btn {
 	cursor: pointer;
+}
+
+/* oldalsó menü dolgok */
+div.highscores {
+	width: calc(100% - 18px);
+	height: 176px;
+	overflow: hidden;
+	border-width: 3px;
+    border-style: solid;
+    margin: 3px;
+    font-size: 13px;
+    padding: 3px;
+    border-radius: 6px;
+    border-color: #4d4d4d;
+	background-color: #eeeeee;
+}
+div.highscore_row {
+    border-radius: 3px;
 }
 
 /* ------ MAIN MENU -------- */

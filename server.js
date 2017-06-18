@@ -67,6 +67,7 @@ io.sockets.on('connection', function (socket) {
 			'tanks': {self_id: Tank.list[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
 		};
 		broadcast_simple('init',init,get_world_sockets(SOCKET_LIST,socket.id));
+		update_score_board(data.w_id);
 	});
 	
 	socket.on('keyPress', function (data) {
@@ -105,15 +106,23 @@ io.sockets.on('connection', function (socket) {
 	
 	socket.on('disconnect', function () {
 		let self_id = socket.id;
+		let world_id = g_playerdata[socket.id].world_id;
 		console.log('socket disconnected: '+socket.id);
 		if (Tank.list[self_id] !== undefined) {
 			Tank.list[self_id].destroy([Tank.list]);
+			delete Tank.list[self_id];
 		}
 		delete SOCKET_LIST[socket.id];
 		if (g_playerdata[socket.id] !== undefined) {
 			delete g_playerdata[socket.id];
 		}
-		world_add_remove_tank(0,socket.id,0);
+		world_add_remove_tank(world_id,socket.id,0);
+		update_score_board(world_id);
+		
+		let winner = world_check_for_winner(world_id);
+		if (winner !== false) {
+			regenerate_map();
+		}
 	});
 	
 	socket.on('request_modify_user_data', function (data) {

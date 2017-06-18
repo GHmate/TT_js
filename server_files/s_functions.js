@@ -136,7 +136,7 @@ create_walls = function (graph,dimensions) {
 	}
 };
 
-regenerate_map = function () { //játék elején vagy egy pálya végén az új pályakezdésért felelő funkció
+regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya végén az új pályakezdésért felelő funkció
 	Wall.list = {};
 	Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
 	Tank.list = {}; //statikus osztály-változó
@@ -177,7 +177,7 @@ regenerate_map = function () { //játék elején vagy egy pálya végén az új 
 	};
 	broadcast_simple('init',init);
 	g_worlds[0].countdown = 110;
-	
+	update_score_board(world_id);
 };
 
 add_tank = function (id) {
@@ -271,7 +271,7 @@ broadcast_simple = function(name,data = '',socket_list = get_world_sockets(SOCKE
 	}
 };
 
-/*broadcast_world = function(name,data = '',socket_list = get_world_sockets(SOCKET_LIST)) { //TODO: minden emberkének broadcastol, még ha nincs tankja akkor is
+/*broadcast_all = function(name,data = '',socket_list = get_world_sockets(SOCKET_LIST)) { //TODO: minden emberkének broadcastoló funkció, még ha nincs tankja akkor is.
 	
 }*/
 
@@ -280,11 +280,17 @@ kill_one_tank = function (tank, bullet) {
 	if (!world_has_tank(world_id,tank.id)) {
 		return;
 	}
+	
+	if (tank.id != bullet.player_id) {
+		g_playerdata[bullet.player_id].score++;
+		update_score_board(world_id);
+	}
+	
 	world_add_remove_tank (world_id,tank.id,0);
 	tank.inactive = true;
 	tank.destroy([Tank.list]);
 	bullet.destroy([Bullet.list]);
-	
+
 	let winner = world_check_for_winner(world_id);
 	if (winner !== false) {
 		regenerate_map();
@@ -297,6 +303,9 @@ world_has_tank = function (world_id,tank_id) {
 };
 
 world_add_remove_tank = function(world_id,tank_id,add) {
+	if (g_worlds[world_id] === undefined) {
+		return;
+	}
 	let index = g_worlds[world_id].tanks.indexOf(tank_id);
 	if (add && index === -1) {
 		g_worlds[world_id].tanks.push(tank_id);
@@ -307,6 +316,9 @@ world_add_remove_tank = function(world_id,tank_id,add) {
 };
 
 world_check_for_winner = function(world_id) {
+	if (g_worlds[world_id] === undefined) {
+		return;
+	}
 	if (g_worlds[world_id].tanks.length === 1) {
 		return g_worlds[world_id].tanks[0];
 	}
@@ -341,4 +353,17 @@ request_modify_user_data = function (socket_id,data) {
 		}
 		
 	}
+};
+
+update_score_board = function (world_id) {
+	let scboard = [];
+	for (let p_id in g_playerdata) {
+		pdata = g_playerdata[p_id];
+		if (pdata.world_id !== world_id ) {
+			continue;
+		}
+		scboard.push({'id': p_id,'name': pdata.display_name,'score': pdata.score});
+	}
+	scboard.sort(function(a, b){return b.score-a.score});
+	broadcast_simple('update_world_scores',scboard);
 };

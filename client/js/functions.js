@@ -77,3 +77,39 @@ function menu_join_world (world_id, name) {
 	jQuery('#c_menu').css('display','none');
 	jQuery('#c_game').css('display','flex');
 }
+
+function update_world_scores (scores) { //{id, name, score}
+	g_world_scores = [];
+	let pos = 1;
+	let self_showed = false;
+	for (let score of scores) {
+		let pos_s = pos+"";
+		while (pos_s.length < 2) {pos_s = "0" + pos_s};
+		let name = score.name;
+		if (name.length > 8) {
+			name = name.substring(0, 6)+'...';
+		}
+		let b_color = '';
+		if (score.id == g_self_data.id) {
+			self_showed = true;
+			b_color = '#feffe9';
+		}
+		g_world_scores.push({'position': pos_s, 'name': name, 'score': score.score, 'back_color': b_color});
+		pos ++;
+		if (pos == 12) {
+			if (!self_showed) {
+				for (let i = pos-1; i < scores.length ; i++) {
+					if (scores[i].id == g_self_data.id) {
+						let name2 = scores[i].name;
+						if (name2.length > 8) {
+							name2 = name2.substring(0, 6)+'...';
+						}
+						g_world_scores[10] = {'position': i+1, 'name': name2, 'score': scores[i].score, 'back_color': '#ffbfbf'};
+					}
+				}
+			}
+			break;
+		}
+	}
+	vue_app.highscores = g_world_scores;
+}

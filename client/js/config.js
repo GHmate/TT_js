@@ -66,6 +66,9 @@ g_self_data = {
 	'missed_packets': 0 //a saját fps alapján számolódik. egy tikben megmondja, hogy mennyi tikkel több futott a szerveren
 };
 
+g_world_scores = [];
+vue_app.highscores = g_world_scores;
+
 focus_circle_data = {
 	'phase': -1,
 	'countdown': 0
