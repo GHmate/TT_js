@@ -92,7 +92,7 @@ Tank = class Tank extends Entity{
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
-				if (b.inactive === false && this.inactive === false) {
+				if (b.inactive === false && this.inactive === false && !(b.parent_protect && b.player_id === this.id) ) {
 					b.inactive = true;
 					this.inactive = true;
 					kill_one_tank(this,b);
@@ -253,9 +253,9 @@ Bullet = class Bullet extends Entity{
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
 		super(data);
-		this.inactive = true; //amég elhagyja az őt kilövő tankot
-		this.left_his_parent = false;
-		this.leaving_parent = 0; //külön visszaszámláló. (előrébb tesszük a golyót, de kap kis időt is, hogy ne ölje magát véletlenül)
+		this.inactive = false;
+		this.parent_protect = true; //ameddig el nem távolodik biztonságos távra (vagy falnak ütközik), nem öli meg a saját tankot
+		this.starting_pos = false; //csak ameddig a while-ban a tank csövéhez teszem
 		this.timer = (data.timer !== undefined ? data.timer : 600);
 		this.player_id = (data.player_id !== undefined ? data.player_id : 0);
 		this.Boom = false;
@@ -292,39 +292,28 @@ Bullet = class Bullet extends Entity{
 		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
 			x_wannago = -x_wannago; //és a mostani célzott helyet is felülírom
-			//this.x += x_wannago;
-			this.left_his_parent = true; //ha falnak lő két miliről, megszívja
-			this.leaving_parent = 2; //2 tik után pusztul, ha ott van a fal mellett
+			this.starting_pos = true;
+			this.parent_protect = false; //ha falnak lő két miliről, megszívja
 		}
 		if ((y_wannago > 0 && colliding.down) || (y_wannago < 0 && colliding.up)) {
 			this.rotation = 2*Math.PI-this.rotation; //függőlegesen tükrözöm az irányát
 			y_wannago = -y_wannago; //és a mostani célzott helyet is felülírom
-			//this.y += y_wannago;
-			this.left_his_parent = true;
-			this.leaving_parent = 2;
+			this.starting_pos = true;
+			this.parent_protect = false;
 		}
 		this.x += x_wannago;
 		this.y += y_wannago;
 		
-		if (!this.left_his_parent) {
+		if (!this.starting_pos || this.parent_protect) {
 			if (Tank.list[this.player_id] === undefined) {
-				this.left_his_parent = true;
+				this.starting_pos = true;
 			}
 			let dist = Math.sqrt(Math.pow(this.x-Tank.list[this.player_id].x,2)+Math.pow(this.y-Tank.list[this.player_id].y,2));
-			if (dist > 25) {
-				this.leaving_parent = 15;
-				this.left_his_parent = true;
+			if (dist > 20) { //20 pixelnél már kirajzoljuk
+				this.starting_pos = true;
 			}
-			/*let collision_data = g_collisioner.check_collision_one_to_n(this,Tank,this.x-x_wannago,this.y-y_wannago,this.player_id);
-			let colliding = collision_data['collision'];
-			if (!colliding.right && !colliding.left && !colliding.up && !colliding.down) {
-				this.left_his_parent = true;
-			}*/
-		}
-		if (this.leaving_parent > 0) {
-			this.leaving_parent--;
-			if (this.leaving_parent === 0) {
-				this.inactive = false;
+			if (dist > 30) { //30 pixelnél már a saját tankot is ölheti
+				this.parent_protect = false;
 			}
 		}
 		
@@ -349,7 +338,7 @@ Bullet = class Bullet extends Entity{
 		g_collisioner.update_arrays();
 		do {
 			this.updatePosition();
-		} while (!this.left_his_parent);
+		} while (!this.starting_pos);
 	}
 };
 
@@ -472,7 +461,7 @@ CollisionManager = class CollisionManager {
 	//megnézi melyik dobozba/dobozokba kell tenni az entity-t
 	get_placing_boxes (entity) {
 		let results = [];
-		let border = 3; //ennyi pixellel számol ráhagyást a tényleges hitboxra, hogy elkerüljük az épp blokk szélén lévő falak hiányának problémáját
+		let border = 5; //ennyi pixellel számol ráhagyást a tényleges hitboxra, hogy elkerüljük az épp blokk szélén lévő falak hiányának problémáját
 		let x_start = Math.floor((entity.hitbox.x1-border)/this.field_size);
 		let x_end = Math.floor((entity.hitbox.x2+border)/this.field_size);
 		let y_start = Math.floor((entity.hitbox.y1-border)/this.field_size);
