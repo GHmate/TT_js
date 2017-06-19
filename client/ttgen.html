@@ -11,8 +11,8 @@
 		<div id="vue_app">
 			<div id="c_menu" class="main_container">
 				<div class="name_and_start">
-					<input id="name_field" class="input-field" type="text" placeholder="your name">
-					<input id="game_starter" class="input-field" type="submit" value="START">
+					<input v-model="p_name" class="input-field" type="text" placeholder="your name">
+					<input @click="submit_name()" class="input-field" type="submit" value="START">
 					<div class="changelog_div"><a href="changelog.html" target="_blank">changelog</a></div>
 				</div>
 			</div>
@@ -62,7 +62,7 @@
 		
 		<!-- modál ablak színes dobozok -->
 		<script type="text/x-template" id="modal-color-block">
-			<div v-bind:style="{'background-color': color}" class="modal_color_picker"  v-bind:data="color" @click="select()"></div>
+			<div v-bind:style="{'background-color': color}" class="modal_color_picker"  v-bind:data="color" @click="select_color()"></div>
 		</script>
 		
 		<!-- high-score: egy sor -->
@@ -77,10 +77,23 @@
 			//vue objektum, amibe a modál ablak is kerül
 			vue_app = new Vue({
 				el: '#vue_app',
+				mounted: function () {
+					window.addEventListener('keyup', function(event) {
+						if (event.keyCode == 13) { 
+							vue_app.submit_name();
+						}
+					});
+				},
 				data: {
+					p_name: '',
 					showModal: false, //boolean változó: látsszon-e a modál ablak
 					colors: [],
 					highscores: []
+				},
+				methods: {
+					submit_name: function () {
+						menu_join_world(0, this.p_name);
+					}
 				},
 				components: {
 					'modal': {
@@ -90,7 +103,7 @@
 						props: ['color'],
 						template: '#modal-color-block',
 						methods: {
-							select: function (event) {
+							select_color: function (event) {
 								this.$emit('close');
 								socket.emit('request_modify_user_data',{'tint': this.color.replace('#','0x')});
 							}
@@ -101,10 +114,6 @@
 						template: '#highscore_row'
 					}
 				}
-			});
-
-			$('#game_starter').click(function() {
-				menu_join_world(0, $('#name_field').val());
 			});
 		</script>
 		<!-- /html interakcióért felelő scriptek -->

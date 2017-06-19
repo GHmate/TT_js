@@ -92,8 +92,9 @@ Tank = class Tank extends Entity{
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
-				if (/*b.player_id !== this.id && */b.inactive === false) {
+				if (b.inactive === false && this.inactive === false) {
 					b.inactive = true;
+					this.inactive = true;
 					kill_one_tank(this,b);
 				}
 			}
@@ -175,7 +176,7 @@ Tank = class Tank extends Entity{
 			} else if (turn === 'r') {
 				t = 1;
 			}
-			let fixed_rotation = this.rotation + 5*t*Math.abs(this.rot_speed);
+			let fixed_rotation = this.rotation + 3*t*Math.abs(this.rot_speed);
 			//bb
 			if (this.shoot_type === "bb") {
 				this.can_shoot = false;
@@ -215,7 +216,7 @@ Tank = class Tank extends Entity{
 			let bl = {
 				'bullets': {self_id: Bullet.list[Bullet.list_id_count]}
 			};
-			broadcast_simple('init',bl,get_world_sockets(SOCKET_LIST));
+			broadcast_simple('init',bl);
 			Bullet.list_id_count ++;
 			this.bullet_count --;
 		};
@@ -241,7 +242,7 @@ Tank = class Tank extends Entity{
 		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
 			'tanks': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
 		};
-		broadcast_simple('destroy',data,get_world_sockets(SOCKET_LIST));
+		broadcast_simple('destroy',data);
 	}
 };
 
@@ -259,10 +260,10 @@ Bullet = class Bullet extends Entity{
 		this.player_id = (data.player_id !== undefined ? data.player_id : 0);
 		this.Boom = false;
 		this.hitbox = {
-			'x1':this.x-5,
-			'x2':this.x+5,
-			'y1':this.y-5,
-			'y2':this.y+5
+			'x1':this.x-4,
+			'x2':this.x+4,
+			'y1':this.y-4,
+			'y2':this.y+4
 		};
 	};
 	updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
@@ -270,10 +271,10 @@ Bullet = class Bullet extends Entity{
 		this.rotation = normalize_rad(this.rotation);
 
 		this.hitbox = {
-			'x1':this.x-5,
-			'x2':this.x+5,
-			'y1':this.y-5,
-			'y2':this.y+5
+			'x1':this.x-4,
+			'x2':this.x+4,
+			'y1':this.y-4,
+			'y2':this.y+4
 		};
 		
 		let x_wannago = 0;
@@ -291,14 +292,14 @@ Bullet = class Bullet extends Entity{
 		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
 			x_wannago = -x_wannago; //és a mostani célzott helyet is felülírom
-			this.x += x_wannago;
+			//this.x += x_wannago;
 			this.left_his_parent = true; //ha falnak lő két miliről, megszívja
 			this.leaving_parent = 2; //2 tik után pusztul, ha ott van a fal mellett
 		}
 		if ((y_wannago > 0 && colliding.down) || (y_wannago < 0 && colliding.up)) {
 			this.rotation = 2*Math.PI-this.rotation; //függőlegesen tükrözöm az irányát
 			y_wannago = -y_wannago; //és a mostani célzott helyet is felülírom
-			this.y += y_wannago;
+			//this.y += y_wannago;
 			this.left_his_parent = true;
 			this.leaving_parent = 2;
 		}
@@ -342,7 +343,7 @@ Bullet = class Bullet extends Entity{
 		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
 			'bullets': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
 		};
-		broadcast_simple('destroy',data,get_world_sockets(SOCKET_LIST));
+		broadcast_simple('destroy',data);
 	}
 	move_starting_pos() {
 		g_collisioner.update_arrays();

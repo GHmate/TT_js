@@ -66,7 +66,7 @@ io.sockets.on('connection', function (socket) {
 		let init = {
 			'tanks': {self_id: Tank.list[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
 		};
-		broadcast_simple('init',init,get_world_sockets(SOCKET_LIST,socket.id));
+		broadcast_simple_except_one(socket.id,'init',init,data.w_id);
 		update_score_board(data.w_id);
 	});
 	
@@ -116,12 +116,15 @@ io.sockets.on('connection', function (socket) {
 		if (g_playerdata[socket.id] !== undefined) {
 			delete g_playerdata[socket.id];
 		}
-		world_add_remove_tank(world_id,socket.id,0);
-		update_score_board(world_id);
 		
-		let winner = world_check_for_winner(world_id);
-		if (winner !== false) {
-			regenerate_map();
+		if (world_id != -1) { //ha épp játszott
+			world_add_remove_tank(world_id,socket.id,0);
+			update_score_board(world_id);
+
+			let winner = world_check_for_winner(world_id);
+			if (winner !== false) {
+				regenerate_map();
+			}
 		}
 	});
 	
@@ -147,7 +150,7 @@ setInterval(function () {
 		if (world.countdown > 0) {
 			world.countdown--;
 			if (world.countdown === 0) {
-				broadcast_simple('world_active',true);
+				broadcast_simple('world_active',true,i); //itt i a world_id, mert abban iterálok
 				for (let index in world.tanks) {
 					if (Tank.list[world.tanks[index]] !== undefined) {
 						Tank.list[world.tanks[index]].inactive = false;
@@ -187,7 +190,7 @@ setInterval(function () {
 
 	//for (let w_id in g_worlds) { //TODO: majd saját lista kell minden world-nek, és itt loopolni.
 		for (var i in SOCKET_LIST) {
-			if (g_playerdata[SOCKET_LIST[i].id].world_id === 0) {
+			if (g_playerdata[SOCKET_LIST[i].id].world_id == 0) {
 				SOCKET_LIST[i].emit('update_entities', {'tank': update_tank, 'bullet': update_bullet});
 			}
 		}

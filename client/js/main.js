@@ -1,3 +1,4 @@
+clear_local_map(); //inicializálunk, ürítünk mindent induláskor
 
 //mozgatás
 document.onkeydown = function(event){

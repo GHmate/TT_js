@@ -167,7 +167,9 @@ regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya vé
 	create_walls(graph,g_dimensions);
 	
 	for (var i in SOCKET_LIST) {
-		add_tank(SOCKET_LIST[i].id);
+		if (g_playerdata[SOCKET_LIST[i].id].world_id == world_id) {
+			add_tank(SOCKET_LIST[i].id);
+		}
 	}
 	//elmeséljük mindenkinek, hogy hol vannak a tankok meg a falak
 	let init = {
@@ -175,13 +177,12 @@ regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya vé
 		'walls': Wall.list,
 		'tanks': Tank.list
 	};
-	broadcast_simple('init',init);
+	broadcast_simple('init',init,world_id);
 	g_worlds[0].countdown = 110;
 	update_score_board(world_id);
 };
 
 add_tank = function (id) {
-	
 	//legyártjuk a tankot
 	let success = false;
 	shuffle(g_worlds[0].leteheto_nodes);
@@ -255,17 +256,25 @@ normalize_rad = function (rad) {
 	return rad;
 };
 
-get_world_sockets = function (socket_list,exception = -1) { //TODO: majd a world-del csináljon csak cuccost, most minden socketet visszaad
+get_world_sockets = function (socket_list,exception = -1,world_id = 0) {
 	let ret = [];
 	for (var i in socket_list) {
-		if (socket_list[i].id !== exception) {
+		if (socket_list[i].id !== exception && g_playerdata[socket_list[i].id].world_id == world_id) {
 			ret.push(socket_list[i]);
 		}
 	}
 	return ret;
 };
 
-broadcast_simple = function(name,data = '',socket_list = get_world_sockets(SOCKET_LIST)) {
+broadcast_simple = function(name,data = '',world_id = 0) {
+	let socket_list = get_world_sockets(SOCKET_LIST,-1,world_id);
+	for (var i in socket_list) {
+		socket_list[i].emit(name, data);
+	}
+};
+
+broadcast_simple_except_one = function(one,name,data = '',world_id = 0) {
+	let socket_list = get_world_sockets(SOCKET_LIST,one,world_id);
 	for (var i in socket_list) {
 		socket_list[i].emit(name, data);
 	}
@@ -285,13 +294,12 @@ kill_one_tank = function (tank, bullet) {
 		g_playerdata[bullet.player_id].score++;
 	} else {
 		if (g_playerdata[bullet.player_id].score > 0) {
-		g_playerdata[bullet.player_id].score--;
+			g_playerdata[bullet.player_id].score--;
 		}
 	}
 	update_score_board(world_id);
 	
 	world_add_remove_tank (world_id,tank.id,0);
-	tank.inactive = true;
 	tank.destroy([Tank.list]);
 	bullet.destroy([Bullet.list]);
 
@@ -302,12 +310,21 @@ kill_one_tank = function (tank, bullet) {
 };
 
 world_has_tank = function (world_id,tank_id) {
+	if (world_id == -1) {
+		console.log('HIBA: world_has_tank -> world_id = -1');
+		return false;
+	}
 	let index = g_worlds[world_id].tanks.indexOf(tank_id);
 	return (index !== -1);
 };
 
 world_add_remove_tank = function(world_id,tank_id,add) {
+	if (world_id == -1) {
+		console.log('HIBA: world_add_remove_tank -> world_id = -1');
+		return;
+	}
 	if (g_worlds[world_id] === undefined) {
+		console.log('HIBA: world_add_remove_tank -> world_id = undefined');
 		return;
 	}
 	let index = g_worlds[world_id].tanks.indexOf(tank_id);
@@ -369,5 +386,5 @@ update_score_board = function (world_id) {
 		scboard.push({'id': p_id,'name': pdata.display_name,'score': pdata.score});
 	}
 	scboard.sort(function(a, b){return b.score-a.score});
-	broadcast_simple('update_world_scores',scboard);
+	broadcast_simple('update_world_scores',scboard,world_id);
 };
