@@ -256,6 +256,7 @@ Bullet = class Bullet extends Entity{
 		this.inactive = false;
 		this.parent_protect = true; //ameddig el nem távolodik biztonságos távra (vagy falnak ütközik), nem öli meg a saját tankot
 		this.starting_pos = false; //csak ameddig a while-ban a tank csövéhez teszem
+		this.starting_timer = 0; //ha közel pattintja a falnak a játékos a golyót, egy darabig még nem aktiválódik, hogy kicsit megengedőbb legyen
 		this.timer = (data.timer !== undefined ? data.timer : 600);
 		this.player_id = (data.player_id !== undefined ? data.player_id : 0);
 		this.Boom = false;
@@ -292,28 +293,45 @@ Bullet = class Bullet extends Entity{
 		if ((x_wannago > 0 && colliding.right) || (x_wannago < 0 && colliding.left)) {
 			this.rotation = Math.PI-this.rotation; //vízszintesen tükrözöm az irányát
 			x_wannago = -x_wannago; //és a mostani célzott helyet is felülírom
-			this.starting_pos = true;
-			this.parent_protect = false; //ha falnak lő két miliről, megszívja
+			if (this.parent_protect || !this.starting_pos) {
+				this.starting_pos = true;
+				if (this.starting_timer == 0) {
+					this.starting_timer = 8;
+				}
+			}
 		}
 		if ((y_wannago > 0 && colliding.down) || (y_wannago < 0 && colliding.up)) {
 			this.rotation = 2*Math.PI-this.rotation; //függőlegesen tükrözöm az irányát
 			y_wannago = -y_wannago; //és a mostani célzott helyet is felülírom
-			this.starting_pos = true;
-			this.parent_protect = false;
+			if (this.parent_protect || !this.starting_pos) {
+				this.starting_pos = true;
+				if (this.starting_timer == 0) {
+					this.starting_timer = 8;
+				}
+			}
+			
 		}
 		this.x += x_wannago;
 		this.y += y_wannago;
 		
+		if (this.starting_timer > 0) {
+			this.starting_timer--;
+			if (this.starting_timer == 0) {
+				this.parent_protect = false;
+			}
+		}
+		
 		if (!this.starting_pos || this.parent_protect) {
 			if (Tank.list[this.player_id] === undefined) {
 				this.starting_pos = true;
-			}
-			let dist = Math.sqrt(Math.pow(this.x-Tank.list[this.player_id].x,2)+Math.pow(this.y-Tank.list[this.player_id].y,2));
-			if (dist > 20) { //20 pixelnél már kirajzoljuk
-				this.starting_pos = true;
-			}
-			if (dist > 30) { //30 pixelnél már a saját tankot is ölheti
-				this.parent_protect = false;
+			} else {
+				let dist = Math.sqrt(Math.pow(this.x-Tank.list[this.player_id].x,2)+Math.pow(this.y-Tank.list[this.player_id].y,2));
+				if (dist > 20) { //20 pixelnél már kirajzoljuk
+					this.starting_pos = true;
+				}
+				if (dist > 30) { //30 pixelnél már a saját tankot is ölheti
+					this.parent_protect = false;
+				}
 			}
 		}
 		

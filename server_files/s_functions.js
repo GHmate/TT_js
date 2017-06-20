@@ -289,12 +289,18 @@ kill_one_tank = function (tank, bullet) {
 	if (!world_has_tank(world_id,tank.id)) {
 		return;
 	}
-	
+	let killer_socket = (SOCKET_LIST[bullet.player_id] === undefined ? false : SOCKET_LIST[bullet.player_id]);
 	if (tank.id != bullet.player_id) {
 		g_playerdata[bullet.player_id].score++;
+		if (killer_socket) {
+			killer_socket.emit('effect','p1');
+		}
 	} else {
 		if (g_playerdata[bullet.player_id].score > 0) {
 			g_playerdata[bullet.player_id].score--;
+		}
+		if (killer_socket) {
+			killer_socket.emit('effect','m1');
 		}
 	}
 	update_score_board(world_id);

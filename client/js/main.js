@@ -143,6 +143,33 @@ socket.on('update_world_scores', function(data){
 	update_world_scores(data);
 });
 
+socket.on('effect', function(data){
+	switch (data) {
+		case 'p1':
+			if (Tank.list[g_self_data.id] !== undefined) {
+				Particle.list[Particle.list_counter] = new Particle({
+					'x': Tank.list[g_self_data.id].x,
+					'y': Tank.list[g_self_data.id].y,
+					'id': Particle.list_counter,
+					'texture': g_textures.plus1
+				});
+				Particle.list_counter++;
+			}
+			break;
+		case 'm1':
+			if (Tank.list[g_self_data.id] !== undefined) {
+				Particle.list[Particle.list_counter] = new Particle({
+					'x': Tank.list[g_self_data.id].x,
+					'y': Tank.list[g_self_data.id].y,
+					'id': Particle.list_counter,
+					'texture': g_textures.minus1
+				});
+				Particle.list_counter++;
+			}
+			break;
+	}
+});
+
 /*socket.on('update_nametag', function(data){ //nem kell, ameddig pálya közben nem akarunk nevet váltani
 	if (Tank.list[data.id] !== undefined) {
 		Tank.list[data.id].nametag.text = data.val;
@@ -212,6 +239,12 @@ g_app.ticker.add(function(delta) {
 	}
 	if (focus_circle_data.phase !== -1) {
 		circle_focus_steps();
+	}
+	
+	if (Particle.list !== undefined) {
+		for (let i in Particle.list) {
+			Particle.list[i].update();
+		}
 	}
 });
 

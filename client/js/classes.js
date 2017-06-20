@@ -550,7 +550,6 @@ class Tank extends Entity{
 			if (rail_part.id === g_self_data.actual_rail_pos.id) {
 				this.x = this.sprite.x = rail_part.x+rail_part.x_dist*g_self_data.actual_rail_pos.pc;
 				this.y = this.sprite.y = rail_part.y+rail_part.y_dist*g_self_data.actual_rail_pos.pc;
-				console.log('rep');
 				break;
 			}
 		}
@@ -732,3 +731,38 @@ CollisionManager = class CollisionManager {
 		return {'collision':collision, 'collided':collided};
 	}
 }
+class Particle {
+	constructor(data) {
+		this.x = (data.x !== undefined ? data.x : 0);
+		this.y = (data.y !== undefined ? data.y-10 : 0);
+		this.id = (data.id !== undefined ? data.id : null);
+		let texture = (data.texture !== undefined ? data.texture : '');
+		this.sprite = new PIXI.Sprite(texture);
+		this.sprite.anchor.set(0.5);
+		this.sprite.x = this.x;
+		this.sprite.y = this.y;
+		this.rotation = (data.rotation !== undefined ? data.rotation : 0);
+		g_app.stage.addChild(this.sprite);
+		this.timer = 30;
+		this.sprite.alpha = 0.9;
+	}
+	destroy(lists = []) {//tömb-tömböt vár, nem sima tömböt
+		if (lists.length < 1) {
+			console.log('warning: particle destroy funkció nem kapott elem-tömböt');
+		}
+		for (let list of lists) {
+			delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
+		}
+		g_app.stage.removeChild(this.sprite); //kiszedi a pixi-s referenciát a sprite-ra
+	};
+	update() {
+		this.timer--;
+		this.sprite.alpha -= 0.9/30;
+		this.sprite.y -= 0.7;
+		if (this.timer <= 0) {
+			this.destroy([Particle.list]);
+		}
+	}
+}
+Particle.list = {};
+Particle.list_counter = 0;

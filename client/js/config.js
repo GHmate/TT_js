@@ -49,7 +49,9 @@ PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;
 g_textures = { //textúrákat egyszer kell csak betölteni
 	'wall':PIXI.Texture.fromImage('images/wall.png'),
 	'tank':PIXI.Texture.fromImage('images/tank_white.png'),
-	'bullet':PIXI.Texture.fromImage('images/bullet.png'), //TODO: változtasd meg
+	'bullet':PIXI.Texture.fromImage('images/bullet.png'),
+	'plus1':PIXI.Texture.fromImage('images/p1.png'),
+	'minus1':PIXI.Texture.fromImage('images/m1.png'),
 	'extra':PIXI.Texture.fromImage('images/tank_white.png') //TODO: változtasd meg
 };
 g_textures.tank.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
