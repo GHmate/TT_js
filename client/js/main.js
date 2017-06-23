@@ -66,6 +66,15 @@ socket.on('init', function(data){
 			ghosttank.anchor.set(0.45,0.5);
 			g_app.stage.addChild(ghosttank);
 		}
+		g_redzone = false;
+		g_redzone_mask = false;
+		g_redzone_pos = {'x': 0,'y': 0,'xend': g_site_orig_width,'yend': g_site_orig_height};
+		g_redzone_ticker = -1;
+		if (data.playarea !== false) {
+			g_redzone_pos = data.playarea;
+			console.log(g_redzone_pos);
+			g_redzone_ticker = 4;
+		}
 	}
 
 	for (let w in data.walls) {
@@ -198,12 +207,27 @@ socket.on('world_active', function(data){
 	}
 });
 
+socket.on('time_is_up', function() {
+	g_redzone_ticker = 4;
+});
+
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
 g_app.ticker.add(function(delta) {
-	if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) {
-		if (delta < 1) {
-			delta = 1;
+	if (delta < 1) {
+		delta = 1;
+	}
+	if (g_redzone_ticker > 0) {
+		g_redzone_ticker--;
+		if (g_redzone_ticker == 0) {
+			draw_redzone(g_redzone_pos);
+			g_redzone_pos.x +=0.5*delta*0.96; //TODO: szinkronizálni a szerverrel néhanapján
+			g_redzone_pos.y +=0.5*delta*0.96;
+			g_redzone_pos.xend -=0.5*delta*0.96;
+			g_redzone_pos.yend -=0.5*delta*0.96;
+			g_redzone_ticker = 4;
 		}
+	}
+	if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) {
 		g_self_data.missed_packets += (60-(60/delta))/(60/delta);
 	}
 	
@@ -216,14 +240,14 @@ g_app.ticker.add(function(delta) {
 	let block_width = jQuery("#game_container").width();
 	let block_height = jQuery("#game_container").height();
 
-	g_site_orig_width = block_width//window.innerWidth-103;
-	g_site_orig_height = g_site_orig_width*WRATIO;
-	if (g_site_orig_height > block_height) {
-		g_site_orig_height = block_height;
-		g_site_orig_width = g_site_orig_height/WRATIO;
+	let actual_width = block_width//window.innerWidth-103;
+	let actual_height = actual_width*WRATIO;
+	if (actual_height > block_height) {
+		actual_height = block_height;
+		actual_width = actual_height/WRATIO;
 	}
-	g_app.renderer.view.style.width = g_site_orig_width;
-	g_app.renderer.view.style.height = g_site_orig_height;
+	g_app.renderer.view.style.width = actual_width;
+	g_app.renderer.view.style.height = actual_height;
 	
 	for (let i in Tank.list) {
 		if (Tank.list[i].id !== g_self_data.id) {

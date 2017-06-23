@@ -137,6 +137,13 @@ create_walls = function (graph,dimensions) {
 };
 
 regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya végén az új pályakezdésért felelő funkció
+	g_worlds[world_id] = {'leteheto_nodes':[],'tanks': []};
+	g_worlds[world_id].countdown = 100; //a kezdés előtt várakozandó idő
+	
+	g_worlds[world_id].timelimit = 400; //ez triggereli a pálya-vége effektet
+	g_worlds[world_id].timelimit_ticker = -1;
+	g_worlds[world_id].playarea = {'x': 0,'y': 0,'xend': g_site_orig_width,'yend': g_site_orig_height};
+	
 	Wall.list = {};
 	Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
 	Tank.list = {}; //statikus osztály-változó
@@ -154,7 +161,6 @@ regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya vé
 	graph = gen_result.graph;
 	selected_block = gen_result.selected_block;
 	
-	g_worlds[0].leteheto_nodes = []; //hova lehet tankot tenni
 	for (var x = 0; x < g_dimensions.x; x++) {
 		for (var y = 0; y < g_dimensions.y; y++) {
 			if (graph[x][y].block_id == selected_block) {
@@ -175,10 +181,10 @@ regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya vé
 	let init = {
 		'clear_all': true,
 		'walls': Wall.list,
-		'tanks': Tank.list
+		'tanks': Tank.list,
+		'playarea': false
 	};
 	broadcast_simple('init',init,world_id);
-	g_worlds[0].countdown = 110;
 	update_score_board(world_id);
 };
 
@@ -284,30 +290,47 @@ broadcast_simple_except_one = function(one,name,data = '',world_id = 0) {
 	
 }*/
 
-kill_one_tank = function (tank, bullet) {
+kill_one_tank = function (tank, bullet = false) {
 	let world_id = g_playerdata[tank.id].world_id;
 	if (!world_has_tank(world_id,tank.id)) {
 		return;
 	}
-	let killer_socket = (SOCKET_LIST[bullet.player_id] === undefined ? false : SOCKET_LIST[bullet.player_id]);
-	if (tank.id != bullet.player_id) {
+	let killer_socket;
+	if (bullet === false) {
+		killer_socket = (SOCKET_LIST[tank.id] === undefined ? false : SOCKET_LIST[tank.id]);
+	} else {
+		killer_socket = (SOCKET_LIST[bullet.player_id] === undefined ? false : SOCKET_LIST[bullet.player_id]);
+	}
+	
+	if (bullet !== false && tank.id != bullet.player_id) {
 		g_playerdata[bullet.player_id].score++;
 		if (killer_socket) {
 			killer_socket.emit('effect','p1');
 		}
 	} else {
-		if (g_playerdata[bullet.player_id].score > 0) {
-			g_playerdata[bullet.player_id].score--;
-		}
-		if (killer_socket) {
-			killer_socket.emit('effect','m1');
+		if (bullet === false) {
+			if (g_playerdata[tank.id].score > 0) {
+				g_playerdata[tank.id].score--;
+			}
+			if (killer_socket) {
+				killer_socket.emit('effect','m1');
+			}
+		} else {
+			if (g_playerdata[bullet.player_id].score > 0) {
+				g_playerdata[bullet.player_id].score--;
+			}
+			if (killer_socket) {
+				killer_socket.emit('effect','m1');
+			}
 		}
 	}
 	update_score_board(world_id);
 	
 	world_add_remove_tank (world_id,tank.id,0);
 	tank.destroy([Tank.list]);
-	bullet.destroy([Bullet.list]);
+	if (bullet !== false) {
+		bullet.destroy([Bullet.list]);
+	}
 
 	let winner = world_check_for_winner(world_id);
 	if (winner !== false) {
@@ -344,9 +367,9 @@ world_add_remove_tank = function(world_id,tank_id,add) {
 
 world_check_for_winner = function(world_id) {
 	if (g_worlds[world_id] === undefined) {
-		return;
+		return false;
 	}
-	if (g_worlds[world_id].tanks.length === 1) {
+	if (g_worlds[world_id].tanks.length < 2) {
 		return g_worlds[world_id].tanks[0];
 	}
 	return false;

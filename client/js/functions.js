@@ -113,3 +113,33 @@ function update_world_scores (scores) { //{id, name, score}
 	}
 	vue_app.highscores = g_world_scores;
 }
+
+function draw_redzone (pos = false,del = false) {
+	if (del){
+		g_app.stage.removeChild(g_redzone);
+		g_app.stage.removeChild(g_redzone_mask);
+		g_redzone = false;
+		g_redzone_mask = false;
+		return;
+	}
+	if (g_redzone === false) {
+		g_redzone = new PIXI.TilingSprite(g_textures.redzone,1400,900);
+		g_redzone.x = g_redzone.y = -10;
+		g_redzone.alpha = 0.5;
+		g_app.stage.addChild(g_redzone);
+	}
+	if (pos !== false) {
+		if (g_redzone_mask === false) {
+			g_redzone_mask = new PIXI.Graphics();
+			g_app.stage.addChild(g_redzone_mask);
+			g_redzone_mask.lineStyle(0);
+			g_redzone.mask = g_redzone_mask;
+		}
+		//pixiben nincs inverz maszk, így 4 külön téglalappal kell megoldanom a maszkolást.
+		g_redzone_mask.clear();
+		g_redzone_mask.drawRect(0, 0, pos.x, 900); //bal oldali
+		g_redzone_mask.drawRect(pos.xend, 0, 1400, 900); //jobb oldali
+		g_redzone_mask.drawRect(pos.x, 0, pos.xend, pos.y); //felső
+		g_redzone_mask.drawRect(pos.x, pos.yend, pos.xend, 900); //alsó
+	}
+}

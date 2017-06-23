@@ -52,6 +52,7 @@ g_textures = { //textúrákat egyszer kell csak betölteni
 	'bullet':PIXI.Texture.fromImage('images/bullet.png'),
 	'plus1':PIXI.Texture.fromImage('images/p1.png'),
 	'minus1':PIXI.Texture.fromImage('images/m1.png'),
+	'redzone':PIXI.Texture.fromImage('images/redzone.png'),
 	'extra':PIXI.Texture.fromImage('images/tank_white.png') //TODO: változtasd meg
 };
 g_textures.tank.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
@@ -75,6 +76,10 @@ focus_circle_data = {
 	'phase': -1,
 	'countdown': 0
 };
+g_redzone = false;
+g_redzone_mask = false;
+g_redzone_pos = {'x': 0,'y': 0,'xend': g_site_orig_width,'yend': g_site_orig_height};
+g_redzone_ticker = -1;
 
 //spritesheets
 PIXI.loader

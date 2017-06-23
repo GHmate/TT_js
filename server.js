@@ -19,10 +19,8 @@ require("./server_files/s_classes.js");
 
 //ha még nem volt generálva, legenerálja a pályát.
 if (g_worlds_number < 1) {
-	g_worlds[0] = {'leteheto_nodes':[],'tanks': []};
 	g_worlds_number++;
-	g_worlds[0].countdown = 110;
-	regenerate_map();
+	regenerate_map(0);
 }
 
 io.sockets.on('connection', function (socket) {
@@ -48,12 +46,17 @@ io.sockets.on('connection', function (socket) {
 		add_tank(socket.id);
 
 		//elmeséljük az újonnan érkezett zöldfülűnek, hogy mi a helyzet a pályán
+		let level_limiter = false;
+		if (g_worlds[data.w_id].timelimit_ticker > -1) {
+			level_limiter = g_worlds[data.w_id].playarea;
+		}
 		socket.emit ('init',{
 			'clear_all': true,
 			'global': {'id': socket.id},
 			'walls': Wall.list,
 			'tanks': Tank.list,
-			'bullets': Bullet.list
+			'bullets': Bullet.list,
+			'playarea': level_limiter
 		});
 		
 		if (g_worlds[data.w_id].countdown === 0) {
@@ -135,6 +138,19 @@ io.sockets.on('connection', function (socket) {
 });
 
 setInterval(function () {
+	
+	//összeszűkül a pálya, ha régóta megy a meccs
+	if (g_worlds[0].timelimit_ticker > 0) {
+		g_worlds[0].timelimit_ticker--;
+		if (g_worlds[0].timelimit_ticker == 0) {
+			g_worlds[0].playarea.x +=0.5;
+			g_worlds[0].playarea.y +=0.5;
+			g_worlds[0].playarea.xend -=0.5;
+			g_worlds[0].playarea.yend -=0.5;
+			g_worlds[0].timelimit_ticker = 4;
+		}
+	}
+	
 	if (g_worlds_number >= 1) {
 		g_collisioner.update_arrays ();
 		
@@ -195,5 +211,18 @@ setInterval(function () {
 			}
 		}
 	//}
+	if (g_worlds[0].timelimit > 0) {
+		g_worlds[0].timelimit--;
+	} else {
+		if (g_worlds[0].timelimit > -1) {
+			g_worlds[0].timelimit_ticker = 4;
+			for (var i in SOCKET_LIST) {
+				if (g_playerdata[SOCKET_LIST[i].id].world_id == 0) {
+					SOCKET_LIST[i].emit('time_is_up');
+				}
+			}
+			g_worlds[0].timelimit = -1;
+		}
+	}
 	
 }, 1000 / 20); //20-30 fps

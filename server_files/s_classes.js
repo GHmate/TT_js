@@ -50,7 +50,7 @@ Tank = class Tank extends Entity{
 		this.shoot_type = "normal"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
 		this.bullet_timer = 3;
 		this.list_of_inputs = [];
-		this.bullet_count = 5;
+		this.bullet_count = 3;
 		this.updatePosition();
 	}
 	updatePosition() {
@@ -99,6 +99,12 @@ Tank = class Tank extends Entity{
 				}
 			}
 		};
+		//ha a tank kimegy a játszható területről
+		let playarea = g_worlds[g_playerdata[this.id].world_id].playarea;
+		if (!this.inactive && (this.x < playarea.x || this.y < playarea.y || this.x > playarea.xend || this.y > playarea.yend)) {
+			this.inactive = true;
+			kill_one_tank(this);
+		}
 		
 	};
 	apply_input_movement_data (repeat) {
@@ -257,7 +263,7 @@ Bullet = class Bullet extends Entity{
 		this.parent_protect = true; //ameddig el nem távolodik biztonságos távra (vagy falnak ütközik), nem öli meg a saját tankot
 		this.starting_pos = false; //csak ameddig a while-ban a tank csövéhez teszem
 		this.starting_timer = 0; //ha közel pattintja a falnak a játékos a golyót, egy darabig még nem aktiválódik, hogy kicsit megengedőbb legyen
-		this.timer = (data.timer !== undefined ? data.timer : 600);
+		this.timer = (data.timer !== undefined ? data.timer : 400);
 		this.player_id = (data.player_id !== undefined ? data.player_id : 0);
 		this.Boom = false;
 		this.hitbox = {
