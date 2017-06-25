@@ -11,7 +11,7 @@ document.onkeydown = function(event){
 		tank_control = 'right';
 	} else if(event.keyCode === 40) { //le
 		tank_control = 'down';
-	} else if(event.keyCode === 86) { //V
+	} else if(event.keyCode === 86 || event.keyCode === 87) { // V vagy W
 		if (g_self_data.shoot_button_up === true) {
 			if (Tank.list[g_self_data.id] !== undefined) {
 				//Tank.list[g_self_data.id].keyevent(tank_control,false);
@@ -38,7 +38,7 @@ document.onkeyup = function(event){
 		tank_control = 'right';
 	} else if(event.keyCode === 40) { //le
 		tank_control = 'down';
-	} else if(event.keyCode === 86) { //V
+	} else if(event.keyCode === 86 || event.keyCode === 87) { // V vagy W
 		if (Tank.list[g_self_data.id] !== undefined) {
 			//Tank.list[g_self_data.id].keyevent(tank_control,false);
 			g_self_data.shoot_button_up = true;
@@ -72,7 +72,6 @@ socket.on('init', function(data){
 		g_redzone_ticker = -1;
 		if (data.playarea !== false) {
 			g_redzone_pos = data.playarea;
-			console.log(g_redzone_pos);
 			g_redzone_ticker = 4;
 		}
 	}
@@ -97,14 +96,33 @@ socket.on('init', function(data){
 		});
 	}
 	for (let t in data.bullets) {
-		Bullet.list[data.bullets[t].id] = new Bullet({
-			'x': data.bullets[t].x,
-			'y': data.bullets[t].y,
-			'id': data.bullets[t].id,
-			'speed': data.bullets[t].speed,
-			//'player_id': data.bullets[t].player_id,
-			//'rotation': data.bullets[t].rotation,
-			'tint': data.bullets[t].tint
+		switch (data.bullets[t].type) {
+			case 'GhostBullet':
+				Bullet.list[data.bullets[t].id] = new GhostBullet({
+					'x': data.bullets[t].x,
+					'y': data.bullets[t].y,
+					'id': data.bullets[t].id,
+					'speed': data.bullets[t].speed,
+					'tint': data.bullets[t].tint
+				});
+				break;
+			default:
+				Bullet.list[data.bullets[t].id] = new Bullet({
+					'x': data.bullets[t].x,
+					'y': data.bullets[t].y,
+					'id': data.bullets[t].id,
+					'speed': data.bullets[t].speed,
+					'tint': data.bullets[t].tint
+				});
+		}
+		
+	}
+	for (let t in data.extras) {
+		Extra.list[data.extras[t].id] = new Extra({
+			'x': data.extras[t].x,
+			'y': data.extras[t].y,
+			'id': data.extras[t].id,
+			'type': data.extras[t].type
 		});
 	}
 	if (data.clear_all === true && focus_circle !== undefined && focus_circle_data.phase === -1) {
@@ -195,6 +213,11 @@ socket.on('destroy', function(data){
 	for (let t in data.bullets) {
 		if (Bullet.list[data.bullets[t]] !== undefined) {
 			Bullet.list[data.bullets[t]].destroy([Bullet.list]);
+		}
+	}
+	for (let t in data.extras) {
+		if (Extra.list[data.extras[t]] !== undefined) {
+			Extra.list[data.extras[t]].destroy([Extra.list]);
 		}
 	}
 });

@@ -93,7 +93,6 @@ create_walls = function (graph,dimensions) {
 						'width': wall.width,
 						'height': wall.height
 					});
-					g_collisioner.place(Wall.list[Wall.list_id_counter]);
 					Wall.list_id_counter++;
 				}
 			}
@@ -112,7 +111,6 @@ create_walls = function (graph,dimensions) {
 						'width': wall.width,
 						'height': wall.height
 					});
-				g_collisioner.place(Wall.list[Wall.list_id_counter]);
 				Wall.list_id_counter++;
 			}
 			if (y === 0) {
@@ -129,7 +127,6 @@ create_walls = function (graph,dimensions) {
 						'width': wall.width,
 						'height': wall.height
 					});
-				g_collisioner.place(Wall.list[Wall.list_id_counter]);
 				Wall.list_id_counter++;
 			}
 		}
@@ -139,8 +136,9 @@ create_walls = function (graph,dimensions) {
 regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya végén az új pályakezdésért felelő funkció
 	g_worlds[world_id] = {'leteheto_nodes':[],'tanks': []};
 	g_worlds[world_id].countdown = 100; //a kezdés előtt várakozandó idő
+	g_worlds[world_id].extra_create_countdown = 150; //extra generálás visszaszámláló
 	
-	g_worlds[world_id].timelimit = 400; //ez triggereli a pálya-vége effektet
+	g_worlds[world_id].timelimit = 700; //ez triggereli a pálya-vége effektet
 	g_worlds[world_id].timelimit_ticker = -1;
 	g_worlds[world_id].playarea = {'x': 0,'y': 0,'xend': g_site_orig_width,'yend': g_site_orig_height};
 	
@@ -151,10 +149,9 @@ regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya vé
 	Bullet.list_id_count = 0;
 	CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel
 	
-	Extra.type_list = ['1','2','3'];
+	Extra.type_list = [/*'boom','frag',*/'ghost'];
 	Extra.list = {};
 	Extra.list_id_count = 0;
-	Extra.creator_timer = 600;
 	
 	g_collisioner = new CollisionManager({});
 	gen_result = generate_map(g_dimensions);
@@ -214,7 +211,6 @@ add_tank = function (id) {
 		die('baj van, nem elég nagy a pálya!');
 	} else {
 		world_add_remove_tank(0,id,1);
-		g_collisioner.place(Tank.list[id]);
 	}
 };
 
@@ -236,7 +232,6 @@ die = function die(data) {
 createExtra = function (){
 	let koordinata= g_worlds[0].leteheto_nodes[getRandomInt(0,g_worlds[0].leteheto_nodes.length-1)];
 	let customnode = graph[koordinata[0]][koordinata[1]];
-	//Extra.list[Extra.list_id_count] = new Extra(customnode.x, customnode.y, customnode.x_graph, customnode.y_graph, Extra.list_id_count, g_textures.extra, 20, 20, Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]);
 	Extra.list[Extra.list_id_count] = new Extra({
 		'x': customnode.x,
 		'y': customnode.y,
@@ -245,6 +240,10 @@ createExtra = function (){
 		'id': Extra.list_id_count,
 		'type': Extra.type_list[getRandomInt(0,Extra.type_list.length-1)]
 	});
+	let ex = {
+		'extras': {self_id: Extra.list[Extra.list_id_count]}
+	};
+	broadcast_simple('init',ex);
 	Extra.list_id_count ++;
 };
 //random int

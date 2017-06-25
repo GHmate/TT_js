@@ -99,6 +99,15 @@ Tank = class Tank extends Entity{
 				}
 			}
 		};
+		//ha Tank ütközik extrával
+		collision_data = g_collisioner.check_collision_one_to_n(this,Extra);
+		let colliding_extra = collision_data['collision'];
+		if (colliding_extra.right || colliding_extra.left || colliding_extra.up || colliding_extra.down){
+			for (let e of collision_data['collided']) {
+				this.shoot_type = 'gh';
+				e.destroy([Extra.list]);
+			}
+		};
 		//ha a tank kimegy a játszható területről
 		let playarea = g_worlds[g_playerdata[this.id].world_id].playarea;
 		if (!this.inactive && (this.x < playarea.x || this.y < playarea.y || this.x > playarea.xend || this.y > playarea.yend)) {
@@ -176,6 +185,7 @@ Tank = class Tank extends Entity{
 			return;
 		}
 		if (this.can_shoot){
+			// fordulás közben kicsit más irányba lövi, hogy kompenzálja a lag-ot
 			let t = 0;
 			if (turn === 'l') {
 				t = -1;
@@ -183,25 +193,30 @@ Tank = class Tank extends Entity{
 				t = 1;
 			}
 			let fixed_rotation = this.rotation + 3*t*Math.abs(this.rot_speed);
+			
 			//bb
-			if (this.shoot_type === "bb") {
-				this.can_shoot = false;
-				this.shoot_type = "bb_s";
-				Bullet.list[Bullet.list_id_count] = new BigBullet({
-					'x': this.x,
-					'y': this.y,
-					'x_graph': this.x_graph,
-					'y_graph': this.y_graph,
-					'id': Bullet.list_id_count,
-					'player_id': this.id,
-					'rotation': fixed_rotation,
-					'tint': this.tint
-				});
-				Bullet.list_id_count++;
-
-
-			} else if (this.shoot_type === "normal") {
-				this.createBullet({'rotation': fixed_rotation});
+			switch (this.shoot_type) {
+				case 'gh': //ghost
+					this.createGhostBullet({'rotation': fixed_rotation});
+					this.shoot_type = 'normal';
+					break;
+				case 'bb': //repesz TODO: createBigBullet fgv
+					this.can_shoot = false;
+					this.shoot_type = "bb_s";
+					Bullet.list[Bullet.list_id_count] = new BigBullet({
+						'x': this.x,
+						'y': this.y,
+						'x_graph': this.x_graph,
+						'y_graph': this.y_graph,
+						'id': Bullet.list_id_count,
+						'player_id': this.id,
+						'rotation': fixed_rotation,
+						'tint': this.tint
+					});
+					Bullet.list_id_count++;
+					break;
+				default: //sima lövedék
+					this.createBullet({'rotation': fixed_rotation});
 			}
 		};
 	}
@@ -219,14 +234,41 @@ Tank = class Tank extends Entity{
 				'tint': this.tint
 			});
 			Bullet.list[Bullet.list_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
+			let send_bullet = Bullet.list[Bullet.list_id_count] //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
+			send_bullet.type = 'Bullet';
 			let bl = {
-				'bullets': {self_id: Bullet.list[Bullet.list_id_count]}
+				'bullets': {self_id: send_bullet}
 			};
 			broadcast_simple('init',bl);
 			Bullet.list_id_count ++;
 			this.bullet_count --;
 		};
-	};	
+	};
+	createGhostBullet(data) {
+		let angle = 0.2;
+		let rot = (data.rotation !== undefined ? data.rotation : this.rotation)-angle;
+		for (let r = 0; r <= 2 ; r += 1) {
+			Bullet.list[Bullet.list_id_count] = new GhostBullet({
+				'x': this.x,
+				'y': this.y,
+				'x_graph': this.x_graph,
+				'y_graph': this.y_graph,
+				'id': Bullet.list_id_count,
+				'player_id': this.id,
+				'rotation': rot,
+				'tint': this.tint
+			});
+			rot += angle;
+			Bullet.list[Bullet.list_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
+			let send_bullet = Bullet.list[Bullet.list_id_count] //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
+			send_bullet.type = 'GhostBullet';
+			let bl = {
+				'bullets': {self_id: send_bullet}
+			};
+			broadcast_simple('init',bl);
+			Bullet.list_id_count ++;
+		}
+	};
 	//lövésváltoztatós extrák ide:
 	ext_machinegun(){
 		Bullet.list[Bullet.list_id_count] = new Bullet({
@@ -348,12 +390,12 @@ Bullet = class Bullet extends Entity{
 		}
 	};
 	destroy (param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
-		if (Tank.list[this.player_id] !== undefined) {
+		if (Tank.list[this.player_id] !== undefined && this.constructor.name === 'Bullet') { //csak sima bulletnél kell visszaállítani a limitet
 			Tank.list[this.player_id].bullet_count ++;
 		}
 		super.destroy(param);
 		let self_id = this.id;
-		let data = { //ide jön minden, amit a játékos kilépésénél pucolni kell
+		let data = {
 			'bullets': {self_id: self_id} //itt direkt tömb van, hátha többet akarunk destroyolni
 		};
 		broadcast_simple('destroy',data);
@@ -364,6 +406,61 @@ Bullet = class Bullet extends Entity{
 			this.updatePosition();
 		} while (!this.starting_pos);
 	}
+};
+
+GhostBullet = class GhostBullet extends Bullet{
+	constructor(data) {
+		super(data);
+		this.timer = (data.timer !== undefined ? data.timer : 600);
+	};
+	updatePosition() {
+		
+		this.rotation = normalize_rad(this.rotation);
+
+		this.hitbox = {
+			'x1':this.x-4,
+			'x2':this.x+4,
+			'y1':this.y-4,
+			'y2':this.y+4
+		};
+		
+		let x_wannago = 0;
+		let y_wannago = 0;
+		let cosos = Math.cos(this.rotation)*this.speed;
+		let sines = Math.sin(this.rotation)*this.speed;
+
+		x_wannago = cosos;
+		y_wannago = sines;
+		this.x += x_wannago;
+		this.y += y_wannago;
+		
+		if (this.starting_timer > 0) {
+			this.starting_timer--;
+			if (this.starting_timer == 0) {
+				this.parent_protect = false;
+			}
+		}
+		
+		if (!this.starting_pos || this.parent_protect) {
+			if (Tank.list[this.player_id] === undefined) {
+				this.starting_pos = true;
+			} else {
+				let dist = Math.sqrt(Math.pow(this.x-Tank.list[this.player_id].x,2)+Math.pow(this.y-Tank.list[this.player_id].y,2));
+				if (dist > 20) { //20 pixelnél már kirajzoljuk
+					this.starting_pos = true;
+				}
+				if (dist > 30) { //30 pixelnél már a saját tankot is ölheti
+					this.parent_protect = false;
+				}
+			}
+		}
+		
+		this.timer --;
+
+		if (this.timer < 1) {
+			this.destroy([Bullet.list]);
+		}
+	};
 };
 
 BigBullet = class BigBullet extends Bullet{
@@ -403,7 +500,6 @@ BigBullet = class BigBullet extends Bullet{
 	};
 }; 	
 	
-
 Extra = class Extra extends Entity{
 	constructor(data){
 		if (data.width === undefined) {data.width = 20;}
@@ -419,6 +515,14 @@ Extra = class Extra extends Entity{
 		};
 		this.type = (data.type !== undefined ? data.type : 0);
 	};
+	destroy (param) {
+		super.destroy(param);
+		let self_id = this.id;
+		let data = {
+			'extras': {self_id: self_id}
+		};
+		broadcast_simple('destroy',data);
+	}
 };
 
 //labirintus egy mezője
@@ -526,6 +630,10 @@ CollisionManager = class CollisionManager {
 			Bullet.list[key].collision_block = [];
 			this.place(Bullet.list[key]);
 		}
+		for (let key in Extra.list) {
+			Extra.list[key].collision_block = [];
+			this.place(Extra.list[key]);
+		}
 	}
 	//sima egy az n-hez ütközést ellenőriz, tömbbel tér vissza. (4 irány)
 	check_collision_one_to_n (target, c_class, xnext = 0, ynext = 0, obj_id = false) {
@@ -534,6 +642,9 @@ CollisionManager = class CollisionManager {
 		let collision = {'right':false,'up':false,'left':false,'down':false};
 		let collided = [];
 		for (let block of target.collision_block) {
+			if (CollisionManager.map === undefined || CollisionManager.map[block[0]] === undefined) {
+				return {'collision':collision, 'collided':collided};
+			}
 			for (let obj of CollisionManager.map[block[0]][block[1]]) {
 				if (!(obj instanceof c_class)) {
 					continue;
@@ -609,4 +720,4 @@ CollisionManager = class CollisionManager {
 		}
 		return {'collision':collision, 'collided':collided};
 	}
-}
+};

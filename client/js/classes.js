@@ -13,6 +13,7 @@ class Entity {
 		this.sprite.y = this.y;
 		this.rotation = (data.rotation !== undefined ? data.rotation : 0);
 		this.tint = (data.tint !== undefined ? data.tint : '0xffffff');
+		//this.sprite.alpha = (data.alpha !== undefined ? data.alpha : 1);
 		//this.speed = (data.speed !== undefined ? data.speed : 2.2);
 		this.collision_block = []; //kell a tank predictionhoz
 		g_app.stage.addChild(this.sprite);
@@ -610,24 +611,24 @@ class BigBullet extends Bullet{
 		
 	};
 	
-}; 	
+};
+
+class GhostBullet extends Bullet{
+	constructor(data) {
+		super(data);
+		this.sprite.alpha = 0.6;
+	};
+};
 	
 class Extra extends Entity{
 	constructor(data){
-		if (data.texture === undefined) {data.texture = g_textures.extra;}
-		if (data.width === undefined) {data.width = 20;}
-		if (data.height === undefined) {data.height = 20;}
+		let type = (data.type !== undefined ? data.type : 'boom');
+		if (data.texture === undefined) {data.texture = g_textures.extras[type];}
+		if (data.width === undefined) {data.width = 30;}
+		if (data.height === undefined) {data.height = 30;}
 		super(data);
+		
 		this.sprite.anchor.set(0.5,0.5);
-		let width = (data.width !== undefined ? data.width : 10);
-		let height = (data.height !== undefined ? data.height : 10);
-		/*this.hitbox = { //téglalap 4 sarka
-			'x1':this.x-width/2,
-			'x2':this.x+width/2,
-			'y1':this.y-height/2,
-			'y2':this.y+height/2
-		};*/
-		this.type = (data.type !== undefined ? data.type : 0);
 	};
 };
 

@@ -225,4 +225,10 @@ setInterval(function () {
 		}
 	}
 	
+	g_worlds[0].extra_create_countdown--;
+	if (g_worlds[0].extra_create_countdown < 1) {
+		g_worlds[0].extra_create_countdown = 120;
+		createExtra();
+	}
+	
 }, 1000 / 20); //20-30 fps
