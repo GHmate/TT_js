@@ -114,6 +114,28 @@ function update_world_scores (scores) { //{id, name, score}
 	vue_app.highscores = g_world_scores;
 }
 
+function set_ipol_redzone (to_data) {
+	if (g_redzone_target !== false) {
+		g_redzone_pos = to_data;
+	}
+	g_redzone_target = to_data;
+	g_redzone_target.speedx = Math.abs(g_redzone_pos.x-to_data.x)/3;
+	g_redzone_target.speedy = Math.abs(g_redzone_pos.y-to_data.y)/3;
+	g_redzone_target.speedx2 = Math.abs(g_redzone_pos.xend-to_data.xend)/3;
+	g_redzone_target.speedy2 = Math.abs(g_redzone_pos.yend-to_data.yend)/3;
+}
+
+function ipol_redzone () {
+	if (g_redzone_target === false) {
+		return;
+	}
+	draw_redzone(g_redzone_pos);
+	g_redzone_pos.x += g_redzone_target.speedx;
+	g_redzone_pos.y += g_redzone_target.speedy;
+	g_redzone_pos.xend -= g_redzone_target.speedx2;
+	g_redzone_pos.yend -= g_redzone_target.speedy2;
+}
+
 function draw_redzone (pos = false,del = false) {
 	if (del){
 		g_app.stage.removeChild(g_redzone);

@@ -83,7 +83,7 @@ focus_circle_data = {
 g_redzone = false;
 g_redzone_mask = false;
 g_redzone_pos = {'x': 0,'y': 0,'xend': g_site_orig_width,'yend': g_site_orig_height};
-g_redzone_ticker = -1;
+g_redzone_target = false;
 
 //spritesheets
 PIXI.loader

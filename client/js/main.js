@@ -69,7 +69,7 @@ socket.on('init', function(data){
 		g_redzone = false;
 		g_redzone_mask = false;
 		g_redzone_pos = {'x': 0,'y': 0,'xend': g_site_orig_width,'yend': g_site_orig_height};
-		g_redzone_ticker = -1;
+		g_redzone_target = false;
 		if (data.playarea !== false) {
 			g_redzone_pos = data.playarea;
 			g_redzone_ticker = 4;
@@ -230,8 +230,8 @@ socket.on('world_active', function(data){
 	}
 });
 
-socket.on('time_is_up', function() {
-	g_redzone_ticker = 4;
+socket.on('time_is_up', function(data) {
+	set_ipol_redzone(data);
 });
 
 //minden frame-n. számokat delta-val szorozva alacsony fps-en is ugyanakkora sebességet kapunk, mint 60-on.
@@ -239,17 +239,9 @@ g_app.ticker.add(function(delta) {
 	if (delta < 1) {
 		delta = 1;
 	}
-	if (g_redzone_ticker > 0) {
-		g_redzone_ticker--;
-		if (g_redzone_ticker == 0) {
-			draw_redzone(g_redzone_pos);
-			g_redzone_pos.x +=0.5*delta*0.96; //TODO: szinkronizálni a szerverrel néhanapján
-			g_redzone_pos.y +=0.5*delta*0.96;
-			g_redzone_pos.xend -=0.5*delta*0.96;
-			g_redzone_pos.yend -=0.5*delta*0.96;
-			g_redzone_ticker = 4;
-		}
-	}
+	
+	ipol_redzone();
+	
 	if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) {
 		g_self_data.missed_packets += (60-(60/delta))/(60/delta);
 	}

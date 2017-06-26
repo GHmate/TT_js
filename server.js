@@ -148,6 +148,11 @@ setInterval(function () {
 			g_worlds[0].playarea.xend -=0.5;
 			g_worlds[0].playarea.yend -=0.5;
 			g_worlds[0].timelimit_ticker = 4;
+			for (var i in SOCKET_LIST) {
+				if (g_playerdata[SOCKET_LIST[i].id].world_id == 0) {
+					SOCKET_LIST[i].emit('time_is_up',g_worlds[0].playarea);
+				}
+			}
 		}
 	}
 	
@@ -218,7 +223,7 @@ setInterval(function () {
 			g_worlds[0].timelimit_ticker = 4;
 			for (var i in SOCKET_LIST) {
 				if (g_playerdata[SOCKET_LIST[i].id].world_id == 0) {
-					SOCKET_LIST[i].emit('time_is_up');
+					SOCKET_LIST[i].emit('time_is_up',g_worlds[0].playarea);
 				}
 			}
 			g_worlds[0].timelimit = -1;
@@ -227,7 +232,7 @@ setInterval(function () {
 	
 	g_worlds[0].extra_create_countdown--;
 	if (g_worlds[0].extra_create_countdown < 1) {
-		g_worlds[0].extra_create_countdown = 120;
+		g_worlds[0].extra_create_countdown = 100;
 		createExtra();
 	}
 	

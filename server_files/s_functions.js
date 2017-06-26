@@ -136,9 +136,9 @@ create_walls = function (graph,dimensions) {
 regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya végén az új pályakezdésért felelő funkció
 	g_worlds[world_id] = {'leteheto_nodes':[],'tanks': []};
 	g_worlds[world_id].countdown = 100; //a kezdés előtt várakozandó idő
-	g_worlds[world_id].extra_create_countdown = 150; //extra generálás visszaszámláló
+	g_worlds[world_id].extra_create_countdown = 100; //extra generálás visszaszámláló
 	
-	g_worlds[world_id].timelimit = 700; //ez triggereli a pálya-vége effektet
+	g_worlds[world_id].timelimit = 500; //ez triggereli a pálya-vége effektet
 	g_worlds[world_id].timelimit_ticker = -1;
 	g_worlds[world_id].playarea = {'x': 0,'y': 0,'xend': g_site_orig_width,'yend': g_site_orig_height};
 	
