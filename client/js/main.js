@@ -106,6 +106,15 @@ socket.on('init', function(data){
 					'tint': data.bullets[t].tint
 				});
 				break;
+			case 'FragBullet':
+				Bullet.list[data.bullets[t].id] = new FragBullet({
+					'x': data.bullets[t].x,
+					'y': data.bullets[t].y,
+					'id': data.bullets[t].id,
+					'speed': data.bullets[t].speed,
+					'tint': data.bullets[t].tint
+				});
+				break;
 			default:
 				Bullet.list[data.bullets[t].id] = new Bullet({
 					'x': data.bullets[t].x,

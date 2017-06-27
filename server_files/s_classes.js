@@ -46,8 +46,8 @@ Tank = class Tank extends Entity{
 		this.nametag = ((data.nametag === undefined || data.nametag === '') ? 'unnamed' : data.nametag);
 		this.inactive = true;
 		this.normal_speed = this.speed;
-		this.can_shoot = true;
-		this.shoot_type = "normal"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
+		this.shoot_phase = 'shoot' //lehet 'shoot','trigger','wait','hold'
+		this.shoot_type = 'normal'; //normal: sima, mg: machinegun, fr: fragbullet, gh: ghostbullet.
 		this.bullet_timer = 3;
 		this.list_of_inputs = [];
 		this.bullet_count = 3;
@@ -68,7 +68,7 @@ Tank = class Tank extends Entity{
 		
 		//fegyver összeszedési kapcsolók 
 		//mchg
-		if (this.shoot_type === "mchg") {
+		/*if (this.shoot_type === "mchg") {
 			this.can_shoot = false;
 			if (!this.shoot_button_up) {this.shoot_type = "mchg_s"};
 		};
@@ -86,13 +86,17 @@ Tank = class Tank extends Entity{
 				};
 			};
 			this.bullet_timer -= 0.75;	
-		}
+		}*/
+		
 		//ha Tank ütközik bullettel
 		let collision_data = g_collisioner.check_collision_one_to_n(this,Bullet);
 		let colliding_bullet = collision_data['collision'];
 		if (colliding_bullet.right || colliding_bullet.left || colliding_bullet.up || colliding_bullet.down){
 			for (let b of collision_data['collided']) {
 				if (b.inactive === false && this.inactive === false && !(b.parent_protect && b.player_id === this.id) ) {
+					if (b.constructor.name === 'FragBullet') {
+						b.boom();
+					}
 					b.inactive = true;
 					this.inactive = true;
 					kill_one_tank(this,b);
@@ -102,9 +106,9 @@ Tank = class Tank extends Entity{
 		//ha Tank ütközik extrával
 		collision_data = g_collisioner.check_collision_one_to_n(this,Extra);
 		let colliding_extra = collision_data['collision'];
-		if (colliding_extra.right || colliding_extra.left || colliding_extra.up || colliding_extra.down){
+		if ((colliding_extra.right || colliding_extra.left || colliding_extra.up || colliding_extra.down) && this.shoot_type === 'normal'){
 			for (let e of collision_data['collided']) {
-				this.shoot_type = 'gh';
+				this.shoot_type = e.type;
 				e.destroy([Extra.list]);
 			}
 		};
@@ -184,7 +188,7 @@ Tank = class Tank extends Entity{
 		if (this.inactive) {
 			return;
 		}
-		if (this.can_shoot){
+		if (this.shoot_phase === 'shoot'){
 			// fordulás közben kicsit más irányba lövi, hogy kompenzálja a lag-ot
 			let t = 0;
 			if (turn === 'l') {
@@ -194,32 +198,30 @@ Tank = class Tank extends Entity{
 			}
 			let fixed_rotation = this.rotation + 3*t*Math.abs(this.rot_speed);
 			
-			//bb
 			switch (this.shoot_type) {
 				case 'gh': //ghost
 					this.createGhostBullet({'rotation': fixed_rotation});
 					this.shoot_type = 'normal';
 					break;
-				case 'bb': //repesz TODO: createBigBullet fgv
-					this.can_shoot = false;
-					this.shoot_type = "bb_s";
-					Bullet.list[Bullet.list_id_count] = new BigBullet({
-						'x': this.x,
-						'y': this.y,
-						'x_graph': this.x_graph,
-						'y_graph': this.y_graph,
-						'id': Bullet.list_id_count,
-						'player_id': this.id,
-						'rotation': fixed_rotation,
-						'tint': this.tint
-					});
-					Bullet.list_id_count++;
+				case 'fr': //repesz
+					this.createFragBullet({'rotation': fixed_rotation});
+					this.shoot_phase = 'trigger';
 					break;
 				default: //sima lövedék
 					this.createBullet({'rotation': fixed_rotation});
 			}
-		};
-	}
+		} else if (this.shoot_phase === 'trigger') {
+			switch (this.shoot_type) {
+				case 'fr': //repesz
+					for (let t in Bullet.list) {
+						if (Bullet.list[t].constructor.name === 'FragBullet' && Bullet.list[t].player_id == this.id) {
+							Bullet.list[t].boom();
+						}
+					}
+					break;
+			}
+		}
+	};
 	createBullet(data) {
 		let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
 		if (this.bullet_count > 0){
@@ -260,7 +262,7 @@ Tank = class Tank extends Entity{
 			});
 			rot += angle;
 			Bullet.list[Bullet.list_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
-			let send_bullet = Bullet.list[Bullet.list_id_count] //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
+			let send_bullet = Bullet.list[Bullet.list_id_count]; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
 			send_bullet.type = 'GhostBullet';
 			let bl = {
 				'bullets': {self_id: send_bullet}
@@ -269,7 +271,28 @@ Tank = class Tank extends Entity{
 			Bullet.list_id_count ++;
 		}
 	};
-	//lövésváltoztatós extrák ide:
+	createFragBullet(data) {
+		let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
+		Bullet.list[Bullet.list_id_count] = new FragBullet({
+			'x': this.x,
+			'y': this.y,
+			'x_graph': this.x_graph,
+			'y_graph': this.y_graph,
+			'id': Bullet.list_id_count,
+			'player_id': this.id,
+			'rotation': rot,
+			'tint': this.tint,
+			'timer': 500
+		});
+		Bullet.list[Bullet.list_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
+		let send_bullet = Bullet.list[Bullet.list_id_count]; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
+		send_bullet.type = 'FragBullet';
+		let bl = {
+			'bullets': {self_id: send_bullet}
+		};
+		broadcast_simple('init',bl);
+		Bullet.list_id_count ++;
+	};
 	ext_machinegun(){
 		Bullet.list[Bullet.list_id_count] = new Bullet({
 			'x': this.x,
@@ -319,7 +342,7 @@ Bullet = class Bullet extends Entity{
 		
 		this.rotation = normalize_rad(this.rotation);
 
-		this.hitbox = {
+		this.hitbox = { //TODO: más lövedékeknél ez eltérő lehet...
 			'x1':this.x-4,
 			'x2':this.x+4,
 			'y1':this.y-4,
@@ -361,7 +384,7 @@ Bullet = class Bullet extends Entity{
 		}
 		this.x += x_wannago;
 		this.y += y_wannago;
-		
+
 		if (this.starting_timer > 0) {
 			this.starting_timer--;
 			if (this.starting_timer == 0) {
@@ -390,7 +413,7 @@ Bullet = class Bullet extends Entity{
 		}
 	};
 	destroy (param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
-		if (Tank.list[this.player_id] !== undefined && this.constructor.name === 'Bullet') { //csak sima bulletnél kell visszaállítani a limitet
+		if (Tank.list[this.player_id] !== undefined && this.constructor.name === 'Bullet' && this.stop_count !== true) { //csak sima bulletnél kell visszaállítani a limitet
 			Tank.list[this.player_id].bullet_count ++;
 		}
 		super.destroy(param);
@@ -463,40 +486,54 @@ GhostBullet = class GhostBullet extends Bullet{
 	};
 };
 
-BigBullet = class BigBullet extends Bullet{
-		constructor(data) {
-		if (data.speed === undefined) {data.speed = 2;}
+FragBullet = class FragBullet extends Bullet{
+	constructor(data) {
+		if (data.speed === undefined) {data.speed = 2.5;}
 		if (data.width === undefined) {data.width = 10;}
 		if (data.height === undefined) {data.height = 10;}
 		super(data);
-		this.speed = 2.5;
-		this.updatePosition();
+		this.starting_timer = data.timer;
+		//this.updatePosition();
 	};
 	boom(){
-		if (Tank.list[this.player_id].shoot_type === "bb_s" && !this.shoot_button_up){
+		let parent = Tank.list[this.player_id];
+		if (parent !== undefined) {
+			parent.shoot_type = 'normal';
+			parent.shoot_phase = 'shoot';
 			for (let i = 0; i < 12; i++) {
 				Bullet.list[Bullet.list_id_count] = new Bullet({
-						'x': this.x,
-						'y': this.y,
-						'x_graph': this.x_graph,
-						'y_graph': this.y_graph,
-						'id': Bullet.list_id_count,
-						'player_id': this.id,
-						'rotation': this.rotation + i*Math.PI/6,
-						'speed': 1 + 2 * Math.random()
-					});
+					'x': this.x,
+					'y': this.y,
+					'x_graph': this.x_graph,
+					'y_graph': this.y_graph,
+					'id': Bullet.list_id_count,
+					'player_id': this.player_id,
+					'rotation': this.rotation + i*Math.PI/6,
+					'speed': 1 + 2 * Math.random(),
+					'timer': 70,
+					'tint': this.tint
+				});
+				Bullet.list[Bullet.list_id_count].stop_count = true; //hogy ne növelje a max darabszámot, amikor elpusztul.
+				Bullet.list[Bullet.list_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
+				let send_bullet = Bullet.list[Bullet.list_id_count]; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
+				send_bullet.type = 'Bullet';
+				let bl = {
+					'bullets': {self_id: send_bullet}
+				};
+				broadcast_simple('init',bl); //TODO: az inicializálásokat össze lehetne szedni, és a sima 20fps-es csomagban egyszerre küldeni, nem külön-külön üzenetekben.
 				Bullet.list_id_count ++;
 			};
-			Tank.list[this.player_id].can_shoot = true;
-			this.destroy([Bullet.list]);
-		};
-	};
-	updatePosition() { 
-		super.updatePosition();
+		}
 		
-		if (this.timer < 550){
+		Tank.list[this.player_id].can_shoot = true;
+		this.destroy([Bullet.list]);
+	};
+	updatePosition() {
+		if (this.timer <= 1) {
 			this.boom();
-		};
+		} else {
+			super.updatePosition();
+		}
 	};
 }; 	
 	
@@ -513,7 +550,7 @@ Extra = class Extra extends Entity{
 			'y1':this.y-height/2,
 			'y2':this.y+height/2
 		};
-		this.type = (data.type !== undefined ? data.type : 0);
+		this.type = (data.type !== undefined ? data.type : 'gh'); //defaultként a ghost-bulletre inicializálom, mert miért ne.
 	};
 	destroy (param) {
 		super.destroy(param);

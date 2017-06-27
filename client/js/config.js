@@ -54,9 +54,9 @@ g_textures = { //textúrákat egyszer kell csak betölteni
 	'minus1':PIXI.Texture.fromImage('images/m1.png'),
 	'redzone':PIXI.Texture.fromImage('images/redzone.png'),
 	'extras': {
-		'boom': PIXI.Texture.fromImage('images/ex_boom.png'),
-		'frag': PIXI.Texture.fromImage('images/ex_frag.png'),
-		'ghost': PIXI.Texture.fromImage('images/ex_ghost.png')
+		'nu': PIXI.Texture.fromImage('images/ex_boom.png'),
+		'fr': PIXI.Texture.fromImage('images/ex_frag.png'),
+		'gh': PIXI.Texture.fromImage('images/ex_ghost.png')
 	}
 };
 g_textures.tank.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;

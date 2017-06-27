@@ -587,30 +587,11 @@ class Bullet extends Entity{
 	}
 }
 
-class BigBullet extends Bullet{
-		constructor(data) {
-		if (data.texture === undefined) {data.texture = g_textures.bullet;}
-		if (data.speed === undefined) {data.speed = 2;}
-		if (data.width === undefined) {data.width = 10;}
-		if (data.height === undefined) {data.height = 10;}
+class FragBullet extends Bullet{
+	constructor(data) {
 		super(data);
-		//this.sprite.x = 2;
-		/*this.sprite.anchor.set(0.5,0.5);
-		this.x_graph = x; //a gráfban elfoglalt hely
-		this.y_graph = y;
-		this.rotation = 0;
-		this.timer = 600;
-		this.player_id = player_id;*/
-		this.speed = 2.5;
-		//this.updatePosition();
+		this.sprite.width = this.sprite.height = 15;
 	};
-	boom(){
-		
-	};
-	updatePosition() { 
-		
-	};
-	
 };
 
 class GhostBullet extends Bullet{

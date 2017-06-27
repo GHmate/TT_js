@@ -159,9 +159,11 @@ function draw_redzone (pos = false,del = false) {
 		}
 		//pixiben nincs inverz maszk, így 4 külön téglalappal kell megoldanom a maszkolást.
 		g_redzone_mask.clear();
+		g_redzone_mask.beginFill(0x000000, 1);
 		g_redzone_mask.drawRect(0, 0, pos.x, 900); //bal oldali
 		g_redzone_mask.drawRect(pos.xend, 0, 1400, 900); //jobb oldali
-		g_redzone_mask.drawRect(pos.x, 0, pos.xend, pos.y); //felső
-		g_redzone_mask.drawRect(pos.x, pos.yend, pos.xend, 900); //alsó
+		g_redzone_mask.drawRect(pos.x, 0, pos.xend-pos.x, pos.y); //felső
+		g_redzone_mask.drawRect(pos.x, pos.yend, pos.xend-pos.x, 900); //alsó
+		g_redzone_mask.endFill();
 	}
 }
