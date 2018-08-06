@@ -207,6 +207,10 @@ Tank = class Tank extends Entity{
 					this.createFragBullet({'rotation': fixed_rotation});
 					this.shoot_phase = 'trigger';
 					break;
+				case 'be': //beam
+					this.createBeam();
+					this.shoot_phase = 'wait';
+					break;
 				default: //sima lövedék
 					this.createBullet({'rotation': fixed_rotation});
 			}
@@ -253,8 +257,6 @@ Tank = class Tank extends Entity{
 			Bullet.list[Bullet.list_id_count] = new GhostBullet({
 				'x': this.x,
 				'y': this.y,
-				'x_graph': this.x_graph,
-				'y_graph': this.y_graph,
 				'id': Bullet.list_id_count,
 				'player_id': this.id,
 				'rotation': rot,
@@ -276,8 +278,6 @@ Tank = class Tank extends Entity{
 		Bullet.list[Bullet.list_id_count] = new FragBullet({
 			'x': this.x,
 			'y': this.y,
-			'x_graph': this.x_graph,
-			'y_graph': this.y_graph,
 			'id': Bullet.list_id_count,
 			'player_id': this.id,
 			'rotation': rot,
@@ -287,6 +287,25 @@ Tank = class Tank extends Entity{
 		Bullet.list[Bullet.list_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
 		let send_bullet = Bullet.list[Bullet.list_id_count]; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
 		send_bullet.type = 'FragBullet';
+		let bl = {
+			'bullets': {self_id: send_bullet}
+		};
+		broadcast_simple('init',bl);
+		Bullet.list_id_count ++;
+	};
+	createBeam(data) {
+		let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
+		Bullet.list[Bullet.list_id_count] = new Beam({
+			'x': this.x+20*Math.cos(rot),
+			'y': this.y+20*Math.sin(rot),
+			'id': Bullet.list_id_count,
+			'player_id': this.id,
+			'rotation': rot,
+			'tint': this.tint,
+			'timer': 60
+		});
+		let send_bullet = Bullet.list[Bullet.list_id_count]; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
+		send_bullet.type = 'Beam';
 		let bl = {
 			'bullets': {self_id: send_bullet}
 		};
@@ -493,7 +512,6 @@ FragBullet = class FragBullet extends Bullet{
 		if (data.height === undefined) {data.height = 10;}
 		super(data);
 		this.starting_timer = data.timer;
-		//this.updatePosition();
 	};
 	boom(){
 		let parent = Tank.list[this.player_id];
@@ -535,7 +553,22 @@ FragBullet = class FragBullet extends Bullet{
 			super.updatePosition();
 		}
 	};
-}; 	
+};
+
+Beam = class Beam extends Bullet{
+	constructor(data) {
+		if (data.speed === undefined) {data.speed = 2.5;}
+		if (data.width === undefined) {data.width = 10;}
+		if (data.height === undefined) {data.height = 10;}
+		super(data);
+	};
+	updatePosition() {
+		this.timer --;
+		if (this.timer < 1) {
+			this.destroy([Bullet.list]);
+		}
+	};
+};
 	
 Extra = class Extra extends Entity{
 	constructor(data){

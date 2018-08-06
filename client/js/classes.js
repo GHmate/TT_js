@@ -306,11 +306,11 @@ class Tank extends Entity{
 		for (let i = 0; i < this.movement_rail.length; i++) {
 			rail_distance_left += this.movement_rail[i].dist*(1-this.movement_rail[i].processed);
 		}
-		let distance_per_tik = (rail_distance_left/this.movement_rail.length)*delta;
-		distance_per_tik += 0.2; //finomhangolás
-		/*if (distance_per_tik < 0.2) {
-			distance_per_tik = 0.5;
-		}*/
+		
+		let distance_per_tik = (rail_distance_left/this.movement_rail.length)*1.8*delta;
+		//finomhangolás: nagyobb: egyből lefuttat mindent -> lehagyja a szerver állapotot
+		//kisebb: tökéletesen a szerver-állapoton van, de nagyon csúszkál (5 input tik után kezdi csak el a kanyart.)
+		
 		this.move_on_rail(distance_per_tik);
 
 		this.sprite.x = this.x;

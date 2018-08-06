@@ -149,7 +149,7 @@ regenerate_map = function (world_id = 0) { //játék elején vagy egy pálya vé
 	Bullet.list_id_count = 0;
 	CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel
 	
-	Extra.type_list = [/*'nu',*/'fr','gh']; //egyezzen a tank class shoot_type lehetőségeivel
+	Extra.type_list = [/*'nu',*/'fr','gh','be']; //egyezzen a tank class shoot_type lehetőségeivel
 	Extra.list = {};
 	Extra.list_id_count = 0;
 	

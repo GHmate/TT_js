@@ -294,6 +294,7 @@ g_app.ticker.add(function(delta) {
 			Particle.list[i].update();
 		}
 	}
+	//meter.tick();
 });
 
 socket.on('input_response', function(position){
