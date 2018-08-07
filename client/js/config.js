@@ -34,7 +34,8 @@ function t_ghost(data) {
 }
 //timing
 g_timing = { //amennyi a szám, annyi tik/sec (vagy fps)
-	'input_sending': 20
+	'input_sending': 20,
+	'lag_delay_hack': 5
 };
 
 //pixi setup

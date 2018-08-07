@@ -527,7 +527,7 @@ FragBullet = class FragBullet extends Bullet{
 					'id': Bullet.list_id_count,
 					'player_id': this.player_id,
 					'rotation': this.rotation + i*Math.PI/6,
-					'speed': 1 + 2 * Math.random(),
+					'speed': 1 + 3 * Math.random(),
 					'timer': 70,
 					'tint': this.tint
 				});

@@ -168,14 +168,13 @@ class Tank extends Entity {
         this.shoot_button_up = true;
         this.movement_timer = 0;
         this.list_of_inputs = []; //az inputok listája, predictionhöz (TODO: talán ki kéne szervezni innen ezeket?)
-        this.server_lastpos = {'x': this.x, 'y': this.y, 'd': this.rotation};
+		this.list_of_inputs_remember = []; //az inputok listája, ami csak szerver update után ürül. ezt használjuk korrigálásra
         this.list_of_inputs_temp = []; //csak a szervernek nem elküldött inputokat tárolja
-        this.movement_rail = [{//hozzáadunk egy első elemet
-                'id': 0, 'x': this.x, 'y': this.y, 'd': this.rotation, 'x_dist': 0, 'y_dist': 0, 'dist': 0, 'processed': 0
-            }];
         
-        for (let i = 0; i < 5; i++) {
+		//Hozzáadok 5 üres inputot, így a tank egy kicsit késleltetve mozog. Kevésbé zavaró, mint a csúszkálásos lag-kompenzáció. Bár kevésbé is hatékony. Még szerver oldalon is lehet hackelni a hitbox-szal.
+        for (let i = 0; i < g_timing['lag_delay_hack']; i++) {
             this.list_of_inputs.push([0,0,0,0,i]);
+			this.list_of_inputs_remember.push([0,0,0,0,i]);
         }
         
         //this.can_shoot = true;
@@ -218,20 +217,6 @@ class Tank extends Entity {
     }
     start_ipol(x, y, dir, spd, rot_spd, self = false) {
         super.start_ipol(x, y, dir, spd, rot_spd, self);
-        if (self) {
-            //nem interpoláljuk, hanem predicteljük, és ilyenkor, amikor jön a szerverről adat, felülírjuk a predictelt értékeket
-            /*let re_calculated_position = {'x': x,'y': y,'d': dir};
-             let eldobando_darab = this.predictedmoves.length-g_self_data.latency;
-             this.predictedmoves.splice(0, eldobando_darab);
-             for (let i in this.predictedmoves) {
-             re_calculated_position.x += this.predictedmoves[i].x;
-             re_calculated_position.y += this.predictedmoves[i].y;
-             re_calculated_position.d += this.predictedmoves[i].d;
-             }
-             this.x = this.sprite.x = re_calculated_position.x;
-             this.y = this.sprite.y = re_calculated_position.y;
-             this.rotation = this.sprite.rotation = re_calculated_position.d;*/
-    }
     }
     keyevent(name, value) {
         this.keypress[name] = value;
@@ -253,83 +238,9 @@ class Tank extends Entity {
             this.movement_timer = 0;
         }
         this.list_of_inputs.push(input_data); //saját használatra
+		this.list_of_inputs_remember.push(input_data); //szerveres ellenőrzésre
         this.list_of_inputs_temp.push(input_data); //szervernek küldéshez, mert ezt mindig ürítjük
 
-        
-
-        //beállítok 0. rail elemet, ha nem volt
-
-        //KUKA, túl macerás volt vezetni: csúszkált. amúgy nem rossz ötlet.
-
-        /*let last_rail_part = this.movement_rail[this.movement_rail.length - 1];
-         if (last_rail_part === undefined) {
-         this.movement_rail.push({'id': 0, 'x': this.x, 'y': this.y, 'd': this.rotation, 'x_dist': 0, 'y_dist': 0, 'dist': 0, 'processed': 0});
-         last_rail_part = this.movement_rail[0];
-         }
-         let self_start_position = {
-         'x': last_rail_part.x + last_rail_part.x_dist,
-         'y': last_rail_part.y + last_rail_part.y_dist,
-         'd': this.rotation
-         };
-         let simulated_pos = this.simulate_input(self_start_position, input_data);
-         let new_rail_part = {
-         'id': this.movement_timer,
-         'x': last_rail_part.x + last_rail_part.x_dist,
-         'y': last_rail_part.y + last_rail_part.y_dist,
-         'd': this.rotation,
-         'x_dist': simulated_pos.x - (last_rail_part.x + last_rail_part.x_dist),
-         'y_dist': simulated_pos.y - (last_rail_part.y + last_rail_part.y_dist),
-         'dist': Math.sqrt(Math.pow(simulated_pos.x - (last_rail_part.x + last_rail_part.x_dist), 2) + Math.pow(simulated_pos.y - (last_rail_part.y + last_rail_part.y_dist), 2)),
-         'processed': 0 //0: nincs processzálva. 1: végig processzáltuk. 0-1 közt: épp processzálva van, részben megtettük a szakasz távolságát (hány százalékban)
-         };
-         this.movement_rail.push(new_rail_part);
-         
-         while (g_self_data.missed_packets >= 1) { //kompenzálunk a szerver felé a kihagyott csomagok miatt (kisebb fps-nél)
-         g_self_data.missed_packets--;
-         this.list_of_inputs.push(input_data);
-         this.list_of_inputs_temp.push(input_data);
-         
-         if (rotate) {
-         this.rotation += this.rot_speed;
-         }
-         
-         ///beállítok 0. rail elemet, ha nem volt
-         let last_rail_part = this.movement_rail[this.movement_rail.length - 1];
-         if (last_rail_part === undefined) {
-         this.movement_rail.push({'id': 0, 'x': this.x, 'y': this.y, 'd': this.rotation, 'x_dist': 0, 'y_dist': 0, 'dist': 0, 'processed': 0});
-         last_rail_part = this.movement_rail[0];
-         }
-         let self_start_position = {
-         'x': last_rail_part.x + last_rail_part.x_dist,
-         'y': last_rail_part.y + last_rail_part.y_dist,
-         'd': this.rotation
-         };
-         let simulated_pos = this.simulate_input(self_start_position, input_data);
-         let new_rail_part = {
-         'id': this.movement_timer,
-         'x': last_rail_part.x + last_rail_part.x_dist,
-         'y': last_rail_part.y + last_rail_part.y_dist,
-         'd': this.rotation,
-         'x_dist': simulated_pos.x - (last_rail_part.x + last_rail_part.x_dist),
-         'y_dist': simulated_pos.y - (last_rail_part.y + last_rail_part.y_dist),
-         'dist': Math.sqrt(Math.pow(simulated_pos.x - (last_rail_part.x + last_rail_part.x_dist), 2) + Math.pow(simulated_pos.y - (last_rail_part.y + last_rail_part.y_dist), 2)),
-         'processed': 0 //0: nincs processzálva. 1: végig processzáltuk. 0-1 közt: épp processzálva van, részben megtettük a szakasz távolságát (hány százalékban)
-         };
-         this.movement_rail.push(new_rail_part);
-         }
-         
-         let rail_distance_left = 0;
-         for (let i = 0; i < this.movement_rail.length; i++) {
-         rail_distance_left += this.movement_rail[i].dist * (1 - this.movement_rail[i].processed);
-         }
-         
-         let distance_per_tik = (rail_distance_left / this.movement_rail.length) * 1.8 * delta;
-         //finomhangolás: nagyobb: egyből lefuttat mindent -> lehagyja a szerver állapotot
-         //kisebb: tökéletesen a szerver-állapoton van, de nagyon csúszkál (5 input tik után kezdi csak el a kanyart.)
-         
-         this.move_on_rail(distance_per_tik);
-         */
-        
         let current_input_data = this.list_of_inputs.shift();
         
         //forgás:
@@ -366,25 +277,6 @@ class Tank extends Entity {
         this.nametag.x = this.x;
         this.nametag.y = this.y - 30;
         this.sprite.rotation = this.rotation;
-        
-        //hack-szerűen késleltetem a forgást, hogy valósabbnak tűnjön
-        /*if (this.sprite.rotation > this.rotation + 0.02) {
-            let rot = (this.sprite.rotation - this.rotation) / 7;
-            this.sprite.rotation -= rot;
-        } else if (this.sprite.rotation < this.rotation - 0.02) {
-            let rot = (this.rotation - this.sprite.rotation) / 7;
-            this.sprite.rotation += rot;
-        } else {
-            this.sprite.rotation = this.rotation;
-        }
-        if (this.rotation > Math.PI * 6 && this.sprite.rotation > Math.PI * 6) {
-            this.sprite.rotation -= Math.PI * 2;
-            this.rotation -= Math.PI * 2;
-        }
-        if (this.rotation < -Math.PI * 6 && this.sprite.rotation < -Math.PI * 6) {
-            this.sprite.rotation += Math.PI * 2;
-            this.rotation += Math.PI * 2;
-        }*/
     };
     send_move_data_to_server() {
         //elküldjük a szervernek az utolsó néhány tik mozgását.
@@ -404,7 +296,6 @@ class Tank extends Entity {
         };
         g_collisioner.update_arrays();
 
-        //let input_data = this.list_of_inputs[loop_index]; //kiolvassuk a tömbből
         if (input_data[4] === undefined) {
             console.log('kapott input: nincs index');
         }
@@ -443,41 +334,10 @@ class Tank extends Entity {
         }
         return ret;
     }
-    move_on_rail(distance) {
-        let end_id = 0;
-        let end_pc = 0;
-        for (let i = 0; i < this.movement_rail.length; i++) {
-
-            let rail_part = this.movement_rail[i];
-            end_id = rail_part.id;
-            if (rail_part.processed >= 1) {
-                continue;
-            }
-
-            if (distance > 0 && this.movement_rail[i].processed < 1) {
-                let walkable_dist = rail_part.dist * (1 - rail_part.processed);
-                if (walkable_dist >= distance) {
-                    let moved_percentage = this.movement_rail[i].processed + (distance / rail_part.dist);
-                    walkable_dist -= distance;
-                    distance = 0;
-                    this.movement_rail[i].processed = end_pc = (rail_part.dist - walkable_dist) / rail_part.dist;
-                    this.x = rail_part.x + rail_part.x_dist * moved_percentage;
-                    this.y = rail_part.y + rail_part.y_dist * moved_percentage;
-                } else {
-                    let moved_percentage = this.movement_rail[i].processed = end_pc = 1;
-                    distance -= walkable_dist;
-                    this.x = rail_part.x + rail_part.x_dist;
-                    this.y = rail_part.y + rail_part.y_dist;
-                }
-
-            }
-        }
-        g_self_data.actual_rail_pos = {'id': end_id, 'pc': end_pc};
-    }
     apply_server_info(s_id, starting_point) {
-        return true; //TODO ez itt esélyt ad desync-re!
+		//megkapja a szervertől, hogy adott input után a szerveren hol van a tank. ebből ismerve a saját inputjait, kiszámolja, hogy hol kellene lennie, és ha eltérést lát, korrigál. lehetne ritkábban futtatni, pl. másodpercenként...
+		
         //van starting point, oda állítja a playert és onnan futtatja a cuccot
-        this.server_lastpos = {'x': starting_point.x, 'y': starting_point.y, 'd': starting_point.rotation};
         if (s_id === false) {
             return; //kihagyott a szerver valamiért. nem csinálunk semmit
         }
@@ -486,13 +346,13 @@ class Tank extends Entity {
         let start_doing = false;
         let remove_count = 0;
 
-        for (let loop_index = 0; loop_index < this.list_of_inputs.length; loop_index++) {
-            let input_data = this.list_of_inputs[loop_index]; //kiolvassuk a tömbből
+        for (let loop_index = 0; loop_index < this.list_of_inputs_remember.length; loop_index++) {
+            let input_data = this.list_of_inputs_remember[loop_index]; //kiolvassuk a tömbből
             if (input_data[4] === undefined) {
                 console.log('input: nincs s_id');
                 continue;
             }
-            if (input_data[4] === s_id) {
+            if (input_data[4] === s_id+g_timing['lag_delay_hack']) {
                 start_doing = true;
             }
             if (!start_doing) {
@@ -501,103 +361,25 @@ class Tank extends Entity {
             }
         }
         if (starting_point) {
-            this.list_of_inputs.splice(0, remove_count);
-        }
-
-        //valamint kidobáljuk a rail régi elemeit is
-        let start_doing_server = false;
-        let start_doing_me = false;
-        remove_count = 0;
-        for (let loop_index = 0; loop_index < this.movement_rail.length; loop_index++) {
-            let rail_part = this.movement_rail[loop_index]; //kiolvassuk a tömbből
-            if (rail_part.id === undefined) {
-                console.log('rail: nincs s_id');
-                continue;
-            }
-            if (rail_part.id === s_id) {
-                start_doing_server = true;
-            }
-            if (rail_part.processed < 1) {
-                start_doing_me = true;
-            }
-            if (!start_doing_server && !start_doing_me) {
-                remove_count++;
-                continue;
-            }
-        }
-        if (starting_point) {
-            this.movement_rail.splice(0, remove_count);
+            this.list_of_inputs_remember.splice(0, remove_count);
         }
 
         this.repair_movement(s_id, starting_point);
     };
     repair_movement(s_id, starting_point) { //TODO: ha a saját pozíció nagyon eltér a szervertől kapottól, ne updatelje magát egy darabig, csak várjon a szerver-pozícióra.
-        let keep_count = 0;
-        let s_index = 0;
-        let s_distance = {'x': 0, 'y': 0};
-        for (let loop_index = 0; loop_index < this.movement_rail.length; loop_index++) {
-            let rail_part = this.movement_rail[loop_index]; //kiolvassuk a tömbből
-            if (rail_part.id === s_id + 1) {
-                s_index = loop_index;
-                s_distance.x = starting_point.x - rail_part.x;
-                s_distance.y = starting_point.y - rail_part.y;
-                break;
-            } else {
-                keep_count++;
-            }
-        }
-        if (s_distance.x < 4 && s_distance.y < 4) { //4 pixel eltérésig nem kell javítani.
-            return;
-        }
-        let del_count = this.movement_rail.length - keep_count;
-
-        this.movement_rail.splice(-del_count, del_count);
-
-        for (let loop_index = s_index - 1; loop_index >= 0; loop_index--) {
-            this.movement_rail[loop_index].x += s_distance.x;
-            this.movement_rail[loop_index].y += s_distance.y;
-        }
-
-        let start_regen = false;
-        for (let loop_index = 0; loop_index < this.list_of_inputs.length; loop_index++) {
-            let input_data = this.list_of_inputs[loop_index];
-            if (input_data[4] === s_id) {
-                start_regen = true;
-            }
-            if (start_regen) {
-                //beállítok 0. rail elemet, ha nem volt
-                let last_rail_part = this.movement_rail[this.movement_rail.length - 1];
-                if (last_rail_part === undefined) {
-                    this.movement_rail.push({'id': 0, 'x': starting_point.x, 'y': starting_point.y, 'd': this.rotation, 'x_dist': 0, 'y_dist': 0, 'dist': 0, 'processed': 0});
-                    last_rail_part = this.movement_rail[0];
-                }
-                let self_start_position = {
-                    'x': last_rail_part.x + last_rail_part.x_dist,
-                    'y': last_rail_part.y + last_rail_part.y_dist,
-                    'd': last_rail_part.d
-                };
-                let simulated_pos = this.simulate_input(self_start_position, input_data);
-                let new_rail_part = {
-                    'id': input_data[4],
-                    'x': last_rail_part.x + last_rail_part.x_dist,
-                    'y': last_rail_part.y + last_rail_part.y_dist,
-                    'd': simulated_pos.d,
-                    'x_dist': simulated_pos.x - (last_rail_part.x + last_rail_part.x_dist),
-                    'y_dist': simulated_pos.y - (last_rail_part.y + last_rail_part.y_dist),
-                    'dist': Math.sqrt(Math.pow(simulated_pos.x - (last_rail_part.x + last_rail_part.x_dist), 2) + Math.pow(simulated_pos.y - (last_rail_part.y + last_rail_part.y_dist), 2)),
-                    'processed': 0 //0: nincs processzálva. 1: végig processzáltuk. 0-1 közt: épp processzálva van, részben megtettük a szakasz távolságát (hány százalékban)
-                };
-                this.movement_rail.push(new_rail_part);
-            }
-        }
-        for (let loop_index = 0; loop_index < this.movement_rail.length; loop_index++) {
-            let rail_part = this.movement_rail[loop_index];
-            if (rail_part.id === g_self_data.actual_rail_pos.id) {
-                this.x = this.sprite.x = rail_part.x + rail_part.x_dist * g_self_data.actual_rail_pos.pc;
-                this.y = this.sprite.y = rail_part.y + rail_part.y_dist * g_self_data.actual_rail_pos.pc;
-                break;
-            }
-        }
+		let simulated_from_server_spot = starting_point;
+		for (let loop_index = 0; loop_index < this.list_of_inputs_remember.length-g_timing['lag_delay_hack']; loop_index++) {
+			let input_data = this.list_of_inputs_remember[loop_index];
+			simulated_from_server_spot = simulate_input(simulated_from_server_spot, input_data);
+		}
+		let distx = Math.abs(this.x - simulated_from_server_spot.x);
+		let disty = Math.abs(this.y - simulated_from_server_spot.y);
+		if (distx > 10 || disty > 10) {
+			this.x = simulated_from_server_spot.x;
+			this.y = simulated_from_server_spot.y;
+			this.rotation = simulated_from_server_spot.rotation;
+			console.log('warning: desync!');
+		}
     };
     destroy(param) {//tömb-tömböt vár, nem sima tömböt
         g_app.stage.removeChild(this.nametag);
