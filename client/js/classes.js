@@ -16,7 +16,7 @@ class Entity {
         //this.sprite.alpha = (data.alpha !== undefined ? data.alpha : 1);
         //this.speed = (data.speed !== undefined ? data.speed : 2.2);
         this.collision_block = []; //kell a tank predictionhoz
-        g_app.stage.addChild(this.sprite);
+        g_pixi_containers.game_container.addChild(this.sprite);
         if (data.width) {
             this.sprite.width = data.width;
         }
@@ -115,7 +115,7 @@ class Entity {
         for (let list of lists) {
             delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
         }
-        g_app.stage.removeChild(this.sprite); //kiszedi a pixi-s referenciát a sprite-ra
+        g_pixi_containers.game_container.removeChild(this.sprite); //kiszedi a pixi-s referenciát a sprite-ra
         this.sprite = null; //kiszedi a saját referenciát a sprite-ra (elvileg nem kötelező, mert ha törlődik ő, akkor a sprite-ja is)
     }
     ;
@@ -164,7 +164,7 @@ class Tank extends Entity {
         this.nametag.x = this.x;
         this.nametag.y = this.y - 30;
         this.nametag.anchor.set(0.5, 0.5);
-        g_app.stage.addChild(this.nametag);
+        g_pixi_containers.game_container.addChild(this.nametag);
         this.shoot_button_up = true;
         this.movement_timer = 0;
         this.list_of_inputs = []; //az inputok listája, predictionhöz (TODO: talán ki kéne szervezni innen ezeket?)
@@ -382,7 +382,8 @@ class Tank extends Entity {
 		}
     };
     destroy(param) {//tömb-tömböt vár, nem sima tömböt
-        g_app.stage.removeChild(this.nametag);
+        draw_tank_explosion(this);
+        g_pixi_containers.game_container.removeChild(this.nametag);
         super.destroy(param);
     };
 }
@@ -565,10 +566,18 @@ class Particle {
         this.sprite.anchor.set(0.5);
         this.sprite.x = this.x;
         this.sprite.y = this.y;
-        this.rotation = (data.rotation !== undefined ? data.rotation : 0);
-        g_app.stage.addChild(this.sprite);
-        this.timer = 30;
-        this.sprite.alpha = 0.9;
+        this.rotation = (data.rotation !== undefined ? data.rotation : Math.PI*(1/2));
+        this.speed = (data.speed !== undefined ? data.speed : 0.5);
+        this.timer = (data.timer !== undefined ? data.timer : 50);
+        this.sprite.alpha = (data.alpha !== undefined ? data.alpha : 1.1);
+        g_pixi_containers.game_container.addChild(this.sprite);
+        
+        if (data.e_layer === '10') {
+            this.sprite.parentGroup = g_pixi_layers.effect_10;
+        } else if (data.e_layer === '0') {
+            this.sprite.parentGroup = g_pixi_layers.effect_0;
+        }
+        
     }
     destroy(lists = []) {//tömb-tömböt vár, nem sima tömböt
         if (lists.length < 1) {
@@ -577,12 +586,14 @@ class Particle {
         for (let list of lists) {
             delete list[this.id]; //kitörli a kapott listákban az objektumra mutató referenciát
         }
-        g_app.stage.removeChild(this.sprite); //kiszedi a pixi-s referenciát a sprite-ra
+        g_pixi_containers.game_container.removeChild(this.sprite); //kiszedi a pixi-s referenciát a sprite-ra
     };
     update() {
         this.timer--;
-        this.sprite.alpha -= 0.9 / 30;
-        this.sprite.y -= 0.7;
+        this.sprite.alpha -= this.sprite.alpha / this.timer;
+        this.sprite.x += Math.cos(this.rotation) * this.speed,
+        this.sprite.y -= Math.sin(this.rotation) * this.speed;
+        //this.sprite.y -= 0.7;
         if (this.timer <= 0) {
             this.destroy([Particle.list]);
         }

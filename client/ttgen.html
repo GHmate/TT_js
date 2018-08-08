@@ -1,129 +1,131 @@
 <html>
-	<body>
-		<link rel="stylesheet" href="css/main.css" />
-		<script src="js/jquery-3.2.1.min.js"></script>
-		<!-- or link to Pixi.js on CDN -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.5.2/pixi.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.2/socket.io.js"></script>
-		<script src="https://vuejs.org/js/vue.js"></script>
-		<script>Vue.config.productionTip = false;</script>
-		<!--<script src="js/fpsmeter.js"></script>-->
-		<div id="vue_app">
-			<div id="c_menu" class="main_container">
-				<div class="name_and_start">
-					<input v-model="p_name" class="input-field" type="text" placeholder="your name">
-					<input @click="submit_name()" class="input-field" type="submit" value="START">
-					<div class="changelog_div"><a href="changelog.html" target="_blank">changelog</a></div>
-				</div>
-			</div>
+    <body>
+        <link rel="stylesheet" href="css/main.css" />
+        <script src="js/jquery-3.2.1.min.js"></script>
+        <!-- or link to Pixi.js on CDN -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.8.1/pixi.min.js"></script>
+        <!--<script src="pixi-display/bin/pixi-display.js"></script>-->
+        <script src="pixi-display/layers/pixi-layers.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.2/socket.io.js"></script>
+        <script src="https://vuejs.org/js/vue.js"></script>
+        <script>Vue.config.productionTip = false;</script>
+        <!--<script src="js/fpsmeter.js"></script>-->
+        <div id="vue_app">
+            <div id="c_menu" class="main_container">
+                <div class="name_and_start">
+                    <input v-model="p_name" class="input-field" type="text" placeholder="your name">
+                    <input @click="submit_name()" class="input-field" type="submit" value="START">
+                    <div class="changelog_div"><a href="changelog.html" target="_blank">changelog</a></div>
+                </div>
+            </div>
 
-			<div id="c_game" class="main_container">
-				<div id="game_container" class="game_container">
+            <div id="c_game" class="main_container">
+                <div id="game_container" class="game_container">
 
-				</div>
-				<div class="menu_container">
-					menubar
-					<div class="highscores">
-						<highscore_row v-for="item in highscores" v-bind:item="item" v-bind:key="item.position"></highscore_row>
-					</div>
-					<div class="btn" id="btn_color_picker" @click="showModal = true">color_picker</div>
-				</div>
-			</div>
+                </div>
+                <div class="menu_container">
+                    menubar
+                    <div class="highscores">
+                        <highscore_row v-for="item in highscores" v-bind:item="item" v-bind:key="item.position"></highscore_row>
+                    </div>
+                    <div class="btn" id="btn_color_picker" @click="showModal = true">color_picker</div>
+                </div>
+            </div>
 
-			<modal v-if="showModal" @close="showModal = false">
-				<div slot='inner'>
-					<modal_color_block v-for="box_color in colors" v-bind:key="box_color.id" v-bind:color="box_color" @close="showModal = false">
-					</modal_color_block>
-				</div>
-			</modal>
-		</div>
-		
-		<!-- TEMPLATES (TODO: kiszervezni, vue-cli használatát bevezetni)-->
-		
-		<!-- modál ablak template -->
-		<script type="text/x-template" id="modal-template">
-			<div class="modal_mask" @click="$emit('close')">
-				<div id="modal-content" class="modal-content" @click.stop>
-					<slot name="header"> <!--ez a default, de a slot miatt felülírható később-->
-						<div class="modal_header">
-							<div class="modal_header_left">válassz színt!</div>
-							<div id="modal_window_x" class="modal_header_close" @click="$emit('close')">&times;</div>
-						</div>
-					</slot>
-					<hr class="separator">
-					<div class="modal_inner">
-						<slot name="inner"> <!--ez a default, de a slot miatt felülírható később-->
-							cuccok
-						</slot>
-					</div>
-				</div>
-			</div>
-		</script>
-		
-		<!-- modál ablak színes dobozok -->
-		<script type="text/x-template" id="modal-color-block">
-			<div v-bind:style="{'background-color': color}" class="modal_color_picker"  v-bind:data="color" @click="select_color()"></div>
-		</script>
-		
-		<!-- high-score: egy sor -->
-		<script type="text/x-template" id="highscore_row">
-			<div v-bind:style="{'background-color': item.back_color}" class="highscore_row">#{{item.position}}&nbsp;{{item.name}}&nbsp;({{item.score}})</div>
-		</script>
-		
-		<!-- /TEMPLATES -->
-		
-		<!-- html interakcióért felelő scriptek -->
-		<script type="text/javascript">
-			//vue objektum, amibe a modál ablak is kerül
-			vue_app = new Vue({
-				el: '#vue_app',
-				mounted: function () {
-					window.addEventListener('keyup', function(event) {
-						if (event.keyCode == 13) { 
-							vue_app.submit_name();
-						}
-					});
-				},
-				data: {
-					p_name: '',
-					showModal: false, //boolean változó: látsszon-e a modál ablak
-					colors: [],
-					highscores: []
-				},
-				methods: {
-					submit_name: function () {
-						menu_join_world(0, this.p_name);
-					}
-				},
-				components: {
-					'modal': {
-						template: '#modal-template'
-					},
-					'modal_color_block': {
-						props: ['color'],
-						template: '#modal-color-block',
-						methods: {
-							select_color: function (event) {
-								this.$emit('close');
-								socket.emit('request_modify_user_data',{'tint': this.color.replace('#','0x')});
-							}
-						}
-					},
-					'highscore_row': {
-						props: ['item'],
-						template: '#highscore_row'
-					}
-				}
-			});
-		</script>
-		<!-- /html interakcióért felelő scriptek -->
-		
-		<!-- game js -->
-		<script src="js/config.js"></script>
-		<script src="js/classes.js"></script>
-		<script src="js/functions.js"></script>
-		<script src="js/main.js"></script>
-		<!-- /game js -->
-		
+            <modal v-if="showModal" @close="showModal = false">
+                <div slot='inner'>
+                    <modal_color_block v-for="box_color in colors" v-bind:key="box_color.id" v-bind:color="box_color" @close="showModal = false">
+                    </modal_color_block>
+                </div>
+            </modal>
+        </div>
+
+        <!-- TEMPLATES (TODO: kiszervezni, vue-cli használatát bevezetni)-->
+
+        <!-- modál ablak template -->
+        <script type="text/x-template" id="modal-template">
+            <div class="modal_mask" @click="$emit('close')">
+            <div id="modal-content" class="modal-content" @click.stop>
+            <slot name="header"> <!--ez a default, de a slot miatt felülírható később-->
+            <div class="modal_header">
+            <div class="modal_header_left">válassz színt!</div>
+            <div id="modal_window_x" class="modal_header_close" @click="$emit('close')">&times;</div>
+            </div>
+            </slot>
+            <hr class="separator">
+            <div class="modal_inner">
+            <slot name="inner"> <!--ez a default, de a slot miatt felülírható később-->
+            cuccok
+            </slot>
+            </div>
+            </div>
+            </div>
+        </script>
+
+        <!-- modál ablak színes dobozok -->
+        <script type="text/x-template" id="modal-color-block">
+            <div v-bind:style="{'background-color': color}" class="modal_color_picker"  v-bind:data="color" @click="select_color()"></div>
+        </script>
+
+        <!-- high-score: egy sor -->
+        <script type="text/x-template" id="highscore_row">
+            <div v-bind:style="{'background-color': item.back_color}" class="highscore_row">#{{item.position}}&nbsp;{{item.name}}&nbsp;({{item.score}})</div>
+        </script>
+
+        <!-- /TEMPLATES -->
+
+        <!-- html interakcióért felelő scriptek -->
+        <script type="text/javascript">
+            //vue objektum, amibe a modál ablak is kerül
+            vue_app = new Vue({
+                el: '#vue_app',
+                mounted: function () {
+                    window.addEventListener('keyup', function (event) {
+                        if (event.keyCode == 13) {
+                            vue_app.submit_name();
+                        }
+                    });
+                },
+                data: {
+                    p_name: '',
+                    showModal: false, //boolean változó: látsszon-e a modál ablak
+                    colors: [],
+                    highscores: []
+                },
+                methods: {
+                    submit_name: function () {
+                        menu_join_world(0, this.p_name);
+                    }
+                },
+                components: {
+                    'modal': {
+                        template: '#modal-template'
+                    },
+                    'modal_color_block': {
+                        props: ['color'],
+                        template: '#modal-color-block',
+                        methods: {
+                            select_color: function (event) {
+                                this.$emit('close');
+                                socket.emit('request_modify_user_data', {'tint': this.color.replace('#', '0x')});
+                            }
+                        }
+                    },
+                    'highscore_row': {
+                        props: ['item'],
+                        template: '#highscore_row'
+                    }
+                }
+            });
+        </script>
+        <!-- /html interakcióért felelő scriptek -->
+
+        <!-- game js -->
+        <script src="js/config.js"></script>
+        <script src="js/classes.js"></script>
+        <script src="js/functions.js"></script>
+        <script src="js/main.js"></script>
+        <!-- /game js -->
+
     </body>
 </html>

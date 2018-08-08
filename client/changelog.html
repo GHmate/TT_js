@@ -1,53 +1,58 @@
 <!DOCTYPE html>
 <html>
-	<body>
-		<div>
-			<br/>
-			<h7>06.15</h7>
-			<ul style="margin-top: 5px;">
-			  <li>feature: changelog hozzáadása</li>
-			  <li>feature: korrigálja a kliens pozícióját, ha nagy az eltérés a szerverhez képest</li>
-			  <li>feature: a tankok lövedéke a cső végétől indul</li>
-			  <li>feature: saját lövedéke is elpusztítja a játékost</li>
-			  <li>bugfix: alacsonyabb kliens fps-nél is ugyanakkora sebessége legyen a tankoknak a szerver oldalon</li> 
-			</ul>
-			<h7>06.17-18</h7>
-			<ul style="margin-top: 5px;">
-			  <li>feature: vuejs hozzáadás (csak script szinten)</li>
-			  <li>feature: color picker átírás vuejs-re</li>
-			  <li>feature: pontozás, highscore táblázat (killekért jár 1 pont, öngyilkosságért -1)</li>
-			</ul>
-			<h7>06.19</h7>
-			<ul style="margin-top: 5px;">
-			  <li>bugfix: fantom-tankok: többet nem kerülnek anyagtalan tankok a pályára, amik blokkolják a pálya-resetet és crash-elik a szervert</li>
-			  <li>bugfix: javítva a bug, amitől néha kilőtte magát a játékos ha menet közben tüzelt, valamint javítva az is, hogy a játékoshoz közel álló ellenfél tankokon átmentek a golyók</li>
-			  <li>tweak: enterrel is be lehet lépni; lövedék közelebb megy a falakhoz, nem pattan le túl hamar</li>
-			</ul>
-			<h7>06.20</h7>
-			<ul style="margin-top: 5px;">
-			  <li>bugfix: server crash fix</li>
-			  <li>tweak: lövedék közeli falhoz pattintása engedékenyebb, (gagyi) effekt mutatja a pont szerzést vagy vesztést</li>
-			</ul>
-			<h7>06.23</h7>
-			<ul style="margin-top: 5px;">
-			  <li>feature: kb. 20 másodperc után elindul a pálya lezárása, szépen lassan szűkítve a játszható területet. Határ átlépése öngyilkosság.</li>
-			  <li>tweak: lövedék élettartama rövidült, lövedékek számának maximuma 5-ről 3-ra csökkent tankonként.</li>
-			</ul>
-			<h7>06.25</h7>
-			<ul style="margin-top: 5px;">
-			  <li>feature: extra weapon: GhostBullet™. Doboz felszedése utáni első lövés 3 áttetsző golyót indít útnak, amik átmennek a falakon.</li>
-			  <li>tweak: alternatív lövés gomb: W</li>
-			</ul>
-			<h7>06.26</h7>
-			<ul style="margin-top: 5px;">
-			  <li>bugfix: pálya vége effekt pontosan követi a szerver-állapotot</li>
-			  <li>tweak: Iván kedvéért kivezettem a 'qol' jelölést a changelog-ból</li>
-			</ul>
-			<h7>06.27</h7>
-			<ul style="margin-top: 5px;">
-			  <li>bugfix: pálya lezáró effekt most már látszik is remélhetőleg mindenkinél</li>
-			  <li>feature: új extra: FragBullet™. Nagyobb, lassabb lövedéket indítasz útnak, ami ha játékosnak ütközik vagy lejár az ideje vagy a lövés gomb újbóli megnyomásakor több kisebb, rövidebb életű golyóvá robban szét.</li>
-			</ul>
-		</div>
-	</body>
+    <body>
+        <div>
+            <br/>
+            <h7>17.06.15</h7>
+            <ul style="margin-top: 5px;">
+                <li>feature: changelog hozzáadása</li>
+                <li>feature: korrigálja a kliens pozícióját, ha nagy az eltérés a szerverhez képest</li>
+                <li>feature: a tankok lövedéke a cső végétől indul</li>
+                <li>feature: saját lövedéke is elpusztítja a játékost</li>
+                <li>bugfix: alacsonyabb kliens fps-nél is ugyanakkora sebessége legyen a tankoknak a szerver oldalon</li> 
+            </ul>
+            <h7>17.06.17-18</h7>
+            <ul style="margin-top: 5px;">
+                <li>feature: vuejs hozzáadás (csak script szinten)</li>
+                <li>feature: color picker átírás vuejs-re</li>
+                <li>feature: pontozás, highscore táblázat (killekért jár 1 pont, öngyilkosságért -1)</li>
+            </ul>
+            <h7>17.06.19</h7>
+            <ul style="margin-top: 5px;">
+                <li>bugfix: fantom-tankok: többet nem kerülnek anyagtalan tankok a pályára, amik blokkolják a pálya-resetet és crash-elik a szervert</li>
+                <li>bugfix: javítva a bug, amitől néha kilőtte magát a játékos ha menet közben tüzelt, valamint javítva az is, hogy a játékoshoz közel álló ellenfél tankokon átmentek a golyók</li>
+                <li>tweak: enterrel is be lehet lépni; lövedék közelebb megy a falakhoz, nem pattan le túl hamar</li>
+            </ul>
+            <h7>17.06.20</h7>
+            <ul style="margin-top: 5px;">
+                <li>bugfix: server crash fix</li>
+                <li>tweak: lövedék közeli falhoz pattintása engedékenyebb, (gagyi) effekt mutatja a pont szerzést vagy vesztést</li>
+            </ul>
+            <h7>17.06.23</h7>
+            <ul style="margin-top: 5px;">
+                <li>feature: kb. 20 másodperc után elindul a pálya lezárása, szépen lassan szűkítve a játszható területet. Határ átlépése öngyilkosság.</li>
+                <li>tweak: lövedék élettartama rövidült, lövedékek számának maximuma 5-ről 3-ra csökkent tankonként.</li>
+            </ul>
+            <h7>17.06.25</h7>
+            <ul style="margin-top: 5px;">
+                <li>feature: extra weapon: GhostBullet™. Doboz felszedése utáni első lövés 3 áttetsző golyót indít útnak, amik átmennek a falakon.</li>
+                <li>tweak: alternatív lövés gomb: W</li>
+            </ul>
+            <h7>17.06.26</h7>
+            <ul style="margin-top: 5px;">
+                <li>bugfix: pálya vége effekt pontosan követi a szerver-állapotot</li>
+                <li>tweak: Iván kedvéért kivezettem a 'qol' jelölést a changelog-ból</li>
+            </ul>
+            <h7>17.06.27</h7>
+            <ul style="margin-top: 5px;">
+                <li>bugfix: pálya lezáró effekt most már látszik is remélhetőleg mindenkinél</li>
+                <li>feature: új extra: FragBullet™. Nagyobb, lassabb lövedéket indítasz útnak, ami ha játékosnak ütközik vagy lejár az ideje vagy a lövés gomb újbóli megnyomásakor több kisebb, rövidebb életű golyóvá robban szét.</li>
+            </ul>
+            <h7>18.08.08</h7>
+            <ul style="margin-top: 5px;">
+                <li>feature: csodálatos vizuális effekt lett bekötve tankok felrobbanásához, és vár a játék 3 mp-et mielőtt új pályát generál. Ja, és közben nincs ám sebezhetetlenség.</li>
+                <li>tweak: a FragBullet™ robbanásából származó lövedékek minimum sebessége növelve lett, az élettartamuk is hosszabbodott kissé.</li>
+            </ul>
+        </div>
+    </body>
 </html>
