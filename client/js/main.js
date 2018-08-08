@@ -314,6 +314,7 @@ socket.on('input_response', function (position) {
          if (index < 0) {
          index = 0;
          }*/
+        position.d = position.rotation; //multi használt funkció "d" néven várja a forgás értéket.
         Tank.list[g_self_data.id].apply_server_info(position.next_processed, position);
     }
     g_self_data.tiks_after_input_sent = 0;

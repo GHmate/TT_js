@@ -285,6 +285,10 @@ class Tank extends Entity {
     };
     simulate_input(start_pos, input_data) {
         let ret = {'x': start_pos.x, 'y': start_pos.y, 'd': start_pos.d};
+        let reset_x = this.x;
+        let reset_y = this.y;
+        let reset_spd = this.speed;
+        
         this.x = ret.x;
         this.y = ret.y;
         let rotate = this.rotation;
@@ -332,6 +336,11 @@ class Tank extends Entity {
                 ret.y += y_wannago;
             }
         }
+        
+        this.x = reset_x;
+        this.y = reset_y;
+        this.speed = reset_spd;
+        
         return ret;
     }
     apply_server_info(s_id, starting_point) {
@@ -367,19 +376,20 @@ class Tank extends Entity {
         this.repair_movement(s_id, starting_point);
     };
     repair_movement(s_id, starting_point) { //TODO: ha a saját pozíció nagyon eltér a szervertől kapottól, ne updatelje magát egy darabig, csak várjon a szerver-pozícióra.
-		let simulated_from_server_spot = starting_point;
-		for (let loop_index = 0; loop_index < this.list_of_inputs_remember.length-g_timing['lag_delay_hack']; loop_index++) {
-			let input_data = this.list_of_inputs_remember[loop_index];
-			simulated_from_server_spot = simulate_input(simulated_from_server_spot, input_data);
-		}
-		let distx = Math.abs(this.x - simulated_from_server_spot.x);
-		let disty = Math.abs(this.y - simulated_from_server_spot.y);
-		if (distx > 10 || disty > 10) {
-			this.x = simulated_from_server_spot.x;
-			this.y = simulated_from_server_spot.y;
-			this.rotation = simulated_from_server_spot.rotation;
-			console.log('warning: desync!');
-		}
+        //console.log(starting_point);
+        let simulated_from_server_spot = starting_point;
+        for (let loop_index = 0; loop_index < this.list_of_inputs_remember.length-g_timing['lag_delay_hack']; loop_index++) {
+                let input_data_temp = this.list_of_inputs_remember[loop_index];
+                simulated_from_server_spot = this.simulate_input(simulated_from_server_spot, input_data_temp);
+        }
+        let distx = Math.abs(this.x - simulated_from_server_spot.x);
+        let disty = Math.abs(this.y - simulated_from_server_spot.y);
+        if (distx > 50 || disty > 50) { // TODO: ez egy rakás szar, meg kellene csinálni, addig sok értelme így nincs...
+            this.x = simulated_from_server_spot.x;
+            this.y = simulated_from_server_spot.y;
+            this.rotation = simulated_from_server_spot.d;
+            console.log('warning: desync!');
+        }
     };
     destroy(param) {//tömb-tömböt vár, nem sima tömböt
         draw_tank_explosion(this);
