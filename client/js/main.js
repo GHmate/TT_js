@@ -20,6 +20,20 @@ document.onkeydown = function (event) {
                 tank_control = 'shoot';
             }
         }
+    } else if (event.keyCode === 84) { //T azaz tesztelés
+        draw_blade(Tank.list[g_self_data.id]);
+        
+        /*line1 = {
+            'x': 100,
+            'y': 200,
+            'angle': 190
+        };
+        line2 = {
+            'x': 1000,
+            'y': 0,
+            'angle': 270
+        };
+        line_intersection();*/
     }
     if (Tank.list !== undefined) {
         if (tank_control !== '' && Tank.list[g_self_data.id] !== undefined) {
@@ -139,27 +153,30 @@ socket.on('init', function (data) {
     }
 });
 
-//TODO: a server_update funkció már nem használandó sehol
-
 socket.on('update_entities', function (data) {
     for (let t in data.tank) {
         let s_tank = data.tank[t];
         if (Tank.list[s_tank.id] !== undefined) {
-            if (g_ipol_on) {
-                Tank.list[s_tank.id].start_ipol(s_tank.x, s_tank.y, s_tank.rotation, s_tank.spd, s_tank.rot_spd, (Tank.list[s_tank.id].id === g_self_data.id));
+            if (s_tank.id === g_self_data.id) {
+                Tank.list[g_self_data.id].mods = s_tank.mods;
+                Tank.list[g_self_data.id].events = s_tank.events;
+                
+                //teszteléshez
+                if (g_ghost && ghosttank !== undefined) {
+                    ghosttank.x = s_tank.x;
+                    ghosttank.y = s_tank.y;
+                    ghosttank.rotation = s_tank.rotation;
+                }
+                
             } else {
-                Tank.list[s_tank.id].server_update({'x': s_tank.x, 'y': s_tank.y, 'rotation': s_tank.rotation});
+                Tank.list[s_tank.id].start_ipol(s_tank.x, s_tank.y, s_tank.rotation, s_tank.spd, s_tank.rot_spd, (Tank.list[s_tank.id].id === g_self_data.id));
             }
         }
     }
     for (let t in data.bullet) {
         let s_bullet = data.bullet[t];
         if (Bullet.list[s_bullet.id] !== undefined) {
-            if (g_ipol_on) {
-                Bullet.list[s_bullet.id].start_ipol(s_bullet.x, s_bullet.y, s_bullet.rotation, s_bullet.spd, s_bullet.rot_spd);
-            } else {
-                Bullet.list[s_bullet.id].server_update({'x': s_bullet.x, 'y': s_bullet.y, 'rotation': s_bullet.rotation});
-            }
+            Bullet.list[s_bullet.id].start_ipol(s_bullet.x, s_bullet.y, s_bullet.rotation, s_bullet.spd, s_bullet.rot_spd);
         }
     }
 });
@@ -276,12 +293,11 @@ g_app.ticker.add(function (delta) {
     g_app.renderer.view.style.height = actual_height;
 
     for (let i in Tank.list) {
+        Tank.list[i].update_cycle();
         if (Tank.list[i].id !== g_self_data.id) {
             Tank.list[i].ipol();
         } else {
-            if (g_ipol_on) {
-                Tank.list[i].predict(delta);
-            }
+            Tank.list[i].predict(delta);
         }
     }
     for (let i in Bullet.list) {

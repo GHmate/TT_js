@@ -61,14 +61,7 @@ class Entity {
             this.ipol_data.end.direction = dir;
             this.ipol_data.speed = spd;
             this.ipol_data.rotate_speed = rot_spd;
-        } else {
-            //teszteléshez
-            if (g_ghost) {
-                ghosttank.x = x;
-                ghosttank.y = y;
-                ghosttank.rotation = dir;
-            }
-    }
+        }
     }
     //maga a mozgatás: 60 fps-sel fusson
     ipol() {
@@ -155,7 +148,7 @@ class Tank extends Entity {
         }
         super(data);
         this.inactive = true;
-        this.normal_speed = this.speed;
+        this.normal_speed = this.speed; //normal speed az alapértelmezett sebesség, erre jönnek rá a bónuszok. minden lehetséges speed modifyer külön változót kap.
         this.sprite.rotation = this.rotation;
         this.sprite.anchor.set(0.45, 0.5);
         this.sprite.tint = this.tint;
@@ -168,13 +161,19 @@ class Tank extends Entity {
         this.shoot_button_up = true;
         this.movement_timer = 0;
         this.list_of_inputs = []; //az inputok listája, predictionhöz (TODO: talán ki kéne szervezni innen ezeket?)
-		this.list_of_inputs_remember = []; //az inputok listája, ami csak szerver update után ürül. ezt használjuk korrigálásra
+        this.list_of_inputs_remember = []; //az inputok listája, ami csak szerver update után ürül. ezt használjuk korrigálásra
         this.list_of_inputs_temp = []; //csak a szervernek nem elküldött inputokat tárolja
-        
-		//Hozzáadok 5 üres inputot, így a tank egy kicsit késleltetve mozog. Kevésbé zavaró, mint a csúszkálásos lag-kompenzáció. Bár kevésbé is hatékony. Még szerver oldalon is lehet hackelni a hitbox-szal.
+        this.active_blade = false; // melee extra követésére.
+        this.mods = {
+            'blade_boost': 0
+        };
+        this.events = [];
+        //Hozzáadok 5 üres inputot, így a tank egy kicsit késleltetve mozog. Kevésbé zavaró, mint a csúszkálásos lag-kompenzáció. Bár kevésbé is hatékony. Még szerver oldalon is lehet hackelni a hitbox-szal.
         for (let i = 0; i < g_timing['lag_delay_hack']; i++) {
             this.list_of_inputs.push([0,0,0,0,i]);
-			this.list_of_inputs_remember.push([0,0,0,0,i]);
+            this.list_of_inputs_remember.push([0,0,0,0,i]);
+            this.list_of_inputs_temp.push([0,0,0,0,i]);
+            this.movement_timer ++;
         }
         
         //this.can_shoot = true;
@@ -194,32 +193,30 @@ class Tank extends Entity {
     changeColor(color) {
         this.tint = this.sprite.tint = color;
     }
-    server_update(s_tank) { //tulajdonképpen csak teszteléshez marad itt
-        if (s_tank.x !== undefined) {
-            this.x = s_tank.x;
-            this.sprite.x = s_tank.x;
-        }
-        if (s_tank.y !== undefined) {
-            this.y = s_tank.y;
-            this.sprite.y = s_tank.y;
-        }
-        if (s_tank.rotation !== undefined) {
-            this.rotation = s_tank.rotation;
-            this.sprite.rotation = s_tank.rotation;
-        }
-    }
-
     ipol() {
         super.ipol();
         this.sprite.rotation = this.rotation;
         this.nametag.x = this.x;
         this.nametag.y = this.y - 30;
+        this.manage_blade();
     }
     start_ipol(x, y, dir, spd, rot_spd, self = false) {
         super.start_ipol(x, y, dir, spd, rot_spd, self);
     }
     keyevent(name, value) {
         this.keypress[name] = value;
+    }
+    update_cycle() {
+        for (let key in this.events) {
+            switch (this.events[key]) {
+                case 'blade':
+                    draw_blade(this);
+                    break;
+                default:
+                    console.log('warning, ismeretlen event: '.this.events[key]);
+            }
+        }
+        this.events = [];
     }
     predict(delta) {
         if (this.inactive) {
@@ -234,32 +231,14 @@ class Tank extends Entity {
             this.movement_timer
         ]; //fel, le, balra, jobbra
         this.movement_timer++;
-        if (this.movement_timer > 30000) {
+        if (this.movement_timer > 300000) {
             this.movement_timer = 0;
         }
-        this.list_of_inputs.push(input_data); //saját használatra
-		this.list_of_inputs_remember.push(input_data); //szerveres ellenőrzésre
+        this.list_of_inputs.push(input_data); //saját használatra (prioritásis sorként, belerakunk cuccokat az elején, kivesszük a végéről használatkor (delay-hack miatt))
+        this.list_of_inputs_remember.push(input_data); //szerveres ellenőrzésre
         this.list_of_inputs_temp.push(input_data); //szervernek küldéshez, mert ezt mindig ürítjük
 
         let current_input_data = this.list_of_inputs.shift();
-        
-        //forgás:
-        let rotate = false;
-        if (current_input_data[3] === 1) { //right
-            if (this.rot_speed < 0) {
-                this.rot_speed = -this.rot_speed;
-            }
-            rotate = !rotate;
-        }
-        if (current_input_data[2] === 1) { //left
-            if (this.rot_speed > 0) {
-                this.rot_speed = -this.rot_speed;
-            }
-            rotate = !rotate;
-        }
-        if (rotate) {
-            this.rotation += this.rot_speed;
-        }
         
         let self_start_position = {
             'x': this.x,
@@ -277,6 +256,7 @@ class Tank extends Entity {
         this.nametag.x = this.x;
         this.nametag.y = this.y - 30;
         this.sprite.rotation = this.rotation;
+        this.manage_blade();
     };
     send_move_data_to_server() {
         //elküldjük a szervernek az utolsó néhány tik mozgását.
@@ -289,9 +269,19 @@ class Tank extends Entity {
         let reset_y = this.y;
         let reset_spd = this.speed;
         
+        //forgás:
+        let final_rotate = 0;
+        if (input_data[3] === 1) { //right
+            final_rotate = this.rot_speed + this.mods.blade_boost*0.02;
+        }
+        if (input_data[2] === 1) { //left
+            final_rotate = -1 * (this.rot_speed + this.mods.blade_boost*0.02);
+        }
+        ret.d += final_rotate;
+        
         this.x = ret.x;
         this.y = ret.y;
-        let rotate = this.rotation;
+        let rotate = ret.d;
         this.hitbox = {//téglalap 4 sarka
             'x1': this.x - 13,
             'x2': this.x + 13,
@@ -305,15 +295,16 @@ class Tank extends Entity {
         }
 
         if (input_data[1] === 1) {
-            this.speed = this.normal_speed * 0.7;
+            this.speed = this.normal_speed * 0.7; //+- speed multiplyers I guess
         } else {
             this.speed = this.normal_speed;
         }
 
         let x_wannago = 0;
         let y_wannago = 0;
-        let cosos = Math.cos(rotate) * this.speed;
-        let sines = Math.sin(rotate) * this.speed;
+        let final_spd = this.speed + this.mods.blade_boost*0.5;
+        let cosos = Math.cos(rotate) * final_spd;
+        let sines = Math.sin(rotate) * final_spd;
         if (input_data[0] === 1) { //up
             x_wannago = cosos;
             y_wannago = sines;
@@ -336,7 +327,7 @@ class Tank extends Entity {
                 ret.y += y_wannago;
             }
         }
-        
+
         this.x = reset_x;
         this.y = reset_y;
         this.speed = reset_spd;
@@ -344,8 +335,7 @@ class Tank extends Entity {
         return ret;
     }
     apply_server_info(s_id, starting_point) {
-		//megkapja a szervertől, hogy adott input után a szerveren hol van a tank. ebből ismerve a saját inputjait, kiszámolja, hogy hol kellene lennie, és ha eltérést lát, korrigál. lehetne ritkábban futtatni, pl. másodpercenként...
-		
+        //megkapja a szervertől, hogy adott input után a szerveren hol van a tank. ebből ismerve a saját inputjait, kiszámolja, hogy hol kellene lennie, és ha eltérést lát, korrigál. lehetne ritkábban futtatni, pl. másodpercenként...
         //van starting point, oda állítja a playert és onnan futtatja a cuccot
         if (s_id === false) {
             return; //kihagyott a szerver valamiért. nem csinálunk semmit
@@ -361,7 +351,7 @@ class Tank extends Entity {
                 console.log('input: nincs s_id');
                 continue;
             }
-            if (input_data[4] === s_id+g_timing['lag_delay_hack']) {
+            if (input_data[4] === s_id) {
                 start_doing = true;
             }
             if (!start_doing) {
@@ -372,25 +362,44 @@ class Tank extends Entity {
         if (starting_point) {
             this.list_of_inputs_remember.splice(0, remove_count);
         }
-
         this.repair_movement(s_id, starting_point);
     };
     repair_movement(s_id, starting_point) { //TODO: ha a saját pozíció nagyon eltér a szervertől kapottól, ne updatelje magát egy darabig, csak várjon a szerver-pozícióra.
-        //console.log(starting_point);
+        
         let simulated_from_server_spot = starting_point;
         for (let loop_index = 0; loop_index < this.list_of_inputs_remember.length-g_timing['lag_delay_hack']; loop_index++) {
-                let input_data_temp = this.list_of_inputs_remember[loop_index];
-                simulated_from_server_spot = this.simulate_input(simulated_from_server_spot, input_data_temp);
+            let input_data_temp = this.list_of_inputs_remember[loop_index];
+            simulated_from_server_spot = this.simulate_input(simulated_from_server_spot, input_data_temp);
         }
+        //console.log(simulated_from_server_spot.d);
+        //console.log('x');
         let distx = Math.abs(this.x - simulated_from_server_spot.x);
         let disty = Math.abs(this.y - simulated_from_server_spot.y);
-        if (distx > 50 || disty > 50) { // TODO: ez egy rakás szar, meg kellene csinálni, addig sok értelme így nincs...
+        if (distx > 5 || disty > 5) { // 5 pixel eltérésnél korrigálunk. pl a blade booster felszedésnél számít.
             this.x = simulated_from_server_spot.x;
             this.y = simulated_from_server_spot.y;
             this.rotation = simulated_from_server_spot.d;
-            console.log('warning: desync!');
         }
+        /*if (g_ghost && ghosttank !== undefined) {
+            ghosttank.x = simulated_from_server_spot.x;
+            ghosttank.y = simulated_from_server_spot.y;
+            ghosttank.rotation = simulated_from_server_spot.d;
+        }*/
     };
+    //akármikor a penge pozícióját / állapotát frissíteni kell, azt itt teszi
+    manage_blade() {
+        if (!this.active_blade) {
+            return;
+        }
+        if (this.active_blade.currentFrame === this.active_blade.totalFrames - 1) {
+            g_pixi_containers.game_container.removeChild(this.active_blade);
+            this.active_blade = false;
+        } else {
+            this.active_blade.x = this.x;
+            this.active_blade.y = this.y;
+            this.active_blade.rotation = this.sprite.rotation;
+        }
+    }
     destroy(param) {//tömb-tömböt vár, nem sima tömböt
         draw_tank_explosion(this);
         g_pixi_containers.game_container.removeChild(this.nametag);
@@ -422,16 +431,6 @@ class Bullet extends Entity {
         //this.Boom = false;
         //this.updatePosition();
     };
-            server_update(s_bullet) {
-        if (s_bullet.x !== undefined) {
-            this.x = s_bullet.x;
-            this.sprite.x = s_bullet.x;
-        }
-        if (s_bullet.y !== undefined) {
-            this.y = s_bullet.y;
-            this.sprite.y = s_bullet.y;
-        }
-    }
 }
 
 class FragBullet extends Bullet {

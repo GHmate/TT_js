@@ -193,10 +193,13 @@ setInterval(function () {
             'x': Tank.list[i].x,
             'y': Tank.list[i].y,
             'rotation': Tank.list[i].rotation,
-            'spd': Tank.list[i].speed,
-            'rot_spd': Tank.list[i].rot_speed,
-            'tint': Tank.list[i].tint
+            //'spd': Tank.list[i].speed,
+            //'rot_spd': Tank.list[i].rot_speed,
+            'tint': Tank.list[i].tint, //TODO: kiölni: kicsit feleslegesnek érzem 20 fps-sel szín adatot küldeni...
+            'mods': Tank.list[i].mods,
+            'events': Tank.list[i].events
         });
+        Tank.list[i].events = [];
     }
     for (let i in Bullet.list) {
         update_bullet.push({
@@ -230,15 +233,22 @@ setInterval(function () {
         }
     }
 
-
     //visszaszámlálások listája. objectekkel lehet tölteni, amiknek a timer paramétere egy szám és a call paramétere egy funkció. minden frame-n léptetve lesznek a countdown-ok.
     //esetleg később paused paramot is kaphat stb.
     for (let key in g_worlds[0].countdowns) {
         g_worlds[0].countdowns[key].timer--;
-        if (g_worlds[0].countdowns[key].timer < 1) {
-            let called_function = g_worlds[0].countdowns[key].call;
-            delete g_worlds[0].countdowns[key];
-            called_function();
+        let this_countdown = g_worlds[0].countdowns[key];
+        if (this_countdown.timer < 1) {
+            let called_function = this_countdown.call;
+            
+            //ha olyan elvetemült dolgot akarnánk csinálni, hogy egy felparaméterezett anonym funkciót akarunk hívni, a .apply pont kapóra jönne.
+            if (Array.isArray(this_countdown.params)) {
+                called_function.apply(null,this_countdown.params);
+            } else {
+                called_function();
+            }
+            
+            g_worlds[0].countdowns.splice(key, 1);
         }
     }
     //TODO: figyelni kell, hogy resetelődjenek a countdown-ok!

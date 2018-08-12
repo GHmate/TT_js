@@ -12,17 +12,15 @@ for (let color of g_tank_colors) {
 }
 
 //tesztelős cuccok
-g_ipol_on = true;
 g_ghost = false;
-function t_ipol(data) {
-    g_ipol_on = data;
-}
+
 function t_ghost(data) {
     if (data) {
         if (g_ghost === false) {
             ghosttank = new PIXI.Sprite(g_textures.tank);//teszteléshez
             ghosttank.anchor.set(0.45, 0.5);
             g_pixi_containers.game_container.addChild(ghosttank);
+            
         }
         g_ghost = true;
     } else {
@@ -35,7 +33,7 @@ function t_ghost(data) {
 //timing
 g_timing = {//amennyi a szám, annyi tik/sec (vagy fps)
     'input_sending': 20,
-    'lag_delay_hack': 5
+    'lag_delay_hack': 6
 };
 
 //pixi setup
@@ -75,7 +73,8 @@ g_textures = {//textúrákat egyszer kell csak betölteni
         'nu': PIXI.Texture.fromImage('images/ex_boom.png'),
         'fr': PIXI.Texture.fromImage('images/ex_frag.png'),
         'gh': PIXI.Texture.fromImage('images/ex_ghost.png'),
-        'be': PIXI.Texture.fromImage('images/ex_beam.png')
+        'be': PIXI.Texture.fromImage('images/ex_beam.png'),
+        'bl': PIXI.Texture.fromImage('images/ex_blade.png')
     }
 };
 g_textures.tank.baseTexture.scaleMode = PIXI.SCALE_MODES.LINEAR;
@@ -106,16 +105,30 @@ g_redzone_target = false;
 
 //spritesheets
 PIXI.loader
-        .add('images/spritesheets/focus_circle.json')
-        .load(onAssetsLoaded);
+    .add('images/spritesheets/focus_circle.json')
+    .add('images/spritesheets/blade.json')
+    .load(onAssetsLoaded);
 focus_circle = undefined;
+
+g_animation_frames = {
+    'focus_circle': [],
+    'tank_blade': []
+};
+
 function onAssetsLoaded()
 {
-    var frames = [];
-    for (var i = 0; i < 29; i++) {
-        frames.push(PIXI.Texture.fromFrame('circle_frame_' + i + '.png'));
+    let sheet = PIXI.loader.resources["images/spritesheets/focus_circle.json"].spritesheet;
+    for (let key in sheet.textures) {
+        g_animation_frames['focus_circle'].push(PIXI.Texture.fromFrame(key));
     }
-    focus_circle = new PIXI.extras.AnimatedSprite(frames);
+    
+    
+    sheet = PIXI.loader.resources["images/spritesheets/blade.json"].spritesheet;
+    for (let key in sheet.textures) {
+        g_animation_frames['tank_blade'].push(PIXI.Texture.fromFrame(key));
+    }
+
+    focus_circle = new PIXI.extras.AnimatedSprite(g_animation_frames['focus_circle']);
     focus_circle.anchor.set(0.5);
 
     if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) { //TODO: ez a pár sor csak addig kell, amég betöltéskor egyből bedobja a tankot

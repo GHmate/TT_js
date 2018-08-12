@@ -142,12 +142,12 @@ regenerate_map = function (world_id = 0, timer = 0) { //játék elején vagy egy
 
     //visszaszámlálások listája. objectekkel lehet tölteni, amiknek a timer paramétere egy szám és a call paramétere egy funkció. minden frame-n léptetve lesznek a countdown-ok.
     //esetleg később paused paramot is kaphat stb.
-    g_worlds[world_id].countdowns = {};
+    g_worlds[world_id].countdowns = [];
 
-    g_worlds[world_id].countdowns.extra = {
+    g_worlds[world_id].countdowns.push ({
         'timer': 100,
         'call': createExtra
-    }
+    });
 
     g_worlds[world_id].timelimit = 500; //ez triggereli a pálya-vége effektet
     g_worlds[world_id].timelimit_ticker = -1;
@@ -160,7 +160,7 @@ regenerate_map = function (world_id = 0, timer = 0) { //játék elején vagy egy
     Bullet.list_id_count = 0;
     CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel
 
-    Extra.type_list = [/*'nu',*/'fr', 'gh', /*'be'*/]; //egyezzen a tank class shoot_type lehetőségeivel
+    Extra.type_list = [/*'nu',*/'fr', 'gh', 'bl'/*,'be'*/]; //egyezzen a tank class shoot_type lehetőségeivel
     Extra.list = {};
     Extra.list_id_count = 0;
 
@@ -234,7 +234,7 @@ shuffle = function (a) {
 }
 
 //futás megállítása
-die = function die(data) {
+die = function (data) {
     console.log('die:');
     console.log(data);
     throw new Error('run_stopped');
@@ -257,10 +257,10 @@ createExtra = function () {
     broadcast_simple('init', ex);
     Extra.list_id_count++;
 
-    g_worlds[0].countdowns.extra = {
+    g_worlds[0].countdowns.push ({
         'timer': 100,
         'call': createExtra
-    };
+    });
 };
 //random int
 getRandomInt = function (min, max) {
@@ -349,11 +349,11 @@ kill_one_tank = function (tank, bullet = false) {
 
     let winner = world_check_for_winner(world_id);
     if (winner !== false) {
-        g_worlds[world_id].countdowns.regenerate = {
+        g_worlds[world_id].countdowns.push ({
             'timer': 60,
             'call': regenerate_map
-        };
-}
+        });
+    }
 };
 
 world_has_tank = function (world_id, tank_id) {
