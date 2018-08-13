@@ -21,19 +21,7 @@ document.onkeydown = function (event) {
             }
         }
     } else if (event.keyCode === 84) { //T azaz tesztelés
-        draw_blade(Tank.list[g_self_data.id]);
-        
-        /*line1 = {
-            'x': 100,
-            'y': 200,
-            'angle': 190
-        };
-        line2 = {
-            'x': 1000,
-            'y': 0,
-            'angle': 270
-        };
-        line_intersection();*/
+        //no testing yet
     }
     if (Tank.list !== undefined) {
         if (tank_control !== '' && Tank.list[g_self_data.id] !== undefined) {
@@ -169,14 +157,15 @@ socket.on('update_entities', function (data) {
                 }
                 
             } else {
-                Tank.list[s_tank.id].start_ipol(s_tank.x, s_tank.y, s_tank.rotation, s_tank.spd, s_tank.rot_spd, (Tank.list[s_tank.id].id === g_self_data.id));
+                Tank.list[s_tank.id].start_ipol(s_tank.x, s_tank.y, s_tank.rotation);
+                Tank.list[s_tank.id].events = s_tank.events;
             }
         }
     }
     for (let t in data.bullet) {
         let s_bullet = data.bullet[t];
         if (Bullet.list[s_bullet.id] !== undefined) {
-            Bullet.list[s_bullet.id].start_ipol(s_bullet.x, s_bullet.y, s_bullet.rotation, s_bullet.spd, s_bullet.rot_spd);
+            Bullet.list[s_bullet.id].start_ipol(s_bullet.x, s_bullet.y, s_bullet.rotation);
         }
     }
 });

@@ -305,20 +305,30 @@ broadcast_simple_except_one = function (one, name, data = '', world_id = 0) {
  
  }*/
 
-kill_one_tank = function (tank, bullet = false) {
+kill_one_tank = function (tank, bullet = false, killer_player = false) {
+    //killer_player akkor jön, ha nem bullet típusú megölés történik.
     let world_id = g_playerdata[tank.id].world_id;
     if (!world_has_tank(world_id, tank.id)) {
         return;
     }
     let killer_socket;
     if (bullet === false) {
-        killer_socket = (SOCKET_LIST[tank.id] === undefined ? false : SOCKET_LIST[tank.id]);
+        if (killer_player !== false) {
+            killer_socket = (SOCKET_LIST[killer_player] === undefined ? false : SOCKET_LIST[killer_player]);
+        } else {
+            killer_socket = (SOCKET_LIST[tank.id] === undefined ? false : SOCKET_LIST[tank.id]);
+        }
     } else {
         killer_socket = (SOCKET_LIST[bullet.player_id] === undefined ? false : SOCKET_LIST[bullet.player_id]);
     }
 
     if (bullet !== false && tank.id != bullet.player_id) {
         g_playerdata[bullet.player_id].score++;
+        if (killer_socket) {
+            killer_socket.emit('effect', 'p1');
+        }
+    } else if (killer_player !== false) {
+        g_playerdata[killer_player].score++;
         if (killer_socket) {
             killer_socket.emit('effect', 'p1');
         }

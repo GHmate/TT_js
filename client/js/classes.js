@@ -49,48 +49,44 @@ class Entity {
         this.ipol_data.start.direction = this.ipol_data.end.direction = dir;
     }
     //amikor a szerverről jön az utasítás, hogy 'mennyé oda'
-    start_ipol(x, y, dir, spd, rot_spd, self = false) {
-        if (!self) { //ha nem épp a saját tankunkról van szó
-            //első körben oda tesszük az entityt, ahol az előző üzenet szerint kellett lennie (hátha eltért az interpoláció miatt)
-            this.ipol_data.start.x = this.ipol_data.end.x;
-            this.ipol_data.start.y = this.ipol_data.end.y;
-            this.ipol_data.start.direction = this.ipol_data.end.direction;
-            //utána megadjuk az új célpontot és a sebességeket
-            this.ipol_data.end.x = x;
-            this.ipol_data.end.y = y;
-            this.ipol_data.end.direction = dir;
-            this.ipol_data.speed = spd;
-            this.ipol_data.rotate_speed = rot_spd;
+    start_ipol(x, y, dir) {
+        //első körben oda tesszük az entityt, ahol az előző üzenet szerint kellett lennie (hátha eltért az interpoláció miatt)
+        this.ipol_data.start.x = this.ipol_data.end.x;
+        this.ipol_data.start.y = this.ipol_data.end.y;
+        this.ipol_data.start.direction = this.ipol_data.end.direction;
+        //utána megadjuk az új célpontot és az irányt
+        this.ipol_data.end.x = x;
+        this.ipol_data.end.y = y;
+        this.ipol_data.end.direction = dir;
+        
+        let dist_x = this.ipol_data.end.x - this.ipol_data.start.x;
+        let dist_y = this.ipol_data.end.y - this.ipol_data.start.y;
+        let distance = Math.sqrt(Math.pow(dist_x, 2) + Math.pow(dist_y, 2));
+        this.ipol_data.speed = distance/3; //20 fps szerver update esetén
+        let dist_angle = Math.abs(this.ipol_data.start.direction - this.ipol_data.end.direction);
+        this.ipol_data.rotate_speed = dist_angle/3; //20 fps szerver update esetén
+        if (this.ipol_data.start.direction > this.ipol_data.end.direction) {
+            this.ipol_data.rotate_speed *= -1;
         }
     }
     //maga a mozgatás: 60 fps-sel fusson
     ipol() {
+        //TODO: mi a fenéér updatel a szerver 20 fps-sel, amikor 10-zel is lehetne pl.(vagy nem?)
         let difference = false;
+        let dist_x = this.ipol_data.end.x - this.ipol_data.start.x;
+        let dist_y = this.ipol_data.end.y - this.ipol_data.start.y;
         if (this.ipol_data.start.x !== this.ipol_data.end.x || this.ipol_data.start.y !== this.ipol_data.end.y) {
-            let dist_x = this.ipol_data.end.x - this.ipol_data.start.x;
-            let dist_y = this.ipol_data.end.y - this.ipol_data.start.y;
-            let distance = Math.sqrt(Math.pow(dist_x, 2) + Math.pow(dist_y, 2));
-            if (distance <= this.ipol_data.speed) {
-                this.ipol_data.start.x = this.ipol_data.end.x;
-                this.ipol_data.start.y = this.ipol_data.end.y;
-            } else {
-                let rotation = Math.atan2(dist_y, dist_x);
-                let next = {
-                    'x': Math.cos(rotation) * this.ipol_data.speed,
-                    'y': Math.sin(rotation) * this.ipol_data.speed
-                };
-                this.ipol_data.start.x += next.x;
-                this.ipol_data.start.y += next.y;
-            }
+            let rotation = Math.atan2(dist_y, dist_x);
+            let next = {
+                'x': Math.cos(rotation) * this.ipol_data.speed,
+                'y': Math.sin(rotation) * this.ipol_data.speed
+            };
+            this.ipol_data.start.x += next.x;
+            this.ipol_data.start.y += next.y;
             difference = true;
         }
         if (this.ipol_data.start.direction !== this.ipol_data.end.direction) {
-            let dist_angle = Math.abs(this.ipol_data.start.direction - this.ipol_data.end.direction);
-            if (dist_angle <= this.ipol_data.rotate_speed) {
-                this.ipol_data.start.direction = this.ipol_data.end.direction;
-            } else {
-                this.ipol_data.start.direction += this.ipol_data.rotate_speed;
-            }
+            this.ipol_data.start.direction += this.ipol_data.rotate_speed;
             difference = true;
         }
         if (difference) {
@@ -200,8 +196,8 @@ class Tank extends Entity {
         this.nametag.y = this.y - 30;
         this.manage_blade();
     }
-    start_ipol(x, y, dir, spd, rot_spd, self = false) {
-        super.start_ipol(x, y, dir, spd, rot_spd, self);
+    start_ipol(x, y, dir) {
+        super.start_ipol(x, y, dir);
     }
     keyevent(name, value) {
         this.keypress[name] = value;

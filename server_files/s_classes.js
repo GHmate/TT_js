@@ -231,6 +231,12 @@ Tank = class Tank extends Entity {
                     this.shoot_phase = 'wait';
                     this.events.push('blade');
                     
+                    let final_pos_x = this.x + 85 * Math.cos(this.rotation);
+                    let final_pos_y = this.y + 85 * Math.sin(this.rotation);
+                    let blade_obj = {'x1': this.x,'y1': this.y,'x2': final_pos_x,'y2': final_pos_y};
+                    g_collisioner.blade_collision(blade_obj,this.id);
+                    
+                    //timer, ameddig nem engedjük lőni / extrát felvenni
                     g_worlds[g_playerdata[this.id].world_id].countdowns.push ({
                         'timer': 15,
                         'call': function (tank) {
@@ -392,9 +398,8 @@ Bullet = class Bullet extends Entity {
             'y1': this.y - 4,
             'y2': this.y + 4
         };
-    }
-    ;
-            updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
+    };
+    updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
 
         this.rotation = normalize_rad(this.rotation);
 
@@ -467,9 +472,8 @@ Bullet = class Bullet extends Entity {
         if (this.timer < 1) {
             this.destroy([Bullet.list]);
         }
-    }
-    ;
-            destroy(param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
+    };
+    destroy(param) { //override-oljuk a destroyt mer object specifikus cuccot csinálunk
         if (Tank.list[this.player_id] !== undefined && this.constructor.name === 'Bullet' && this.stop_count !== true) { //csak sima bulletnél kell visszaállítani a limitet
             Tank.list[this.player_id].bullet_count++;
         }
@@ -852,5 +856,92 @@ CollisionManager = class CollisionManager {
             }
         }
         return {'collision': collision, 'collided': collided};
+    }
+    //eltalál-e valakit egy blade az adott pozíción. lefuttatja a tank(ok) killelését, ha igen
+    blade_collision(blade_pos, parent_player_id) {
+        for (let id in Tank.list) {
+            if (id == parent_player_id) { //ugye amikor teszt közben magát öli meg...
+                //ráadásul a === szétbassza
+                continue;
+            }
+            // a tank hitboxának 4 vonala (kicsit csalok, mert az egy vonalas ütközés nem elég érzékeny)
+            let new_hitbox = {'x1': Tank.list[id].hitbox.x1-5,'x2': Tank.list[id].hitbox.x2+5,'y1': Tank.list[id].hitbox.y1-5,'y2': Tank.list[id].hitbox.y2+5};
+            
+            let tank_hit_line1 = {'x1': new_hitbox.x1,'x2': new_hitbox.x2,'y1': new_hitbox.y1,'y2': new_hitbox.y1};
+            let tank_hit_line2 = {'x1': new_hitbox.x1,'x2': new_hitbox.x2,'y1': new_hitbox.y2,'y2': new_hitbox.y2};
+            let tank_hit_line3 = {'x1': new_hitbox.x1,'x2': new_hitbox.x1,'y1': new_hitbox.y1,'y2': new_hitbox.y2};
+            let tank_hit_line4 = {'x1': new_hitbox.x2,'x2': new_hitbox.x2,'y1': new_hitbox.y1,'y2': new_hitbox.y2};
+            if (this.sline_intersect(blade_pos,tank_hit_line1) || this.sline_intersect(blade_pos,tank_hit_line2) || this.sline_intersect(blade_pos,tank_hit_line3) || this.sline_intersect(blade_pos,tank_hit_line4)) {
+                Tank.list[id].inactive = true;
+                kill_one_tank(Tank.list[id], false, parent_player_id);
+            }
+        }
+    }
+    // szakasz ütközés figyelés, true, ha metszik egymást. 2 objectet vár
+    sline_intersect(line1, line2) {
+        let a = line1.x1;
+        let b = line1.y1;
+        let c = line1.x2;
+        let d = line1.y2;
+        let p = line2.x1;
+        let q = line2.y1;
+        let r = line2.x2;
+        let s = line2.y2;
+
+        let det, gamma, lambda;
+        det = (c - a) * (s - q) - (r - p) * (d - b);
+        if (det === 0) {
+            return false;
+        } else {
+            lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+            gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+            return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+        }
+    };
+    //funkció: kap: 2 vonalat, x,y koord (pont, amin áthalad) + szög.
+    line_intersection(line1, line2) {
+        if (line1.angle === line2.angle) {
+            return false;
+        }
+        /*konvertáljuk normál alakra, tehát majd kell egy d. (y = m1*x + d1)
+        m = bármely természetes szám és false. beállítjuk tangens(szög) segítségével. gáz, ha 90 vagy 270 fok.
+        d = y-m*x*/
+        let m1 = -1 * Math.tan(line1.angle * Math.PI/180);
+        let m2 = -1 * Math.tan(line2.angle * Math.PI/180);
+
+        let x_intersect, y_intersect;
+        let d1 = 0;
+        let d2 = 0;
+
+        if (line1.angle === 90 || line1.angle === 270) {
+            x_intersect = line1.x;
+            d2 = line2.y - (m2*line2.x);
+        } else if (line2.angle === 90 || line2.angle === 270) {
+            x_intersect = line2.x;
+            d1 = line1.y - (m1*line1.x);
+        } else {
+            //normál alakra hozva az egyenesek függvényét
+            d1 = line1.y - (m1*line1.x);
+            d2 = line2.y - (m2*line2.x);
+            /*közös pont:
+            m1*x + d1 = m2*x + d2
+            m1*x - m2*x = d2 - d1
+            x = (d2 - d1) / (m1 - m2)*/
+            x_intersect = (d2 - d1) / (m1 - m2);
+        }
+        //és y = m1*(x-behely.) + d1
+        if (d1 !== 0) {
+            y_intersect = m1*x_intersect + d1;
+        } else if (d2 !== 0) {
+            y_intersect = m2*x_intersect + d2;
+        } else {
+            console.log('WTF vonal metszés bug')
+        }
+        let ret = {
+            'x': x_intersect,
+            'y': y_intersect
+        };
+        //console.log(ret);
+        return ret;
     }
 };

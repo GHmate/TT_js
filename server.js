@@ -235,10 +235,16 @@ setInterval(function () {
 
     //visszaszámlálások listája. objectekkel lehet tölteni, amiknek a timer paramétere egy szám és a call paramétere egy funkció. minden frame-n léptetve lesznek a countdown-ok.
     //esetleg később paused paramot is kaphat stb.
-    for (let key in g_worlds[0].countdowns) {
+    for (let key = 0; key < g_worlds[0].countdowns.length; key++) {
+        if (g_worlds[0].countdowns[key] == undefined) {
+            //valami error volt, pucolás
+            console.log('ííí, countdown hiba');
+            continue;
+        }
         g_worlds[0].countdowns[key].timer--;
         let this_countdown = g_worlds[0].countdowns[key];
         if (this_countdown.timer < 1) {
+            g_worlds[0].countdowns.splice(key, 1); //fontos, előbb törlünk, aztán hívunk...
             let called_function = this_countdown.call;
             
             //ha olyan elvetemült dolgot akarnánk csinálni, hogy egy felparaméterezett anonym funkciót akarunk hívni, a .apply pont kapóra jönne.
@@ -247,8 +253,6 @@ setInterval(function () {
             } else {
                 called_function();
             }
-            
-            g_worlds[0].countdowns.splice(key, 1);
         }
     }
     //TODO: figyelni kell, hogy resetelődjenek a countdown-ok!
