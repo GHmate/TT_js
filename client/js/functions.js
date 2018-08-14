@@ -38,7 +38,7 @@ function clear_local_map() {
 
 function draw_blade (tank) {
     tank_blade = new PIXI.extras.AnimatedSprite(g_animation_frames['tank_blade']);
-    tank_blade.anchor.set(-0.17,0.5);
+    tank_blade.anchor.set(-0.14,0.5);
     tank_blade.x = tank.x;
     tank_blade.y = tank.y;
     tank_blade.rotation = tank.sprite.rotation;

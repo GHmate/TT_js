@@ -231,10 +231,12 @@ Tank = class Tank extends Entity {
                     this.shoot_phase = 'wait';
                     this.events.push('blade');
                     
-                    let final_pos_x = this.x + 85 * Math.cos(this.rotation);
-                    let final_pos_y = this.y + 85 * Math.sin(this.rotation);
-                    let blade_obj = {'x1': this.x,'y1': this.y,'x2': final_pos_x,'y2': final_pos_y};
-                    g_collisioner.blade_collision(blade_obj,this.id);
+                    this.do_blade(this.id);
+                    g_worlds[g_playerdata[this.id].world_id].countdowns.push ({
+                        'timer': 5,
+                        'call': this.do_blade,
+                        'params': [this.id]
+                    });
                     
                     //timer, ameddig nem engedjük lőni / extrát felvenni
                     g_worlds[g_playerdata[this.id].world_id].countdowns.push ({
@@ -362,6 +364,13 @@ Tank = class Tank extends Entity {
         });
         Bullet.list_id_count++;
     };
+    do_blade(id) {
+        let tank = Tank.list[id];
+        let final_pos_x = tank.x + 105 * Math.cos(tank.rotation);
+        let final_pos_y = tank.y + 105 * Math.sin(tank.rotation);
+        let blade_obj = {'x1': tank.x,'y1': tank.y,'x2': final_pos_x,'y2': final_pos_y};
+        g_collisioner.blade_collision(blade_obj,tank.id);
+    }
     destroy(param) {
         super.destroy(param);
         let self_id = this.id;
