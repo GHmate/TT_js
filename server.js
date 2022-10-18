@@ -7,15 +7,13 @@ app.get('/', function (req, res) {
 });
 app.use('/', express.static(__dirname + '/client'));
 
-serv.listen(process.env.PORT || 8080);
+serv.listen(process.env.PORT || 8081);
 console.log("Ready to roll out!");
 SOCKET_LIST = {};
 
 var io = require('socket.io')(serv, {});
-
 require("./server_files/s_config.js");
 require("./server_files/s_functions.js");
-require("./server_files/s_classes.js");
 
 //ha még nem volt generálva, legenerálja a pályát.
 if (g_worlds_number < 1) {
@@ -53,28 +51,28 @@ io.sockets.on('connection', function (socket) {
         socket.emit('init', {
             'clear_all': true,
             'global': {'id': socket.id},
-            'walls': Wall.list,
-            'tanks': Tank.list,
-            'bullets': Bullet.list,
+            'walls': g_worlds[0].lists.wall,
+            'tanks': g_worlds[0].lists.tank,
+            'bullets': g_worlds[0].lists.bullet,
             'playarea': level_limiter
         });
 
         if (g_worlds[data.w_id].countdown === 0) {
             socket.emit('world_active', true);
-            Tank.list[socket.id].inactive = false;
+            g_worlds[0].lists.tank[socket.id].inactive = false;
         }
 
         //megmondjuk mindenki másnak, hogy hol az új játékos tankja
         let self_id = socket.id;//kényszerűségből... nem akarja kulcsként engedni a socket.id-t vagy a socket['id']-t
         let init = {
-            'tanks': {self_id: Tank.list[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
+            'tanks': {self_id: g_worlds[0].lists.tank[socket.id]} //itt direkt tömb van, hátha többet akarunk inicializálni TODO: ne küldjük a teljes objectet
         };
         broadcast_simple_except_one(socket.id, 'init', init, data.w_id);
         update_score_board(data.w_id);
     });
 
     socket.on('keyPress', function (data) {
-        if (Tank.list[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
+        if (g_worlds[0].lists.tank[socket.id] === undefined) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
             return;
         }
         if (data.inputId === 'shoot' && data.state) {
@@ -85,23 +83,23 @@ io.sockets.on('connection', function (socket) {
             if (!data.turning.left && data.turning.right) {
                 turn = (turn === '' ? 'r' : '');
             }
-            Tank.list[socket.id].triggerShoot(turn);
+            g_worlds[0].lists.tank[socket.id].triggerShoot(turn);
         }
     });
 
     socket.on('input_list', function (data) {
-        if (Tank.list[socket.id] === undefined || Tank.list[socket.id].inactive === true) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
+        if (g_worlds[0].lists.tank[socket.id] === undefined || g_worlds[0].lists.tank[socket.id].inactive === true) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
             return;
         }
         let next_id = (data[0] === undefined ? false : data[0][4]);
-        Tank.list[socket.id].apply_input_movement_data(Tank.list[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
-        Tank.list[socket.id].list_of_inputs = Tank.list[socket.id].list_of_inputs.concat(data);
+        g_worlds[0].lists.tank[socket.id].apply_input_movement_data(g_worlds[0].lists.tank[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
+        g_worlds[0].lists.tank[socket.id].list_of_inputs = g_worlds[0].lists.tank[socket.id].list_of_inputs.concat(data);
         let response_data = {
-            'x': Tank.list[socket.id].x,
-            'y': Tank.list[socket.id].y,
-            'rotation': Tank.list[socket.id].rotation,
-            'spd': Tank.list[socket.id].speed,
-            'rot_spd': Tank.list[socket.id].rot_speed,
+            'x': g_worlds[0].lists.tank[socket.id].x,
+            'y': g_worlds[0].lists.tank[socket.id].y,
+            'rotation': g_worlds[0].lists.tank[socket.id].rotation,
+            'spd': g_worlds[0].lists.tank[socket.id].speed,
+            'rot_spd': g_worlds[0].lists.tank[socket.id].rot_speed,
             'next_processed': next_id
         };
         socket.emit('input_response', response_data);
@@ -111,9 +109,9 @@ io.sockets.on('connection', function (socket) {
         let self_id = socket.id;
         let world_id = g_playerdata[socket.id].world_id;
         console.log('socket disconnected: ' + socket.id);
-        if (Tank.list[self_id] !== undefined) {
-            Tank.list[self_id].destroy([Tank.list]);
-            delete Tank.list[self_id];
+        if (g_worlds[0].lists.tank[self_id] !== undefined) {
+            g_worlds[0].lists.tank[self_id].destroy([g_worlds[0].lists.tank]);
+            delete g_worlds[0].lists.tank[self_id];
         }
         delete SOCKET_LIST[socket.id];
         if (g_playerdata[socket.id] !== undefined) {
@@ -159,11 +157,11 @@ setInterval(function () {
     if (g_worlds_number >= 1) {
         g_collisioner.update_arrays();
 
-        for (let t in Tank.list) {
-            Tank.list[t].updatePosition();
+        for (let t in g_worlds[0].lists.tank) {
+            g_worlds[0].lists.tank[t].updatePosition();
         }
-        for (let t in Bullet.list) {
-            Bullet.list[t].updatePosition();
+        for (let t in g_worlds[0].lists.bullet) {
+            g_worlds[0].lists.bullet[t].updatePosition();
         }
     }
     for (let i in g_worlds) {
@@ -173,8 +171,8 @@ setInterval(function () {
             if (world.countdown === 0) {
                 broadcast_simple('world_active', true, i); //itt i a world_id, mert abban iterálok
                 for (let index in world.tanks) {
-                    if (Tank.list[world.tanks[index]] !== undefined) {
-                        Tank.list[world.tanks[index]].inactive = false;
+                    if (g_worlds[0].lists.tank[world.tanks[index]] !== undefined) {
+                        g_worlds[0].lists.tank[world.tanks[index]].inactive = false;
                     }
                 }
             }
@@ -187,28 +185,28 @@ setInterval(function () {
 
     let update_tank = [];
     let update_bullet = [];
-    for (let i in Tank.list) {
+    for (let i in g_worlds[0].lists.tank) {
         update_tank.push({
-            'id': Tank.list[i].id,
-            'x': Tank.list[i].x,
-            'y': Tank.list[i].y,
-            'rotation': Tank.list[i].rotation,
-            //'spd': Tank.list[i].speed,
-            //'rot_spd': Tank.list[i].rot_speed,
-            'tint': Tank.list[i].tint, //TODO: kiölni: kicsit feleslegesnek érzem 20 fps-sel szín adatot küldeni...
-            'mods': Tank.list[i].mods,
-            'events': Tank.list[i].events
+            'id': g_worlds[0].lists.tank[i].id,
+            'x': g_worlds[0].lists.tank[i].x,
+            'y': g_worlds[0].lists.tank[i].y,
+            'rotation': g_worlds[0].lists.tank[i].rotation,
+            //'spd': g_worlds[0].lists.tank[i].speed,
+            //'rot_spd': g_worlds[0].lists.tank[i].rot_speed,
+            'tint': g_worlds[0].lists.tank[i].tint, //TODO: kiölni: kicsit feleslegesnek érzem 20 fps-sel szín adatot küldeni...
+            'mods': g_worlds[0].lists.tank[i].mods,
+            'events': g_worlds[0].lists.tank[i].events
         });
-        Tank.list[i].events = [];
+        g_worlds[0].lists.tank[i].events = [];
     }
-    for (let i in Bullet.list) {
+    for (let i in g_worlds[0].lists.bullet) {
         update_bullet.push({
-            'id': Bullet.list[i].id,
-            'x': Bullet.list[i].x,
-            'y': Bullet.list[i].y,
-            'rotation': Bullet.list[i].rotation,
-            'spd': Bullet.list[i].speed,
-            'rot_spd': Bullet.list[i].rot_speed
+            'id': g_worlds[0].lists.bullet[i].id,
+            'x': g_worlds[0].lists.bullet[i].x,
+            'y': g_worlds[0].lists.bullet[i].y,
+            'rotation': g_worlds[0].lists.bullet[i].rotation,
+            'spd': g_worlds[0].lists.bullet[i].speed,
+            'rot_spd': g_worlds[0].lists.bullet[i].rot_speed
         });
     }
 

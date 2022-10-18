@@ -1,7 +1,14 @@
+const Node = require('./Classes/Node');
+const Tank = require('./Classes/Tank');
+const Bullet = require('./Classes/Bullet');
+const Wall = require('./Classes/Wall');
+const Extra = require('./Classes/Extra');
+const CollisionManager = require('./Classes/CollisionManager');
+
 /**
  * generálunk és amég nem találunk megfelelő méretű blokkot, újrageneráljuk a pályát
  * 
- * @param obj dimensions, a gráf szélessége és hosszúsága (node-ok száma)
+ * @param dimensions obj, a gráf szélessége és hosszúsága (node-ok száma)
  * @returns obj: {obj: gráf, int: választott blokk azonosítója}
  */
 generate_map = function (dimensions) {
@@ -13,9 +20,9 @@ generate_map = function (dimensions) {
         actual_block = 0;
         selected_block = 0;
         var graph = []; //2 dimenziós mátrix, elemei node-ok
-        for (var x = 0; x < dimensions.x; x++) {
+        for (let x = 0; x < dimensions.x; x++) {
             graph[x] = [];
-            for (var y = 0; y < dimensions.y; y++) {
+            for (let y = 0; y < dimensions.y; y++) {
                 graph[x][y] = new Node({
                     'x': x,
                     'y': y
@@ -47,8 +54,8 @@ generate_map = function (dimensions) {
 //lekérdezi, hogy adott node-ra tehet-e tankot
 free_pos = function (node) {
     var free = true;
-    for (id in Tank.list) {
-        if (Math.abs(Tank.list[id].x_graph - node.x_graph) + Math.abs(Tank.list[id].y_graph - node.y_graph) < g_player_min_distance) {
+    for (id in g_worlds[0].lists.tank) {
+        if (Math.abs(g_worlds[0].lists.tank[id].x_graph - node.x_graph) + Math.abs(g_worlds[0].lists.tank[id].y_graph - node.y_graph) < g_player_min_distance) {
             free = false;
         }
     }
@@ -84,16 +91,16 @@ create_walls = function (graph, dimensions) {
                             wall.y = y_self + g_field_size / 2;
                             break;
                     }
-                    Wall.list[Wall.list_id_counter] = new Wall({
+                    g_worlds[0].lists.wall[g_worlds[0].lists.wall_id_counter] = new Wall({
                         'x': wall.x,
                         'y': wall.y,
                         'x_graph': x,
                         'y_graph': y,
-                        'id': Wall.list_id_counter,
+                        'id': g_worlds[0].lists.wall_id_counter,
                         'width': wall.width,
                         'height': wall.height
                     });
-                    Wall.list_id_counter++;
+                    g_worlds[0].lists.wall_id_counter++;
                 }
             }
             //bal szélére, tetejére plusz falak
@@ -102,32 +109,32 @@ create_walls = function (graph, dimensions) {
                 wall.width = shorter_side;
                 wall.x = x_self - g_field_size / 2;
                 wall.y = y_self;
-                Wall.list[Wall.list_id_counter] = new Wall({
+                g_worlds[0].lists.wall[g_worlds[0].lists.wall_id_counter] = new Wall({
                     'x': wall.x,
                     'y': wall.y,
                     'x_graph': x,
                     'y_graph': y,
-                    'id': Wall.list_id_counter,
+                    'id': g_worlds[0].lists.wall_id_counter,
                     'width': wall.width,
                     'height': wall.height
                 });
-                Wall.list_id_counter++;
+                g_worlds[0].lists.wall_id_counter++;
             }
             if (y === 0) {
                 wall.height = shorter_side;
                 wall.width = longer_side;
                 wall.x = x_self;
                 wall.y = y_self - g_field_size / 2;
-                Wall.list[Wall.list_id_counter] = new Wall({
+                g_worlds[0].lists.wall[g_worlds[0].lists.wall_id_counter] = new Wall({
                     'x': wall.x,
                     'y': wall.y,
                     'x_graph': x,
                     'y_graph': y,
-                    'id': Wall.list_id_counter,
+                    'id': g_worlds[0].lists.wall_id_counter,
                     'width': wall.width,
                     'height': wall.height
                 });
-                Wall.list_id_counter++;
+                g_worlds[0].lists.wall_id_counter++;
             }
         }
     }
@@ -153,16 +160,17 @@ regenerate_map = function (world_id = 0, timer = 0) { //játék elején vagy egy
     g_worlds[world_id].timelimit_ticker = -1;
     g_worlds[world_id].playarea = {'x': 0, 'y': 0, 'xend': g_site_orig_width, 'yend': g_site_orig_height};
 
-    Wall.list = {};
-    Wall.list_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
-    Tank.list = {}; //statikus osztály-változó
-    Bullet.list = {};
-    Bullet.list_id_count = 0;
+    g_worlds[0].lists = {};
+    g_worlds[0].lists.wall = {};
+    g_worlds[0].lists.wall_id_counter = 0; //új id-ket kapnak a falak, csak növekszik
+    g_worlds[0].lists.tank = {}; //statikus osztály-változó
+    g_worlds[0].lists.bullet = {};
+    g_worlds[0].lists.bullet_id_count = 0;
     CollisionManager.map = []; //egy mátrix, ami alapján nézi, hogy egyáltalán mi ütközhet mivel
 
     Extra.type_list = [/*'nu',*/'fr', 'gh', 'bl'/*,'be'*/]; //egyezzen a tank class shoot_type lehetőségeivel
-    Extra.list = {};
-    Extra.list_id_count = 0;
+    g_worlds[0].lists.extra = {};
+    g_worlds[0].lists.extra_id_count = 0;
 
     g_collisioner = new CollisionManager({});
     gen_result = generate_map(g_dimensions);
@@ -188,8 +196,8 @@ regenerate_map = function (world_id = 0, timer = 0) { //játék elején vagy egy
     //elmeséljük mindenkinek, hogy hol vannak a tankok meg a falak
     let init = {
         'clear_all': true,
-        'walls': Wall.list,
-        'tanks': Tank.list,
+        'walls': g_worlds[0].lists.wall,
+        'tanks': g_worlds[0].lists.tank,
         'playarea': false
     };
     broadcast_simple('init', init, world_id);
@@ -204,7 +212,7 @@ add_tank = function (id) {
         var node = graph[g_worlds[0].leteheto_nodes[k][0]][g_worlds[0].leteheto_nodes[k][1]];
 
         if (free_pos(node)) {
-            Tank.list[id] = new Tank({
+            g_worlds[0].lists.tank[id] = new Tank({
                 'x': node.x,
                 'y': node.y,
                 'x_graph': node.x_graph,
@@ -243,19 +251,19 @@ die = function (data) {
 createExtra = function () {
     let koordinata = g_worlds[0].leteheto_nodes[getRandomInt(0, g_worlds[0].leteheto_nodes.length - 1)];
     let customnode = graph[koordinata[0]][koordinata[1]];
-    Extra.list[Extra.list_id_count] = new Extra({
+    g_worlds[0].lists.extra[g_worlds[0].lists.extra_id_count] = new Extra({
         'x': customnode.x,
         'y': customnode.y,
         'x_graph': customnode.x_graph,
         'y_graph': customnode.y_graph,
-        'id': Extra.list_id_count,
+        'id': g_worlds[0].lists.extra_id_count,
         'type': Extra.type_list[getRandomInt(0, Extra.type_list.length - 1)]
     });
     let ex = {
-        'extras': {self_id: Extra.list[Extra.list_id_count]}
+        'extras': {self_id: g_worlds[0].lists.extra[g_worlds[0].lists.extra_id_count]}
     };
     broadcast_simple('init', ex);
-    Extra.list_id_count++;
+    g_worlds[0].lists.extra_id_count++;
 
     g_worlds[0].countdowns.push ({
         'timer': 100,
@@ -352,9 +360,9 @@ kill_one_tank = function (tank, bullet = false, killer_player = false) {
     update_score_board(world_id);
 
     world_add_remove_tank(world_id, tank.id, 0);
-    tank.destroy([Tank.list]);
+    tank.destroy([g_worlds[0].lists.tank]);
     if (bullet !== false) {
-        bullet.destroy([Bullet.list]);
+        bullet.destroy([g_worlds[0].lists.bullet]);
     }
 
     let winner = world_check_for_winner(world_id);
@@ -414,15 +422,15 @@ request_modify_user_data = function (socket_id, data) {
     }
     if (data.tint !== undefined) {
         g_playerdata[socket_id].tint = data.tint;
-        if (Tank.list[socket_id] !== undefined) {
-            Tank.list[socket_id].tint = data.tint;
+        if (g_worlds[0].lists.tank[socket_id] !== undefined) {
+            g_worlds[0].lists.tank[socket_id].tint = data.tint;
         }
 
         let update_tank = [];
-        for (let i in Tank.list) {
+        for (let i in g_worlds[0].lists.tank) {
             update_tank.push({
-                'id': Tank.list[i].id,
-                'tint': Tank.list[i].tint
+                'id': g_worlds[0].lists.tank[i].id,
+                'tint': g_worlds[0].lists.tank[i].tint
             });
         }
 
@@ -447,3 +455,32 @@ update_score_board = function (world_id) {
     });
     broadcast_simple('update_world_scores', scboard, world_id);
 };
+
+createBullet = function (data, tank) {
+    let rot = (data.rotation !== undefined ? data.rotation : tank.rotation);
+    if (tank.bullet_count > 0) {
+        let newBullet = g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count] = new Bullet({
+            'x': tank.x,
+            'y': tank.y,
+            'x_graph': tank.x_graph,
+            'y_graph': tank.y_graph,
+            'id': g_worlds[0].lists.bullet_id_count,
+            'player_id': tank.id,
+            'rotation': rot,
+            'tint': tank.tint
+        });
+        broadcastBullet(newBullet);
+        tank.bullet_count--;
+    }
+}
+
+function broadcastBullet (newBullet) {
+    newBullet.move_starting_pos(); //a tank csövéhez teszi a golyót
+    let send_bullet = newBullet; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
+    send_bullet.type = 'Bullet';
+    let bl = {
+        'bullets': {self_id: send_bullet}
+    };
+    broadcast_simple('init', bl); //TODO: az inicializálásokat össze lehetne szedni, és a sima 20fps-es csomagban egyszerre küldeni, nem külön-külön üzenetekben.
+    g_worlds[0].lists.bullet_id_count++;
+}
