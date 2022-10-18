@@ -13,12 +13,13 @@ SOCKET_LIST = {};
 
 var io = require('socket.io')(serv, {});
 require("./server_files/s_config.js");
-require("./server_files/s_functions.js");
+require("./server_files/Functions/s_functions.js");
+const boardFunctions = require("./server_files/Functions/boardFunctions");
 
 //ha még nem volt generálva, legenerálja a pályát.
 if (g_worlds_number < 1) {
     g_worlds_number++;
-    regenerate_map(0);
+    boardFunctions.regenerate_map(0);
 }
 
 io.sockets.on('connection', function (socket) {
@@ -41,7 +42,7 @@ io.sockets.on('connection', function (socket) {
         g_playerdata[socket.id].score = 0;
 
         //kreálunk új tankot, ha játék közben lépett be (ami ki lesz szedve a végleges verzióban amúgy)
-        add_tank(socket.id);
+        boardFunctions.add_tank(socket.id);
 
         //elmeséljük az újonnan érkezett zöldfülűnek, hogy mi a helyzet a pályán
         let level_limiter = false;
@@ -124,7 +125,7 @@ io.sockets.on('connection', function (socket) {
 
             let winner = world_check_for_winner(world_id);
             if (winner !== false) {
-                regenerate_map();
+                boardFunctions.regenerate_map();
             }
         }
     });

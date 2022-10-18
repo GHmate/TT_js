@@ -2,6 +2,7 @@ const Tank = require("./Tank");
 const Wall = require("./Wall");
 const Bullet = require("./Bullet");
 const Extra = require("./Extra");
+const boardFunctions = require("../Functions/boardFunctions.js");
 
 const classByName = {
     'Wall': Wall,
@@ -165,7 +166,7 @@ module.exports = class CollisionManager {
             let tank_hit_line4 = {'x1': new_hitbox.x2,'x2': new_hitbox.x2,'y1': new_hitbox.y1,'y2': new_hitbox.y2};
             if (this.sline_intersect(blade_pos,tank_hit_line1) || this.sline_intersect(blade_pos,tank_hit_line2) || this.sline_intersect(blade_pos,tank_hit_line3) || this.sline_intersect(blade_pos,tank_hit_line4)) {
                 g_worlds[0].lists.tank[id].inactive = true;
-                kill_one_tank(g_worlds[0].lists.tank[id], false, parent_player_id);
+                boardFunctions.kill_one_tank(g_worlds[0].lists.tank[id], false, parent_player_id);
             }
         }
     }

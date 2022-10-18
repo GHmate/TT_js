@@ -1,5 +1,5 @@
 const Bullet = require("./Bullet");
-require("../s_functions.js");
+require("../Functions/s_functions.js");
 
 module.exports = class FragBullet extends Bullet {
     constructor(data) {

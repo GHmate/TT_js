@@ -1,5 +1,7 @@
 const Entity = require("./Entity");
-require("../s_functions.js");
+require("../Functions/s_functions.js");
+const tankFunctions = require("../Functions/tankFunctions.js");
+const boardFunctions = require("../Functions/boardFunctions.js");
 
 module.exports = class Tank extends Entity {
     constructor(data) {
@@ -71,7 +73,7 @@ module.exports = class Tank extends Entity {
                     }
                     b.inactive = true;
                     this.inactive = true;
-                    kill_one_tank(this, b);
+                    boardFunctions.kill_one_tank(this, b);
                 }
             }
         }
@@ -92,7 +94,7 @@ module.exports = class Tank extends Entity {
         let playarea = g_worlds[g_playerdata[this.id].world_id].playarea;
         if (!this.inactive && (this.x < playarea.x || this.y < playarea.y || this.x > playarea.xend || this.y > playarea.yend)) {
             this.inactive = true;
-            kill_one_tank(this);
+            boardFunctions.kill_one_tank(this);
         }
 
     }
@@ -175,11 +177,11 @@ module.exports = class Tank extends Entity {
                 case 'wait':
                     //nem lövünk
                     break;
-                /*case 'gh': //ghost
-                    this.createGhostBullet({'rotation': fixed_rotation});
+                case 'gh': //ghost
+                    createGhostBullet({'rotation': fixed_rotation}, this);
                     this.shoot_type = 'normal';
                     break;
-                case 'fr': //repesz
+                /*case 'fr': //repesz
                     this.createFragBullet({'rotation': fixed_rotation});
                     this.shoot_phase = 'trigger';
                     break;
@@ -211,7 +213,7 @@ module.exports = class Tank extends Entity {
                     this.mods.blade_boost = 0;
                     break;*/
                 default: //sima lövedék
-                    createBullet({'rotation': fixed_rotation}, this);
+                    tankFunctions.createBullet({'rotation': fixed_rotation}, this);
             }
         } else if (this.shoot_phase === 'trigger') {
             switch (this.shoot_type) {
@@ -226,29 +228,7 @@ module.exports = class Tank extends Entity {
         }
     }
 /*
-    createGhostBullet(data) {
-        let angle = 0.2;
-        let rot = (data.rotation !== undefined ? data.rotation : this.rotation) - angle;
-        for (let r = 0; r <= 2; r += 1) {
-            g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count] = new GhostBullet({
-                'x': this.x,
-                'y': this.y,
-                'id': g_worlds[0].lists.bullet_id_count,
-                'player_id': this.id,
-                'rotation': rot,
-                'tint': this.tint
-            });
-            rot += angle;
-            g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
-            let send_bullet = g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count]; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
-            send_bullet.type = 'GhostBullet';
-            let bl = {
-                'bullets': {self_id: send_bullet}
-            };
-            broadcast_simple('init', bl);
-            g_worlds[0].lists.bullet_id_count++;
-        }
-    }
+
     createFragBullet(data) {
         let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
         g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count] = new FragBullet({
