@@ -102,26 +102,32 @@ module.exports = class Tank extends Entity {
         if (this.inactive) {
             return;
         }
+        let baseInputData = {
+            'keys': {
+                'up': false,
+                'down': false,
+                'left': false,
+                'right': false,
+            }
+        };
         for (let rep = 0; rep < repeat; rep++) {
 
             let input_data = this.list_of_inputs.splice(0, 1); //kiszedjük a tömbből
-            input_data = (input_data[0] === undefined ? [0, 0, 0, 0] : input_data[0]); //csak az elsőre vagyunk kíváncsiak. a splice tömböt ad vissza mindig. ha üres, nem megy.
-            let rotate = false;
+            input_data = input_data[0] || baseInputData; //csak az elsőre vagyunk kíváncsiak. a splice tömböt ad vissza mindig. ha üres, nem megy.
 
-            if (input_data[1] === 1) {
-                this.speed = this.normal_speed * 0.7;
-            } else {
-                this.speed = this.normal_speed;
+            this.speed = this.normal_speed + this.mods.blade_boost * 0.5;
+            if (input_data.keys.down) {
+                this.speed *= 0.7;
             }
 
             let final_rotate = 0;
-            if (input_data[3] === 1) { //right
-                final_rotate = this.rot_speed + this.mods.blade_boost*0.02;
+            if (input_data.keys.right) {
+                final_rotate = this.rot_speed + this.mods.blade_boost * 0.02;
             }
-            if (input_data[2] === 1) { //left
-                final_rotate = -1 * (this.rot_speed + this.mods.blade_boost*0.02);
+            if (input_data.keys.left) {
+                final_rotate = -1 * (this.rot_speed + this.mods.blade_boost * 0.02);
             }
-            this.rotation += final_rotate; //*delta
+            this.rotation += final_rotate;
 
             this.hitbox = {//téglalap 4 sarka
                 'x1': this.x - 13,
@@ -132,15 +138,14 @@ module.exports = class Tank extends Entity {
 
             let x_wannago = 0;
             let y_wannago = 0;
-            let final_spd = this.speed + this.mods.blade_boost*0.5;
-            let cosos = Math.cos(this.rotation) * final_spd;
-            let sines = Math.sin(this.rotation) * final_spd;
-            if (input_data[0] === 1) { //up
-                x_wannago = cosos; //*delta
-                y_wannago = sines; //*delta
-            } else if (input_data[1] === 1) { //down
-                x_wannago = -1 * cosos; //*delta
-                y_wannago = -1 * sines; //*delta
+            let cosos = Math.cos(this.rotation) * this.speed;
+            let sines = Math.sin(this.rotation) * this.speed;
+            if (input_data.keys.up) {
+                x_wannago = cosos;
+                y_wannago = sines;
+            } else if (input_data.keys.down) {
+                x_wannago = -1 * cosos;
+                y_wannago = -1 * sines;
             }
 
             //mozgás és fal-ütközés
@@ -175,43 +180,22 @@ module.exports = class Tank extends Entity {
 
             switch (this.shoot_type) {
                 case 'wait':
-                    //nem lövünk
                     break;
                 case 'gh': //ghost
-                    createGhostBullet({'rotation': fixed_rotation}, this);
+                    tankFunctions.createGhostBullet({'rotation': fixed_rotation}, this);
                     this.shoot_type = 'normal';
                     break;
-                /*case 'fr': //repesz
-                    this.createFragBullet({'rotation': fixed_rotation});
+                case 'fr': //frag
+                    tankFunctions.createFragBullet({'rotation': fixed_rotation}, this);
                     this.shoot_phase = 'trigger';
                     break;
-                case 'be': //beam erősen TODO
+                /*case 'be': //beam TODO
                     this.createBeam();
                     this.shoot_phase = 'wait';
-                    break;
-                case 'bl': //blade
-                    this.shoot_phase = 'wait';
-                    this.events.push('blade');
-
-                    this.do_blade(this.id);
-                    g_worlds[g_playerdata[this.id].world_id].countdowns.push ({
-                        'timer': 5,
-                        'call': this.do_blade,
-                        'params': [this.id]
-                    });
-
-                    //timer, ameddig nem engedjük lőni / extrát felvenni
-                    g_worlds[g_playerdata[this.id].world_id].countdowns.push ({
-                        'timer': 15,
-                        'call': function (tank) {
-                            tank.shoot_phase = 'shoot'; //lőhet
-                            tank.shoot_type = 'normal'; //normál lövedéket
-                        },
-                        'params': [this]
-                    });
-
-                    this.mods.blade_boost = 0;
                     break;*/
+                case 'bl': //blade
+                    tankFunctions.swingBlade(this);
+                    break;
                 default: //sima lövedék
                     tankFunctions.createBullet({'rotation': fixed_rotation}, this);
             }
@@ -228,27 +212,6 @@ module.exports = class Tank extends Entity {
         }
     }
 /*
-
-    createFragBullet(data) {
-        let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
-        g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count] = new FragBullet({
-            'x': this.x,
-            'y': this.y,
-            'id': g_worlds[0].lists.bullet_id_count,
-            'player_id': this.id,
-            'rotation': rot,
-            'tint': this.tint,
-            'timer': 500
-        });
-        g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count].move_starting_pos(); //a tank csövéhez teszi a golyót
-        let send_bullet = g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count]; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
-        send_bullet.type = 'FragBullet';
-        let bl = {
-            'bullets': {self_id: send_bullet}
-        };
-        broadcast_simple('init', bl);
-        g_worlds[0].lists.bullet_id_count++;
-    }
     createBeam(data) {
         let rot = (data.rotation !== undefined ? data.rotation : this.rotation);
         g_worlds[0].lists.bullet[g_worlds[0].lists.bullet_id_count] = new Beam({
@@ -280,13 +243,6 @@ module.exports = class Tank extends Entity {
             'tint': this.tint
         });
         g_worlds[0].lists.bullet_id_count++;
-    }
-    do_blade(id) {
-        let tank = g_worlds[0].lists.tank[id];
-        let final_pos_x = tank.x + 105 * Math.cos(tank.rotation);
-        let final_pos_y = tank.y + 105 * Math.sin(tank.rotation);
-        let blade_obj = {'x1': tank.x,'y1': tank.y,'x2': final_pos_x,'y2': final_pos_y};
-        g_collisioner.blade_collision(blade_obj,tank.id);
     }*/
     destroy(param) {
         super.destroy(param);

@@ -13,6 +13,7 @@ for (let color of g_tank_colors) {
 
 //tesztelős cuccok
 g_ghost = false;
+// call ghost in console: t_ghost(true);
 
 function t_ghost(data) {
     if (data) {
@@ -33,7 +34,6 @@ function t_ghost(data) {
 //timing
 g_timing = {//amennyi a szám, annyi tik/sec (vagy fps)
     'input_sending': 20,
-    'lag_delay_hack': 6
 };
 
 //pixi setup

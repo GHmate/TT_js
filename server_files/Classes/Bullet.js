@@ -25,6 +25,7 @@ module.exports = class Bullet extends Entity {
             'y1': this.y - 4,
             'y2': this.y + 4
         };
+        this.type = data.type;
     }
     updatePosition() { //TODO: a szögfüggvényes számolást nem kell minden tikben elvégezni, csak ha változás történik
 

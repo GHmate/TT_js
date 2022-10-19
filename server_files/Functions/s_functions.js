@@ -15,33 +15,11 @@ die = function (data) {
     console.log(data);
     throw new Error('run_stopped');
 };
-//extra spawn
-createExtra = function () {
-    let koordinata = g_worlds[0].leteheto_nodes[getRandomInt(0, g_worlds[0].leteheto_nodes.length - 1)];
-    let customnode = graph[koordinata[0]][koordinata[1]];
-    g_worlds[0].lists.extra[g_worlds[0].lists.extra_id_count] = new Extra({
-        'x': customnode.x,
-        'y': customnode.y,
-        'x_graph': customnode.x_graph,
-        'y_graph': customnode.y_graph,
-        'id': g_worlds[0].lists.extra_id_count,
-        'type': Extra.type_list[getRandomInt(0, Extra.type_list.length - 1)]
-    });
-    let ex = {
-        'extras': {self_id: g_worlds[0].lists.extra[g_worlds[0].lists.extra_id_count]}
-    };
-    broadcast_simple('init', ex);
-    g_worlds[0].lists.extra_id_count++;
 
-    g_worlds[0].countdowns.push ({
-        'timer': 100,
-        'call': createExtra
-    });
-};
-//random int
 getRandomInt = function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
+
 //visszateszi a szöget 0 és 2pi közé, biztos ami biztos
 normalize_rad = function (rad) {
     while (rad < 0) {
@@ -166,7 +144,6 @@ update_score_board = function (world_id) {
 broadcastBullet = function (newBullet) {
     newBullet.move_starting_pos(); //a tank csövéhez teszi a golyót
     let send_bullet = newBullet; //TODO: csak a legszükségesebb adatokat küldeni. máshol is!
-    send_bullet.type = 'Bullet';
     let bl = {
         'bullets': {self_id: send_bullet}
     };

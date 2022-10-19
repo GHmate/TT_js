@@ -293,3 +293,26 @@ module.exports.kill_one_tank = (tank, bullet = false, killer_player = false) => 
         });
     }
 };
+
+function createExtra () {
+    let coords = g_worlds[0].leteheto_nodes[getRandomInt(0, g_worlds[0].leteheto_nodes.length - 1)];
+    let customNode = graph[coords[0]][coords[1]];
+    g_worlds[0].lists.extra[g_worlds[0].lists.extra_id_count] = new Extra({
+        'x': customNode.x,
+        'y': customNode.y,
+        'x_graph': customNode.x_graph,
+        'y_graph': customNode.y_graph,
+        'id': g_worlds[0].lists.extra_id_count,
+        'type': Extra.type_list[getRandomInt(0, Extra.type_list.length - 1)]
+    });
+    let ex = {
+        'extras': {self_id: g_worlds[0].lists.extra[g_worlds[0].lists.extra_id_count]}
+    };
+    broadcast_simple('init', ex);
+    g_worlds[0].lists.extra_id_count++;
+
+    g_worlds[0].countdowns.push ({
+        'timer': 100,
+        'call': createExtra
+    });
+};

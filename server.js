@@ -92,7 +92,7 @@ io.sockets.on('connection', function (socket) {
         if (g_worlds[0].lists.tank[socket.id] === undefined || g_worlds[0].lists.tank[socket.id].inactive === true) { //TODO: kliens ne is küldjön ilyen kérést, ha nincs tankja
             return;
         }
-        let next_id = (data[0] === undefined ? false : data[0][4]);
+        let nextRow = (data[0] === undefined ? false : data[0].tick);
         g_worlds[0].lists.tank[socket.id].apply_input_movement_data(g_worlds[0].lists.tank[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
         g_worlds[0].lists.tank[socket.id].list_of_inputs = g_worlds[0].lists.tank[socket.id].list_of_inputs.concat(data);
         let response_data = {
@@ -101,7 +101,7 @@ io.sockets.on('connection', function (socket) {
             'rotation': g_worlds[0].lists.tank[socket.id].rotation,
             'spd': g_worlds[0].lists.tank[socket.id].speed,
             'rot_spd': g_worlds[0].lists.tank[socket.id].rot_speed,
-            'next_processed': next_id
+            'next_processed': nextRow
         };
         socket.emit('input_response', response_data);
     });

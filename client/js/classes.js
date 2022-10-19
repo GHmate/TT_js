@@ -5,8 +5,8 @@ class Entity {
         this.x = (data.x !== undefined ? data.x : 0);
         this.y = (data.y !== undefined ? data.y : 0);
         this.id = (data.id !== undefined ? data.id : null);
-        this.speed = (data.speed !== undefined ? data.speed : 2.2); //kell a tank predictionhoz (TODO: nem biztos)
-        this.rot_speed = (data.rot_speed !== undefined ? data.rot_speed : 0.07);  //kell a tank predictionhoz (TODO: nem biztos)
+        this.speed = (data.speed !== undefined ? data.speed : 2.2);
+        this.rot_speed = (data.rot_speed !== undefined ? data.rot_speed : 0.07);
         let texture = (data.texture !== undefined ? data.texture : '');
         this.sprite = new PIXI.Sprite(texture);
         this.sprite.x = this.x;
@@ -144,7 +144,7 @@ class Tank extends Entity {
         }
         super(data);
         this.inactive = true;
-        this.normal_speed = this.speed; //normal speed az alapértelmezett sebesség, erre jönnek rá a bónuszok. minden lehetséges speed modifyer külön változót kap.
+        this.normal_speed = this.speed; //normal speed az alapértelmezett sebesség, erre jönnek rá a bónuszok. minden lehetséges speed modifier külön változót kap.
         this.sprite.rotation = this.rotation;
         this.sprite.anchor.set(0.45, 0.5);
         this.sprite.tint = this.tint;
@@ -156,22 +156,14 @@ class Tank extends Entity {
         g_pixi_containers.game_container.addChild(this.nametag);
         this.shoot_button_up = true;
         this.movement_timer = 0;
-        this.list_of_inputs = []; //az inputok listája, predictionhöz (TODO: talán ki kéne szervezni innen ezeket?)
-        this.list_of_inputs_remember = []; //az inputok listája, ami csak szerver update után ürül. ezt használjuk korrigálásra
-        this.list_of_inputs_temp = []; //csak a szervernek nem elküldött inputokat tárolja
+        this.inputsForCorrection = []; //az inputok listája, ami csak szerver update után ürül. ezt használjuk korrigálásra
+        this.inputsForServer = []; //csak a szervernek nem elküldött inputokat tárolja
         this.active_blade = false; // melee extra követésére.
         this.mods = {
             'blade_boost': 0
         };
         this.events = [];
-        //Hozzáadok 5 üres inputot, így a tank egy kicsit késleltetve mozog. Kevésbé zavaró, mint a csúszkálásos lag-kompenzáció. Bár kevésbé is hatékony. Még szerver oldalon is lehet hackelni a hitbox-szal.
-        for (let i = 0; i < g_timing['lag_delay_hack']; i++) {
-            this.list_of_inputs.push([0,0,0,0,i]);
-            this.list_of_inputs_remember.push([0,0,0,0,i]);
-            this.list_of_inputs_temp.push([0,0,0,0,i]);
-            this.movement_timer ++;
-        }
-        
+
         //this.can_shoot = true;
         //this.shoot_type = "bb"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
         //this.bullet_timer = 3;
@@ -219,22 +211,21 @@ class Tank extends Entity {
             return;
         }
         //logoljuk az inputokat
-        let input_data = [
-            this.keypress['up'] ? 1 : 0,
-            this.keypress['down'] ? 1 : 0,
-            this.keypress['left'] ? 1 : 0,
-            this.keypress['right'] ? 1 : 0,
-            this.movement_timer
-        ]; //fel, le, balra, jobbra
+        let input_data = {
+            'keys': {
+                'up': this.keypress['up'],
+                'down': this.keypress['down'],
+                'left': this.keypress['left'],
+                'right': this.keypress['right'],
+            },
+            'tick': this.movement_timer,
+            'mods': this.mods,
+        };
         this.movement_timer++;
         if (this.movement_timer > 300000) {
             this.movement_timer = 0;
         }
-        this.list_of_inputs.push(input_data); //saját használatra (prioritásis sorként, belerakunk cuccokat az elején, kivesszük a végéről használatkor (delay-hack miatt))
-        this.list_of_inputs_remember.push(input_data); //szerveres ellenőrzésre
-        this.list_of_inputs_temp.push(input_data); //szervernek küldéshez, mert ezt mindig ürítjük
-
-        let current_input_data = this.list_of_inputs.shift();
+        this.inputsForCorrection.push(input_data); //szerveres adat utáni korrekcióra TODO in a perfect world ez nem kellene
         
         let self_start_position = {
             'x': this.x,
@@ -242,7 +233,7 @@ class Tank extends Entity {
             'd': this.rotation
         };
         //console.log(input_data);
-        let simulated_pos = this.simulate_input(self_start_position, current_input_data);
+        let simulated_pos = this.simulate_input(self_start_position, input_data);
         this.x = simulated_pos.x;
         this.y = simulated_pos.y;
         this.rotation = simulated_pos.d;
@@ -253,25 +244,43 @@ class Tank extends Entity {
         this.nametag.y = this.y - 30;
         this.sprite.rotation = this.rotation;
         this.manage_blade();
+
+        this.inputsForServer.push(input_data); //input csomag küldés szervernek
+
+        // TODO collisionnal detektálni kéne hogy extrát felszedtük, vagy a pengét elhasználta, a lendi fgv nem jó vmiért
+        /*let collision_data = g_collisioner.check_collision_one_to_n(this, Extra);
+        let colliding_extra = collision_data['collision'];
+        if ((colliding_extra.right || colliding_extra.left || colliding_extra.up || colliding_extra.down) && this.shoot_type === 'normal') {
+            for (let e of collision_data['collided']) {
+                if (e.type === 'bl') {
+                    this.mods.blade_boost = 1;
+                    console.log('boost');
+                }
+            }
+        }*/
     };
     send_move_data_to_server() {
         //elküldjük a szervernek az utolsó néhány tik mozgását.
-        socket.emit('input_list', this.list_of_inputs_temp);
-        this.list_of_inputs_temp = [];
+        socket.emit('input_list', this.inputsForServer);
+        this.inputsForServer = [];
     };
     simulate_input(start_pos, input_data) {
         let ret = {'x': start_pos.x, 'y': start_pos.y, 'd': start_pos.d};
         let reset_x = this.x;
         let reset_y = this.y;
         let reset_spd = this.speed;
-        
-        //forgás:
-        let final_rotate = 0;
-        if (input_data[3] === 1) { //right
-            final_rotate = this.rot_speed + this.mods.blade_boost*0.02;
+
+        this.speed = this.normal_speed + input_data.mods.blade_boost * 0.5;
+        if (input_data.keys.down) {
+            this.speed *= 0.7;
         }
-        if (input_data[2] === 1) { //left
-            final_rotate = -1 * (this.rot_speed + this.mods.blade_boost*0.02);
+
+        let final_rotate = 0;
+        if (input_data.keys.right) {
+            final_rotate = this.rot_speed + input_data.mods.blade_boost * 0.02;
+        }
+        if (input_data.keys.left) {
+            final_rotate = -1 * (this.rot_speed + input_data.mods.blade_boost * 0.02);
         }
         ret.d += final_rotate;
         
@@ -286,25 +295,18 @@ class Tank extends Entity {
         };
         g_collisioner.update_arrays();
 
-        if (input_data[4] === undefined) {
+        if (input_data.tick === undefined) {
             console.log('kapott input: nincs index');
-        }
-
-        if (input_data[1] === 1) {
-            this.speed = this.normal_speed * 0.7; //+- speed multiplyers I guess
-        } else {
-            this.speed = this.normal_speed;
         }
 
         let x_wannago = 0;
         let y_wannago = 0;
-        let final_spd = this.speed + this.mods.blade_boost*0.5;
-        let cosos = Math.cos(rotate) * final_spd;
-        let sines = Math.sin(rotate) * final_spd;
-        if (input_data[0] === 1) { //up
+        let cosos = Math.cos(rotate) * this.speed;
+        let sines = Math.sin(rotate) * this.speed;
+        if (input_data.keys.up) {
             x_wannago = cosos;
             y_wannago = sines;
-        } else if (input_data[1] === 1) { //down
+        } else if (input_data.keys.down) {
             x_wannago = -1 * cosos;
             y_wannago = -1 * sines;
         }
@@ -341,13 +343,13 @@ class Tank extends Entity {
         let start_doing = false;
         let remove_count = 0;
 
-        for (let loop_index = 0; loop_index < this.list_of_inputs_remember.length; loop_index++) {
-            let input_data = this.list_of_inputs_remember[loop_index]; //kiolvassuk a tömbből
-            if (input_data[4] === undefined) {
-                console.log('input: nincs s_id');
+        for (let loop_index = 0; loop_index < this.inputsForCorrection.length; loop_index++) {
+            let input_data = this.inputsForCorrection[loop_index]; //kiolvassuk a tömbből
+            if (input_data.tick === undefined) {
+                console.log('input: nincs s_id: ' + JSON.stringify(input_data));
                 continue;
             }
-            if (input_data[4] === s_id) {
+            if (input_data.tick === s_id) {
                 start_doing = true;
             }
             if (!start_doing) {
@@ -356,15 +358,15 @@ class Tank extends Entity {
             }
         }
         if (starting_point) {
-            this.list_of_inputs_remember.splice(0, remove_count);
+            this.inputsForCorrection.splice(0, remove_count);
         }
         this.repair_movement(s_id, starting_point);
     };
     repair_movement(s_id, starting_point) { //TODO: ha a saját pozíció nagyon eltér a szervertől kapottól, ne updatelje magát egy darabig, csak várjon a szerver-pozícióra.
         
         let simulated_from_server_spot = starting_point;
-        for (let loop_index = 0; loop_index < this.list_of_inputs_remember.length-g_timing['lag_delay_hack']; loop_index++) {
-            let input_data_temp = this.list_of_inputs_remember[loop_index];
+        for (let loop_index = 0; loop_index < this.inputsForCorrection.length; loop_index++) {
+            let input_data_temp = this.inputsForCorrection[loop_index];
             simulated_from_server_spot = this.simulate_input(simulated_from_server_spot, input_data_temp);
         }
         //console.log(simulated_from_server_spot.d);

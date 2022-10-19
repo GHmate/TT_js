@@ -3,15 +3,15 @@ clear_local_map(); //inicializálunk, ürítünk mindent induláskor
 //mozgatás
 document.onkeydown = function (event) {
     let tank_control = '';
-    if (event.keyCode === 37) { //balra
+    if (event.code === 'ArrowLeft') {
         tank_control = 'left';
-    } else if (event.keyCode === 38) { //fel
+    } else if (event.code === 'ArrowUp') {
         tank_control = 'up';
-    } else if (event.keyCode === 39) { //jobbra
+    } else if (event.code === 'ArrowRight') {
         tank_control = 'right';
-    } else if (event.keyCode === 40) { //le
+    } else if (event.code === 'ArrowDown') {
         tank_control = 'down';
-    } else if (event.keyCode === 86 || event.keyCode === 87) { // V vagy W
+    } else if (event.code === 'KeyV' || event.code === 'KeyW') {
         if (g_self_data.shoot_button_up === true) {
             if (Tank.list[g_self_data.id] !== undefined) {
                 //Tank.list[g_self_data.id].keyevent(tank_control,false);
@@ -20,7 +20,7 @@ document.onkeydown = function (event) {
                 tank_control = 'shoot';
             }
         }
-    } else if (event.keyCode === 84) { //T azaz tesztelés
+    } else if (event.code === 'KeyT') {
         //no testing yet
     }
     if (Tank.list !== undefined) {
@@ -32,15 +32,15 @@ document.onkeydown = function (event) {
 
 document.onkeyup = function (event) {
     let tank_control = '';
-    if (event.keyCode === 37) { //balra
+    if (event.code === 'ArrowLeft') {
         tank_control = 'left';
-    } else if (event.keyCode === 38) { //fel
+    } else if (event.code === 'ArrowUp') {
         tank_control = 'up';
-    } else if (event.keyCode === 39) { //jobbra
+    } else if (event.code === 'ArrowRight') {
         tank_control = 'right';
-    } else if (event.keyCode === 40) { //le
+    } else if (event.code === 'ArrowDown') {
         tank_control = 'down';
-    } else if (event.keyCode === 86 || event.keyCode === 87) { // V vagy W
+    } else if (event.code === 'KeyV' || event.code === 'KeyW') {
         if (Tank.list[g_self_data.id] !== undefined) {
             //Tank.list[g_self_data.id].keyevent(tank_control,false);
             g_self_data.shoot_button_up = true;
