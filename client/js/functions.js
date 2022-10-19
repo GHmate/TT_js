@@ -89,8 +89,8 @@ function menu_join_world(world_id, name) {
     let data = {'w_id': world_id};
     socket.emit('request_modify_user_data', {'display_name': name});
     socket.emit('request_world_join', data);
-    jQuery('#c_menu').css('display', 'none');
-    jQuery('#c_game').css('display', 'flex');
+    document.querySelector('#c_menu').style.display = 'none';
+    document.querySelector('#c_game').style.display = 'flex';
 }
 
 function update_world_scores(scores) { //{id, name, score}

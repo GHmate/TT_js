@@ -269,8 +269,8 @@ g_app.ticker.add(function (delta) {
     g_self_data.tiks_after_input_sent++;
 
     //oldal resize
-    let block_width = jQuery("#game_container").width();
-    let block_height = jQuery("#game_container").height();
+    let block_width = document.querySelector("#game_container").clientWidth;
+    let block_height = document.querySelector("#game_container").clientHeight;
 
     let actual_width = block_width//window.innerWidth-103;
     let actual_height = actual_width * WRATIO;

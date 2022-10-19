@@ -38,7 +38,7 @@ g_timing = {//amennyi a szám, annyi tik/sec (vagy fps)
 
 //pixi setup
 g_app = new PIXI.Application(g_window_size.x, g_window_size.y, {backgroundColor: 0xdddddd});
-jQuery("#game_container").append(g_app.view);
+document.querySelector('#game_container').append(g_app.view);
 
 //g_app.renderer = PIXI.autoDetectRenderer(320, 480, null, false, true);
 //g_app.renderer.antialias = false;
@@ -135,33 +135,6 @@ function onAssetsLoaded()
         start_circle_focus({'x': Tank.list[g_self_data.id].x, 'y': Tank.list[g_self_data.id].y});
     }
 }
-
-/*var meter = new FPSMeter(jQuery('#vue_app'),{
- interval:  100,     // Update interval in milliseconds.
- smoothing: 8,      // Spike smoothing strength. 1 means no smoothing.
- show:      'fps',   // Whether to show 'fps', or 'ms' = frame duration in milliseconds.
- 
- decimals:  0,       // Number of decimals in FPS number. 1 = 59.9, 2 = 59.94, ...
- maxFps:    60,      // Max expected FPS value.
- threshold: 100,     // Minimal tick reporting interval in milliseconds.
- 
- // Meter position
- position: 'absolute', // Meter position.
- zIndex:   10,         // Meter Z index.
- left:     '2px',      // Meter left offset.
- top:      '2px',      // Meter top offset.
- right:    'auto',     // Meter right offset.
- bottom:   'auto',     // Meter bottom offset.
- margin:   '0 0 0 0',  // Meter margin. Helps with centering the counter when left: 50%;
- 
- // Theme
- theme: 'dark', // Meter theme. Build in: 'dark', 'light', 'transparent', 'colorful'.
- heat:  1,      // Allow themes to use coloring by FPS heat. 0 FPS = red, maxFps = green.
- 
- // Graph
- graph:   1, // Whether to show history graph.
- history: 20 // How many history states to show in a graph.
- });*/
 
 //socket dolgai
 socket = io();
