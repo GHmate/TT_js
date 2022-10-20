@@ -6,8 +6,8 @@ module.exports = class Entity {
         this.x_graph = (data.x_graph !== undefined ? data.x_graph : 0); //a gráfban elfoglalt hely
         this.y_graph = (data.y_graph !== undefined ? data.y_graph : 0);
         this.id = (data.id !== undefined ? data.id : null);
-        this.speed = (data.speed !== undefined ? data.speed : 2.2);
-        this.rot_speed = (data.rot_speed !== undefined ? data.rot_speed : 0.07);
+        this.speed = (data.speed !== undefined ? data.speed : g_broadcasted_constants.entity.speed);
+        this.rot_speed = (data.rot_speed !== undefined ? data.rot_speed : g_broadcasted_constants.entity.rspeed);
         this.collision_block = []; //collisionManager melyik dobozkájában van éppen. több is lehet, ha átlóg
         this.width = (data.width !== undefined ? data.width : 10);
         this.height = (data.height !== undefined ? data.height : 10);

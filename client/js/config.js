@@ -31,10 +31,6 @@ function t_ghost(data) {
         g_ghost = false;
     }
 }
-//timing
-g_timing = {//amennyi a szám, annyi tik/sec (vagy fps)
-    'input_sending': 20,
-};
 
 //pixi setup
 g_app = new PIXI.Application(g_window_size.x, g_window_size.y, {backgroundColor: 0xdddddd});
@@ -88,7 +84,6 @@ g_self_data = {
     'tiks_after_input_sent': 0,
     'actual_rail_pos': {'id': 0, 'pc': 0},
     'display_name': 'unnamed',
-    'missed_packets': 0 //a saját fps alapján számolódik. egy tikben megmondja, hogy mennyi tikkel több futott a szerveren
 };
 
 g_world_scores = [];
@@ -114,6 +109,18 @@ g_animation_frames = {
     'focus_circle': [],
     'tank_blade': []
 };
+
+//Updated by the server on 'init'
+g_broadcasted_constants = {
+    'gameTick': 30, //except this currently...
+    'entity': {
+        'speed': 0,
+        'rspeed': 0
+    },
+    'bullet': {
+        'speed': 0,
+    },
+}
 
 function onAssetsLoaded()
 {

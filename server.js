@@ -55,7 +55,8 @@ io.sockets.on('connection', function (socket) {
             'walls': g_worlds[0].lists.wall,
             'tanks': g_worlds[0].lists.tank,
             'bullets': g_worlds[0].lists.bullet,
-            'playarea': level_limiter
+            'playarea': level_limiter,
+            'g_broadcasted_constants': g_broadcasted_constants
         });
 
         if (g_worlds[data.w_id].countdown === 0) {
@@ -93,8 +94,8 @@ io.sockets.on('connection', function (socket) {
             return;
         }
         let nextRow = (data[0] === undefined ? false : data[0].tick);
-        g_worlds[0].lists.tank[socket.id].apply_input_movement_data(g_worlds[0].lists.tank[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
-        g_worlds[0].lists.tank[socket.id].list_of_inputs = g_worlds[0].lists.tank[socket.id].list_of_inputs.concat(data);
+        //g_worlds[0].lists.tank[socket.id].apply_input_movement_data(g_worlds[0].lists.tank[socket.id].list_of_inputs.length);//a maradék inputokat gyorsan végigfuttatom még
+        g_worlds[0].lists.tank[socket.id].list_of_inputs = data;
         let response_data = {
             'x': g_worlds[0].lists.tank[socket.id].x,
             'y': g_worlds[0].lists.tank[socket.id].y,
@@ -179,7 +180,7 @@ setInterval(function () {
             }
         }
     }
-}, 1000 / 60); //60 fps
+}, 1000 / g_broadcasted_constants.gameTick);
 
 //komenikáció
 setInterval(function () {
@@ -192,8 +193,6 @@ setInterval(function () {
             'x': g_worlds[0].lists.tank[i].x,
             'y': g_worlds[0].lists.tank[i].y,
             'rotation': g_worlds[0].lists.tank[i].rotation,
-            //'spd': g_worlds[0].lists.tank[i].speed,
-            //'rot_spd': g_worlds[0].lists.tank[i].rot_speed,
             'tint': g_worlds[0].lists.tank[i].tint, //TODO: kiölni: kicsit feleslegesnek érzem 20 fps-sel szín adatot küldeni...
             'mods': g_worlds[0].lists.tank[i].mods,
             'events': g_worlds[0].lists.tank[i].events
@@ -256,4 +255,4 @@ setInterval(function () {
     }
     //TODO: figyelni kell, hogy resetelődjenek a countdown-ok!
 
-}, 1000 / 20); //20-30 fps
+}, 1000 / 20);

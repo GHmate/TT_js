@@ -1,12 +1,11 @@
 // minden osztály őse, amik a pályán / gráfon helyezkednek el
 class Entity {
-    //constructor(x,y,x_graph,y_graph,id,texture,width=false,height=false,speed = 2.2) {
     constructor(data) {
         this.x = (data.x !== undefined ? data.x : 0);
         this.y = (data.y !== undefined ? data.y : 0);
         this.id = (data.id !== undefined ? data.id : null);
-        this.speed = (data.speed !== undefined ? data.speed : 2.2);
-        this.rot_speed = (data.rot_speed !== undefined ? data.rot_speed : 0.07);
+        this.speed = (data.speed !== undefined ? data.speed : g_broadcasted_constants.entity.speed);
+        this.rot_speed = (data.rot_speed !== undefined ? data.rot_speed : g_broadcasted_constants.entity.rspeed);
         let texture = (data.texture !== undefined ? data.texture : '');
         this.sprite = new PIXI.Sprite(texture);
         this.sprite.x = this.x;
@@ -14,7 +13,6 @@ class Entity {
         this.rotation = (data.rotation !== undefined ? data.rotation : 0);
         this.tint = (data.tint !== undefined ? data.tint : '0xffffff');
         //this.sprite.alpha = (data.alpha !== undefined ? data.alpha : 1);
-        //this.speed = (data.speed !== undefined ? data.speed : 2.2);
         this.collision_block = []; //kell a tank predictionhoz
         g_pixi_containers.game_container.addChild(this.sprite);
         if (data.width) {
@@ -71,7 +69,6 @@ class Entity {
     }
     //maga a mozgatás: 60 fps-sel fusson
     ipol() {
-        //TODO: mi a fenéér updatel a szerver 20 fps-sel, amikor 10-zel is lehetne pl.(vagy nem?)
         let difference = false;
         let dist_x = this.ipol_data.end.x - this.ipol_data.start.x;
         let dist_y = this.ipol_data.end.y - this.ipol_data.start.y;
@@ -369,15 +366,9 @@ class Tank extends Entity {
             let input_data_temp = this.inputsForCorrection[loop_index];
             simulated_from_server_spot = this.simulate_input(simulated_from_server_spot, input_data_temp);
         }
-        //console.log(simulated_from_server_spot.d);
-        //console.log('x');
-        let distx = Math.abs(this.x - simulated_from_server_spot.x);
-        let disty = Math.abs(this.y - simulated_from_server_spot.y);
-        if (distx > 5 || disty > 5) { // 5 pixel eltérésnél korrigálunk. pl a blade booster felszedésnél számít.
-            this.x = simulated_from_server_spot.x;
-            this.y = simulated_from_server_spot.y;
-            this.rotation = simulated_from_server_spot.d;
-        }
+        this.x = simulated_from_server_spot.x;
+        this.y = simulated_from_server_spot.y;
+        this.rotation = simulated_from_server_spot.d;
         /*if (g_ghost && ghosttank !== undefined) {
             ghosttank.x = simulated_from_server_spot.x;
             ghosttank.y = simulated_from_server_spot.y;
@@ -411,7 +402,6 @@ class Bullet extends Entity {
         if (data.texture === undefined) {
             data.texture = g_textures.bullet;
         }
-        //if (data.speed === undefined) {data.speed = 2.6;}
         if (data.width === undefined) {
             data.width = 10;
         }

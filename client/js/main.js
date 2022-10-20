@@ -59,7 +59,9 @@ socket.on('init', function (data) {
     if (data.global !== undefined) {
         g_self_data.id = data.global.id;
     }
-
+    if (data.g_broadcasted_constants !== undefined) {
+        g_broadcasted_constants = data.g_broadcasted_constants;
+    }
     if (data.clear_all === true) { //teljes reset
         g_collisioner = new CollisionManager({});
         clear_local_map();
@@ -259,10 +261,6 @@ g_app.ticker.add(function (delta) {
 
     ipol_redzone();
 
-    if (Tank.list !== undefined && Tank.list[g_self_data.id] !== undefined) {
-        g_self_data.missed_packets += (60 - (60 / delta)) / (60 / delta);
-    }
-
     if (g_self_data.latency_check) {
         g_self_data.latency_counter++;
     }
@@ -285,8 +283,6 @@ g_app.ticker.add(function (delta) {
         Tank.list[i].update_cycle();
         if (Tank.list[i].id !== g_self_data.id) {
             Tank.list[i].ipol();
-        } else {
-            Tank.list[i].predict(delta);
         }
     }
     for (let i in Bullet.list) {
@@ -311,14 +307,6 @@ socket.on('input_response', function (position) {
         g_self_data.latency_check = false;
     }
     if (Tank.list[g_self_data.id] !== undefined) {
-        //az utolsó n daradb inputot újra-szimulálja a szervertől kapott pozícióra (instant), és korrigálja a jelenlegi helyet.
-        //(n a ping és pong közt eltelt tik-ek száma) majd törli a szimuláltaknál is régebbi input adatokat.
-
-        /*let list_length = Tank.list[g_self_data.id].list_of_inputs.length;
-         let index = list_length-g_self_data.tiks_after_input_sent-Math.ceil(g_self_data.latency*2);
-         if (index < 0) {
-         index = 0;
-         }*/
         position.d = position.rotation; //multi használt funkció "d" néven várja a forgás értéket.
         Tank.list[g_self_data.id].apply_server_info(position.next_processed, position);
     }
@@ -326,13 +314,12 @@ socket.on('input_response', function (position) {
 });
 
 setInterval(function () {
-    if (Tank.list !== undefined) {
-        if (Tank.list[g_self_data.id] !== undefined) {
-            Tank.list[g_self_data.id].send_move_data_to_server();
-        }
-        if (!g_self_data.latency_check) {
-            socket.emit('ping_time');
-            g_self_data.latency_check = true;
-        }
+    if (Tank.list === undefined || Tank.list[g_self_data.id] === undefined) {
+        return;
     }
-}, 1000 / g_timing.input_sending);
+    let mainTank = Tank.list[g_self_data.id];
+    mainTank.predict();
+    if (mainTank.inputsForServer.length === 3) {
+        mainTank.send_move_data_to_server();
+    }
+}, 1000 / g_broadcasted_constants.gameTick);

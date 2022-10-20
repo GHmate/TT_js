@@ -22,3 +22,14 @@ g_path_gen_chance = 0.6; //útvonal generálási esély. célszerű 0.4 és 0.7 
 
 g_worlds_number = 0;
 g_worlds = {};
+
+g_broadcasted_constants = {
+    'gameTick': 30,
+    'entity': {
+        'speed': 4.2,
+        'rspeed': 0.12
+    },
+    'bullet': {
+        'speed': 5,
+    },
+}

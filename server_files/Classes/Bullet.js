@@ -3,7 +3,7 @@ const Entity = require("./Entity");
 module.exports = class Bullet extends Entity {
     constructor(data) {
         if (data.speed === undefined) {
-            data.speed = 2.6;
+            data.speed = g_broadcasted_constants.bullet.speed;
         }
         if (data.width === undefined) {
             data.width = 10;
