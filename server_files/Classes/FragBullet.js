@@ -38,7 +38,6 @@ module.exports = class FragBullet extends Bullet {
             }
         }
 
-        g_worlds[0].lists.tank[this.player_id].can_shoot = true;
         this.destroy([g_worlds[0].lists.bullet]);
     }
     updatePosition() {

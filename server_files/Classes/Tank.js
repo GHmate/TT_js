@@ -43,14 +43,12 @@ module.exports = class Tank extends Entity {
         //fegyver összeszedési kapcsolók
         //mchg
         /*if (this.shoot_type === "mchg") {
-         this.can_shoot = false;
          if (!this.shoot_button_up) {this.shoot_type = "mchg_s"};
          };
 
          //machine gun
          if (this.shoot_type === "mchg_s") {
          if (this.shoot_button_up){
-         this.can_shoot = true;
          this.shoot_type = "normal";
          };
          if (!this.shoot_button_up) {

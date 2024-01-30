@@ -161,7 +161,6 @@ class Tank extends Entity {
         };
         this.events = [];
 
-        //this.can_shoot = true;
         //this.shoot_type = "bb"; // mchg --- machinegun , normal--- sima bullet, bb --- BigBoom, 
         //this.bullet_timer = 3;
         this.keypress = {
