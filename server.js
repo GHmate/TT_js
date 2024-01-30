@@ -2,13 +2,33 @@ var express = require('express');
 var app = express();
 var serv = require('http').Server(app);
 
+const { networkInterfaces } = require('os');
+const nets = networkInterfaces();
+const ipData = Object.create(null); // Or just '{}', an empty object
+for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+        // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+        // 'IPv4' is in Node <= 17, from 18 it's a number 4 or 6
+        const familyV4Value = typeof net.family === 'string' ? 'IPv4' : 4
+        if (net.family === familyV4Value && !net.internal) {
+            if (!ipData[name]) {
+                ipData[name] = [];
+            }
+            ipData[name].push(net.address);
+        }
+    }
+}
+
+
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/client/ttgen.html');
 });
 app.use('/', express.static(__dirname + '/client'));
 
-serv.listen(process.env.PORT || 8081);
+const port = 8081;
+serv.listen(port);
 console.log("Ready to roll out!");
+console.log("Connect on: " + ipData["enp1s0"][0] + ":" + port);
 SOCKET_LIST = {};
 
 var io = require('socket.io')(serv, {});
